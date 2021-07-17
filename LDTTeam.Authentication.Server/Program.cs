@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Server.Extensions;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +16,10 @@ namespace LDTTeam.Authentication.Server
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(x =>
+                {
+                    x.AddEnvironmentVariables("LDTTEAM_AUTH_");
+                })
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
     }
 }
