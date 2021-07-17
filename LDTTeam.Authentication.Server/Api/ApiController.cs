@@ -91,41 +91,5 @@ namespace LDTTeam.Authentication.Server.Api
 
             return false;
         }
-
-        [HttpGet("test")]
-        public async Task<ActionResult<Dictionary<string, bool>>> Test()
-        {
-            Dictionary<string, bool> results = new();
-
-            ApplicationUser? user = await _db.Users.FirstOrDefaultAsync();
-
-            if (user == null)
-                return NotFound();
-
-            CancellationTokenSource source = new();
-            using IServiceScope scope = _services.CreateScope();
-            await foreach (Reward reward in _db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable()
-                .WithCancellation(source.Token))
-            {
-                results[reward.Id] = false;
-                foreach (ConditionInstance conditionInstance in reward.Conditions)
-                {
-                    ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
-                        x.ModuleName == conditionInstance.ModuleName &&
-                        x.Name == conditionInstance.ConditionName);
-
-                    if (condition == null) continue;
-
-                    if (!await condition.ExecuteAsync(scope, conditionInstance,
-                        user.Id,
-                        source.Token)) continue;
-
-                    results[reward.Id] = true;
-                    break;
-                }
-            }
-
-            return results;
-        }
     }
 }
