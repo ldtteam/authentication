@@ -1,0 +1,53 @@
+﻿@page
+@using LDTTeam.Authentication.Modules.Api
+@using Microsoft.AspNetCore.Identity
+@model IndexModel
+@inject SignInManager<ApplicationUser> _signInManager
+@inject UserManager<ApplicationUser> _userManager
+
+@{
+    ViewData["Title"] = "Home page";
+}
+
+
+<div class="text-center">
+    <h1 class="display-4">This is not the home page you're looking for</h1>
+</div>
+
+@*
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    <div class="card-group">
+        @foreach (ApplicationUser user in await _userManager.Users.ToListAsync())
+        {
+            <div class="card">
+                <div class="card-header">
+                    @user.UserName
+                </div>
+                <div class="card-body">
+                    @foreach (UserLoginInfo info in await _userManager.GetLoginsAsync(user))
+                    {
+                        <p>
+                            <b>@info.LoginProvider:</b> @info.ProviderKey
+                        </p>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <br/>
+    
+    @if (_signInManager.IsSignedIn(User))
+    {
+        foreach (Claim claim in User.Claims)
+        {
+            <p>
+                <b>@claim.Type :</b> @claim.Value
+            </p>
+        }
+    }
+</div>
+*@

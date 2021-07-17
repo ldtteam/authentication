@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Server", "LDTTeam.Authentication.Server\LDTTeam.Authentication.Server.csproj", "{7DF56A6A-6042-408F-BA44-1370B234A895}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuth/AspNet.Security.OAuth.BuyMeACoffee", "OAuth\AspNet.Security.OAuth.BuyMeACoffee\AspNet.Security.OAuth.BuyMeACoffee.csproj", "{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuth/AspNet.Security.OAuth.Minecraft", "OAuth\AspNet.Security.OAuth.Minecraft\AspNet.Security.OAuth.Minecraft.csproj", "{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OAuth", "OAuth", "{E6E1D69D-B439-461D-8986-3B469D7E84BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Modules.Api", "LDTTeam.Authentication.Modules.Api\LDTTeam.Authentication.Modules.Api.csproj", "{96925F76-BF19-4365-B5DA-DAFB0C875F68}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{8C417205-8E80-4F65-9A01-0C1283728103}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Modules.GitHub", "Modules\LDTTeam.Authentication.Modules.GitHub\LDTTeam.Authentication.Modules.GitHub.csproj", "{BAAE589D-99F9-435E-8447-E0DC0C98A7B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Modules.Patreon", "Modules\LDTTeam.Authentication.Modules.Patreon\LDTTeam.Authentication.Modules.Patreon.csproj", "{13DC1AB6-5E4E-48E4-8EA0-83671A785625}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Modules.Discord", "Modules\LDTTeam.Authentication.Modules.Discord\LDTTeam.Authentication.Modules.Discord.csproj", "{8E3982A0-4A17-433F-A215-C5744D5BAA1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Modules.Minecraft", "Modules\LDTTeam.Authentication.Modules.Minecraft\LDTTeam.Authentication.Modules.Minecraft.csproj", "{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7DF56A6A-6042-408F-BA44-1370B234A895}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DF56A6A-6042-408F-BA44-1370B234A895}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DF56A6A-6042-408F-BA44-1370B234A895}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DF56A6A-6042-408F-BA44-1370B234A895}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96925F76-BF19-4365-B5DA-DAFB0C875F68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96925F76-BF19-4365-B5DA-DAFB0C875F68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96925F76-BF19-4365-B5DA-DAFB0C875F68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96925F76-BF19-4365-B5DA-DAFB0C875F68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAAE589D-99F9-435E-8447-E0DC0C98A7B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAAE589D-99F9-435E-8447-E0DC0C98A7B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAAE589D-99F9-435E-8447-E0DC0C98A7B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAAE589D-99F9-435E-8447-E0DC0C98A7B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13DC1AB6-5E4E-48E4-8EA0-83671A785625}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13DC1AB6-5E4E-48E4-8EA0-83671A785625}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13DC1AB6-5E4E-48E4-8EA0-83671A785625}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13DC1AB6-5E4E-48E4-8EA0-83671A785625}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E3982A0-4A17-433F-A215-C5744D5BAA1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E3982A0-4A17-433F-A215-C5744D5BAA1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E3982A0-4A17-433F-A215-C5744D5BAA1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E3982A0-4A17-433F-A215-C5744D5BAA1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE} = {E6E1D69D-B439-461D-8986-3B469D7E84BC}
+		{B97A6DEB-2FD9-4B8C-A9BC-0E0CD1FF161E} = {E6E1D69D-B439-461D-8986-3B469D7E84BC}
+		{BAAE589D-99F9-435E-8447-E0DC0C98A7B0} = {8C417205-8E80-4F65-9A01-0C1283728103}
+		{13DC1AB6-5E4E-48E4-8EA0-83671A785625} = {8C417205-8E80-4F65-9A01-0C1283728103}
+		{8E3982A0-4A17-433F-A215-C5744D5BAA1B} = {8C417205-8E80-4F65-9A01-0C1283728103}
+		{DAB8BDE5-E20D-4F22-8B8F-8A107E185C1D} = {8C417205-8E80-4F65-9A01-0C1283728103}
+	EndGlobalSection
+EndGlobal

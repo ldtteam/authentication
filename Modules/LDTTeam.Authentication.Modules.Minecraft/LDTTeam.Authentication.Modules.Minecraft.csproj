@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\LDTTeam.Authentication.Modules.Api\LDTTeam.Authentication.Modules.Api.csproj" />
+      <ProjectReference Include="..\..\OAuth\AspNet.Security.OAuth.Minecraft\AspNet.Security.OAuth.Minecraft.csproj" />
+    </ItemGroup>
+
+</Project>

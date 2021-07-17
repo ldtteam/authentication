@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <UserSecretsId>aspnet-com.ldtteam.authentication.server-682F51E1-4BB3-4B8A-8BFD-EDC360290C85</UserSecretsId>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="5.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.5">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.5">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\LDTTeam.Authentication.Modules.Api\LDTTeam.Authentication.Modules.Api.csproj" />
+      <ProjectReference Include="..\Modules\LDTTeam.Authentication.Modules.Discord\LDTTeam.Authentication.Modules.Discord.csproj" />
+      <ProjectReference Include="..\Modules\LDTTeam.Authentication.Modules.GitHub\LDTTeam.Authentication.Modules.GitHub.csproj" />
+      <ProjectReference Include="..\Modules\LDTTeam.Authentication.Modules.Minecraft\LDTTeam.Authentication.Modules.Minecraft.csproj" />
+      <ProjectReference Include="..\Modules\LDTTeam.Authentication.Modules.Patreon\LDTTeam.Authentication.Modules.Patreon.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Data\Migrations" />
+      <Folder Include="Models" />
+    </ItemGroup>
+
+</Project>

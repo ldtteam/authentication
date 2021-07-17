@@ -1,0 +1,12 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@model ExternalLoginModel
+
+@foreach (ModelError error in ModelState.Values.SelectMany(entry => entry.Errors))
+{
+    <p>@error.ErrorMessage</p>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

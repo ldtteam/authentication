@@ -1,0 +1,70 @@
+﻿using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace AspNet.Security.OAuth.BuyMeACoffee
+{
+    public class BuyMeACoffeeAuthenticationHandler : OAuthHandler<BuyMeACoffeeAuthenticationOptions>
+    {
+        public BuyMeACoffeeAuthenticationHandler(
+            [NotNull] IOptionsMonitor<BuyMeACoffeeAuthenticationOptions> options,
+            [NotNull] ILoggerFactory logger,
+            [NotNull] UrlEncoder encoder,
+            [NotNull] ISystemClock clock)
+            : base(options, logger, encoder, clock)
+        {
+        }
+
+        protected override async Task<AuthenticationTicket> CreateTicketAsync(
+            [NotNull] ClaimsIdentity identity,
+            [NotNull] AuthenticationProperties properties,
+            [NotNull] OAuthTokenResponse tokens)
+        {
+            string endpoint = Options.UserInformationEndpoint;
+
+            if (Options.Fields.Count > 0)
+            {
+                endpoint = QueryHelpers.AddQueryString(endpoint, "fields[user]", string.Join(",", Options.Fields));
+            }
+
+            if (Options.Includes.Count > 0)
+            {
+                endpoint = QueryHelpers.AddQueryString(endpoint, "include", string.Join(",", Options.Includes));
+            }
+
+            using HttpRequestMessage request = new(HttpMethod.Get, endpoint);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
+
+            using HttpResponseMessage response = await Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Context.RequestAborted);
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogError("An error occurred while retrieving the user profile: the remote server " +
+                                "returned a {Status} response with the following payload: {Headers} {Body}.",
+                                /* Status: */ response.StatusCode,
+                                /* Headers: */ response.Headers.ToString(),
+                                /* Body: */ await response.Content.ReadAsStringAsync(Context.RequestAborted));
+
+                throw new HttpRequestException("An error occurred while retrieving the user profile.");
+            }
+
+            using JsonDocument payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted));
+
+            ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+            OAuthCreatingTicketContext context = new OAuthCreatingTicketContext(principal, properties, Context, Scheme, Options, Backchannel, tokens, payload.RootElement);
+            context.RunClaimActions(payload.RootElement.GetProperty("data"));
+
+            await Options.Events.CreatingTicket(context);
+            return new AuthenticationTicket(context.Principal!, context.Properties, Scheme.Name);
+        }
+    }
+}

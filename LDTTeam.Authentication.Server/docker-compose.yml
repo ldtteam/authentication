@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-ldtteam-auth-db:/var/lib/mysql
+
+volumes:
+  postgres-ldtteam-auth-db:
