@@ -18,8 +18,6 @@ env:
 
 jobs:     
   build:
-    needs:
-      - tag
     runs-on: ubuntu-latest
     permissions:
       contents: read
