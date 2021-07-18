@@ -132,9 +132,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 new Claim("urn:minecraft:user:id", new Guid(minecraftId).ToString()));
             await _signInManager.RefreshSignInAsync(user);
 
-            StatusMessage = null;
-
-            return await OnGetAsync();
+            return RedirectToPage("ExternalLogins");
         }
 
 

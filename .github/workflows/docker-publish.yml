@@ -34,6 +34,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.26.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
