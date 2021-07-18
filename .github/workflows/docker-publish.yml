@@ -32,7 +32,8 @@ jobs:
           WITH_V: true
           
   build:
-
+    needs:
+      - tag
     runs-on: ubuntu-latest
     permissions:
       contents: read
