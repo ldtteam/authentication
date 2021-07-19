@@ -81,10 +81,11 @@ jobs:
         run: dotnet publish --runtime linux-x64 -o Publish LDTTeam.Authentication.Server && zip -r "${{ steps.tag_version.outputs.new_tag }}-release.zip" Publish
 
       - name: Release
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: softprops/action-gh-release@v1
         with:
           files: ${{ steps.tag_version.outputs.new_tag }}-release.zip
-          automatic_release_tag: "latest"
-          title: "Release Build"
-          prerelease: false
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          body_path: ${{ github.workflow }}-CHANGELOG.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: my_gh_org/my_gh_repo
