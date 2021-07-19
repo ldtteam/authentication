@@ -85,7 +85,6 @@ jobs:
         with:
           files: ${{ steps.tag_version.outputs.new_tag }}-release.zip
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          body_path: ${{ github.workflow }}-CHANGELOG.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: my_gh_org/my_gh_repo
