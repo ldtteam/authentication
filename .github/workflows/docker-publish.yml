@@ -36,6 +36,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
           DEFAULT_BUMP: patch
+          
+      - name: Checkout repository with Version Tags
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
