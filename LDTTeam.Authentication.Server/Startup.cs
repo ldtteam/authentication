@@ -1,7 +1,11 @@
+using System;
+using FluffySpoon.AspNet.LetsEncrypt;
+using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
 using LDTTeam.Authentication.Modules.Api.Webhook;
+using LDTTeam.Authentication.Server.Config;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -12,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace LDTTeam.Authentication.Server
 {
@@ -72,15 +77,33 @@ namespace LDTTeam.Authentication.Server
                     queueCapacity = 100;
                 return new WebhookQueue(queueCapacity);
             });
-            
+
             services.AddHostedService<EventsQueueService>();
             services.AddHostedService<WebhookLoggingQueueService>();
-            
+
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = 
+                options.ForwardedHeaders =
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
+
+            LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
+
+            if (config?.Enabled == true)
+            {
+                //the following line adds the automatic renewal service.
+                services.AddFluffySpoonLetsEncrypt(new LetsEncryptOptions()
+                {
+                    Email = config.Email,
+                    UseStaging = config.Staging,
+                    Domains = new[] {config.Domain},
+                    TimeUntilExpiryBeforeRenewal = TimeSpan.FromDays(30), //renew automatically 30 days before expiry
+                    CertificateSigningRequest = config.Csr
+                });
+
+                services.AddFluffySpoonLetsEncryptFileCertificatePersistence();
+                services.AddFluffySpoonLetsEncryptMemoryChallengePersistence();
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -91,8 +114,8 @@ namespace LDTTeam.Authentication.Server
                 {
                     ForwardedHeaders = ForwardedHeaders.XForwardedProto
                 });
-            
-            if (false)//env.IsDevelopment())
+
+            if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseMigrationsEndPoint();
@@ -102,6 +125,13 @@ namespace LDTTeam.Authentication.Server
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+            }
+            
+            LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
+
+            if (config?.Enabled == true)
+            {
+                app.UseFluffySpoonLetsEncrypt();
             }
 
             app.UseHttpsRedirection();
