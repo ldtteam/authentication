@@ -74,6 +74,9 @@ namespace LDTTeam.Authentication.Server.Services
                 {
                     _logger.LogError(e, "Error occurred executing.");
                 }
+
+                // saves from rate limiting (30 per 60s)
+                await Task.Delay(2020, stoppingToken);
             }
         }
 
