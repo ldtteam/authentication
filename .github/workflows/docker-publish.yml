@@ -72,7 +72,7 @@ jobs:
           dotnet-version: 5.0.x
   
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore LDTTeam.Authentication.Server
 
       - name: Build
         run: dotnet publish --no-restore --runtime linux-x64 -o Publish LDTTeam.Authentication.Server && zip -r "${{ steps.tag_version.outputs.new_tag }}-release.zip" Publish
