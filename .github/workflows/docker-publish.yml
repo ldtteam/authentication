@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -35,7 +35,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
-          DRY_RUN: true
           DEFAULT_BUMP: patch
 
       # Login against a Docker registry except on PR
