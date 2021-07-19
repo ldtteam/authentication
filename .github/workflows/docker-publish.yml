@@ -35,6 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
+          DEFAULT_BUMP: patch
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -70,12 +71,9 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.x
-  
-      - name: Restore dependencies
-        run: dotnet restore LDTTeam.Authentication.Server
 
       - name: Build
-        run: dotnet publish --no-restore --runtime linux-x64 -o Publish LDTTeam.Authentication.Server && zip -r "${{ steps.tag_version.outputs.new_tag }}-release.zip" Publish
+        run: dotnet publish --runtime linux-x64 -o Publish LDTTeam.Authentication.Server && zip -r "${{ steps.tag_version.outputs.new_tag }}-release.zip" Publish
 
       - name: Release
         uses: softprops/action-gh-release@v1
