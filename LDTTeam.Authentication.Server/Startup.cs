@@ -74,7 +74,7 @@ namespace LDTTeam.Authentication.Server
             services.AddSingleton<IWebhookQueue>(_ =>
             {
                 if (!int.TryParse(Configuration["LoggingQueueCapacity"], out int queueCapacity))
-                    queueCapacity = 100;
+                    queueCapacity = 1000;
                 return new WebhookQueue(queueCapacity);
             });
 
