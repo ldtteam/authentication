@@ -37,6 +37,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                 await foreach ((PatreonService.MemberAttributes memberAttributes,
                     PatreonService.MemberRelationships memberRelationships) in _patreonService.RequestMembers())
                 {
+                    if (memberIds.Contains(memberRelationships.User.Data.Id))
+                        continue;
+
                     memberIds.Add(memberRelationships.User.Data.Id);
 
                     DbPatreonMember? member = members.FirstOrDefault(x => x.Id == memberRelationships.User.Data.Id);
@@ -78,9 +81,6 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                     await _db.PatreonMembers.AddAsync(new DbPatreonMember(memberRelationships.User.Data.Id,
                         memberAttributes.LifetimeCents, memberAttributes.CurrentMonthlyCents));
                 }
-
-                await _db.SaveChangesAsync();
-                members = await _db.PatreonMembers.ToListAsync();
 
                 foreach (DbPatreonMember member in members.Where(member => memberIds.All(x => x != member.Id)))
                 {
