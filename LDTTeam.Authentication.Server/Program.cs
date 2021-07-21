@@ -15,6 +15,7 @@ namespace LDTTeam.Authentication.Server
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseSystemd()
                 .ConfigureAppConfiguration(x =>
                 {
                     x.AddEnvironmentVariables("LDTTEAM_AUTH_");
