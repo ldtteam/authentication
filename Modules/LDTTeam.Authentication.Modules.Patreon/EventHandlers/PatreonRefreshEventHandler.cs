@@ -79,6 +79,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         memberAttributes.LifetimeCents, memberAttributes.CurrentMonthlyCents));
                 }
 
+                await _db.SaveChangesAsync();
+                members = await _db.PatreonMembers.ToListAsync();
+
                 foreach (DbPatreonMember member in members.Where(member => memberIds.All(x => x != member.Id)))
                 {
                     await _webhookQueue.QueueBackgroundWorkItemAsync(new Embed
