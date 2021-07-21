@@ -35,6 +35,7 @@ namespace LDTTeam.Authentication.Server.Api
         }
 
         [HttpGet("webhook/{provider}")]
+        [HttpPost("webhook/{provider}")]
         public async Task<ActionResult> WebhookEndpoint(string provider)
         {
             await _eventsQueue.QueueBackgroundWorkItemAsync((events, scope, _) =>
