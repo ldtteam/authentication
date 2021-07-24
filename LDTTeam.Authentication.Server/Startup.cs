@@ -4,7 +4,7 @@ using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
-using LDTTeam.Authentication.Modules.Api.Webhook;
+using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Config;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Services;
@@ -59,6 +59,8 @@ namespace LDTTeam.Authentication.Server
             }
 
             services.AddMemoryCache();
+            
+            services.AddTransient<IConditionService, ConditionService>();
 
             services.AddSingleton<EventsService>();
             services.AddStartupTask<EventsStartupTask>();
@@ -71,15 +73,7 @@ namespace LDTTeam.Authentication.Server
                 return new BackgroundEventsQueue(queueCapacity);
             });
 
-            services.AddSingleton<IWebhookQueue>(_ =>
-            {
-                if (!int.TryParse(Configuration["LoggingQueueCapacity"], out int queueCapacity))
-                    queueCapacity = 1000;
-                return new WebhookQueue(queueCapacity);
-            });
-
             services.AddHostedService<EventsQueueService>();
-            services.AddHostedService<WebhookLoggingQueueService>();
 
             services.Configure<ForwardedHeadersOptions>(options =>
             {
@@ -126,7 +120,7 @@ namespace LDTTeam.Authentication.Server
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-            
+
             LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
 
             if (config?.Enabled == true)

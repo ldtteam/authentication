@@ -1,17 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
-using LDTTeam.Authentication.Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 {
@@ -19,17 +13,15 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
     public class Rewards : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IServiceProvider _services;
-        private readonly DatabaseContext _db;
+        private readonly IConditionService _conditionService;
 
-        public Rewards(UserManager<ApplicationUser> userManager, IServiceProvider services, DatabaseContext db)
+        public Rewards(UserManager<ApplicationUser> userManager, IConditionService conditionService)
         {
             _userManager = userManager;
-            _services = services;
-            _db = db;
+            _conditionService = conditionService;
         }
 
-        public readonly Dictionary<string, bool> RewardsDictionary = new();
+        public Dictionary<string, bool> RewardsDictionary { get; set; } = null!;
 
         public async Task<ActionResult> OnGetAsync()
         {
@@ -38,28 +30,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             if (user == null)
                 return NotFound();
 
-            CancellationTokenSource source = new();
-            using IServiceScope scope = _services.CreateScope();
-            await foreach (Reward reward in _db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable()
-                .WithCancellation(source.Token))
-            {
-                RewardsDictionary[reward.Id] = false;
-                foreach (ConditionInstance conditionInstance in reward.Conditions)
-                {
-                    ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
-                        x.ModuleName == conditionInstance.ModuleName &&
-                        x.Name == conditionInstance.ConditionName);
-
-                    if (condition == null) continue;
-
-                    if (!await condition.ExecuteAsync(scope, conditionInstance,
-                        user.Id,
-                        source.Token)) continue;
-
-                    RewardsDictionary[reward.Id] = true;
-                    break;
-                }
-            }
+            RewardsDictionary = await _conditionService.GetRewardsForUser(user.Id);
 
             return Page();
         }

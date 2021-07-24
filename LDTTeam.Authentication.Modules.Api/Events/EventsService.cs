@@ -34,5 +34,13 @@ namespace LDTTeam.Authentication.Modules.Api.Events
         }
 
         public readonly AsyncEvent<Func<IServiceScope, List<string>?, Task>> _refreshContentEvent = new();
+        
+        public event Func<IServiceScope, Task> PostRefreshContentEvent
+        {
+            add => _postRefreshContentEvent.Add(value);
+            remove => _postRefreshContentEvent.Remove(value);
+        }
+
+        public readonly AsyncEvent<Func<IServiceScope, Task>> _postRefreshContentEvent = new();
     }
 }

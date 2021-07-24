@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json.Serialization;
 
-namespace LDTTeam.Authentication.Modules.Api.Webhook
+namespace LDTTeam.Authentication.Modules.Api.Logging
 {
     public class Embed
     {

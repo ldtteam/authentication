@@ -11,6 +11,7 @@
 
     <ItemGroup>
       <PackageReference Include="AspNet.Security.OAuth.Discord" Version="5.0.4" />
+      <PackageReference Include="RabbitMQ.Client" Version="6.2.2" />
     </ItemGroup>
 
 </Project>

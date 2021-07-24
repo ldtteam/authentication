@@ -33,8 +33,11 @@ namespace LDTTeam.Authentication.Server.Services
 
             Console.WriteLine($"Conditions Registered: {JsonSerializer.Serialize(Conditions.Registry)}");
 
-            await _eventsQueue.QueueBackgroundWorkItemAsync((events, scope, _) =>
-                events._refreshContentEvent.InvokeAsync(scope, null));
+            await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+            {
+                await events._refreshContentEvent.InvokeAsync(scope, null);
+                await events._postRefreshContentEvent.InvokeAsync(scope);
+            });
         }
     }
 }

@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
+using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Api.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -23,17 +25,19 @@ namespace LDTTeam.Authentication.Server.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<ExternalLoginModel> _logger;
         private readonly IBackgroundEventsQueue _eventsQueue;
+        private readonly Channel<Embed>? _embeds;
 
         public ExternalLoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ILogger<ExternalLoginModel> logger,
-            IBackgroundEventsQueue eventsQueue)
+            IBackgroundEventsQueue eventsQueue, Channel<Embed>? embeds = null)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
             _eventsQueue = eventsQueue;
+            _embeds = embeds;
         }
 
         public string ProviderDisplayName { get; set; } = null!;
@@ -122,10 +126,38 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                 result = await _userManager.AddLoginAsync(user, info);
                 if (result.Succeeded)
                 {
-                    await _eventsQueue.QueueBackgroundWorkItemAsync((events, scope, _) =>
-                        events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider}));
+                    await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+                    {
+                        await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                        await events._postRefreshContentEvent.InvokeAsync(scope);
+                    });
 
                     _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+
+                    if (_embeds != null)
+                    {
+                        await _embeds.Writer.WriteAsync(new Embed
+                        {
+                            Title = "New User Created",
+                            Description = "A new user has signed in on our service!",
+                            Color = 3135592,
+                            Fields = new List<Embed.Field>
+                            {
+                                new()
+                                {
+                                    Name = "User Name",
+                                    Value = user.UserName!,
+                                    Inline = true
+                                },
+                                new()
+                                {
+                                    Name = "Provider",
+                                    Value = info.LoginProvider,
+                                    Inline = true
+                                }
+                            }
+                        });
+                    }
 
                     AuthenticationProperties props = new();
                     props.StoreTokens(info.AuthenticationTokens);
@@ -146,8 +178,11 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
-                        await _eventsQueue.QueueBackgroundWorkItemAsync((events, scope, _) =>
-                            events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider}));
+                        await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+                        {
+                            await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                            await events._postRefreshContentEvent.InvokeAsync(scope);
+                        });
 
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 

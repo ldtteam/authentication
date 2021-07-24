@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
+using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Api.Utils;
 using LDTTeam.Authentication.Modules.Minecraft.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -23,16 +25,18 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly MinecraftService _minecraftService;
         private readonly IBackgroundEventsQueue _eventsQueue;
+        private readonly Channel<Embed>? _embeds;
 
         public ExternalLoginsModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            MinecraftService minecraftService, IBackgroundEventsQueue eventsQueue)
+            MinecraftService minecraftService, IBackgroundEventsQueue eventsQueue, Channel<Embed>? embeds = null)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _minecraftService = minecraftService;
             _eventsQueue = eventsQueue;
+            _embeds = embeds;
         }
 
         public IList<UserLoginInfo> CurrentLogins { get; set; }
@@ -131,6 +135,37 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             await _userManager.AddClaimAsync(user,
                 new Claim("urn:minecraft:user:id", new Guid(minecraftId).ToString()));
             await _signInManager.RefreshSignInAsync(user);
+            
+            if (_embeds != null)
+            {
+                await _embeds.Writer.WriteAsync(new Embed
+                {
+                    Title = "User linked minecraft UUID",
+                    Description = "A user has linked a new minecraft UUID to their account!",
+                    Color = 3135592,
+                    Fields = new List<Embed.Field>
+                    {
+                        new()
+                        {
+                            Name = "User Name",
+                            Value = user.UserName!,
+                            Inline = true
+                        },
+                        new()
+                        {
+                            Name = "Minecraft User Name",
+                            Value = Input.MinecraftUsername,
+                            Inline = true
+                        },
+                        new()
+                        {
+                            Name = "UUID",
+                            Value = minecraftId,
+                            Inline = true
+                        }
+                    }
+                });
+            }
 
             return RedirectToPage("ExternalLogins");
         }
@@ -172,8 +207,36 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 return RedirectToPage();
             }
             
-            await _eventsQueue.QueueBackgroundWorkItemAsync((events, scope, _) =>
-                events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider}));
+            if (_embeds != null)
+            {
+                await _embeds.Writer.WriteAsync(new Embed
+                {
+                    Title = "User linked new OAuth provider",
+                    Description = "A user has linked a new OAuth provider to their account!",
+                    Color = 3135592,
+                    Fields = new List<Embed.Field>
+                    {
+                        new()
+                        {
+                            Name = "User Name",
+                            Value = user.UserName!,
+                            Inline = true
+                        },
+                        new()
+                        {
+                            Name = "Provider",
+                            Value = info.LoginProvider,
+                            Inline = true
+                        }
+                    }
+                });
+            }
+            
+            await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+            {
+                await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                await events._postRefreshContentEvent.InvokeAsync(scope);
+            });
 
             if (info.LoginProvider == "Minecraft")
             {

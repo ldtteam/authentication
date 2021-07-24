@@ -28,7 +28,7 @@ namespace LDTTeam.Authentication.Modules.Patreon
 
             if (patreonConfig == null)
                 throw new Exception("patreon not set in configuration!");
-            
+
             return builder.AddPatreon(o =>
             {
                 o.ClientId = patreonConfig.ClientId;
@@ -52,12 +52,13 @@ namespace LDTTeam.Authentication.Modules.Patreon
         {
             events.RefreshContentEvent += async (scope, modules) =>
             {
-                if (modules != null && modules.All(x => !x.Equals("patreon", StringComparison.InvariantCultureIgnoreCase)))
+                if (modules != null &&
+                    modules.All(x => !x.Equals("patreon", StringComparison.InvariantCultureIgnoreCase)))
                     return;
 
                 await scope.ServiceProvider.GetRequiredService<PatreonRefreshEventHandler>().ExecuteAsync();
             };
-            
+
             events.ConditionRegistration += () =>
             {
                 Conditions.Registry.Add(new PatreonCondition());
