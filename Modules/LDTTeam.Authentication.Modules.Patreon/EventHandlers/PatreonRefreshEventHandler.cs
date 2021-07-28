@@ -156,6 +156,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         }
                     });
                 }
+
                 _logger.LogCritical(e, "Patreon Refresh Failed!");
             }
         }

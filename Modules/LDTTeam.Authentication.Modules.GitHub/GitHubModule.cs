@@ -56,7 +56,15 @@ namespace LDTTeam.Authentication.Modules.GitHub
                 if (modules != null && modules.All(x => !x.Equals("github", StringComparison.InvariantCultureIgnoreCase)))
                     return;
 
-                await scope.ServiceProvider.GetRequiredService<GithubRefreshEventHandler>().ExecuteAsync();
+                try
+                {
+                    await scope.ServiceProvider.GetRequiredService<GithubRefreshEventHandler>().ExecuteAsync();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             };
 
             events.ConditionRegistration += () =>
