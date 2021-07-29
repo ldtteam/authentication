@@ -1,8 +1,12 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
+using LDTTeam.Authentication.Modules.Discord.Config;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Remora.Discord.Commands.Services;
+using Remora.Discord.Core;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord.Services
@@ -11,15 +15,22 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
     {
         private readonly SlashService _slashService;
         private readonly ILogger<DiscordBackgroundService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public DiscordStartupTask(SlashService slashService, ILogger<DiscordBackgroundService> logger)
+        public DiscordStartupTask(SlashService slashService, ILogger<DiscordBackgroundService> logger, IConfiguration configuration)
         {
             _slashService = slashService;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
+
+            if (discordConfig == null)
+                throw new Exception("discord not set in configuration!");
+            
             Result checkSlashSupport = _slashService.SupportsSlashCommands();
             if (!checkSlashSupport.IsSuccess)
             {
@@ -31,10 +42,14 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
             }
             else
             {
-                Result updateSlash = _slashService.UpdateSlashCommandsAsync(ct: cancellationToken).Result;
-                if (!updateSlash.IsSuccess)
+                foreach (string server in discordConfig.RoleMappings.Keys)
                 {
-                    _logger.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error.Message);
+                    if (!ulong.TryParse(server, out ulong serverId)) continue;
+                    Result updateSlash = _slashService.UpdateSlashCommandsAsync(new Snowflake(serverId), cancellationToken).Result;
+                    if (!updateSlash.IsSuccess)
+                    {
+                        _logger.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error.Message);
+                    }
                 }
             }
             
