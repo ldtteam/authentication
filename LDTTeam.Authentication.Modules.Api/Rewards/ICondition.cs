@@ -11,5 +11,7 @@ namespace LDTTeam.Authentication.Modules.Api.Rewards
         public string Name { get; }
 
         public Task<bool> ExecuteAsync(IServiceScope scope, ConditionInstance instance, string userId, CancellationToken cancellationToken = default);
+
+        public bool Validate(ConditionInstance instance);
     }
 }

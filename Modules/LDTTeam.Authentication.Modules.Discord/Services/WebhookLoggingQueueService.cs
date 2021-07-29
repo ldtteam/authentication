@@ -1,46 +1,48 @@
-using System.Text;
-using System.Text.Json;
+using System;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Logging;
+using LDTTeam.Authentication.Modules.Discord.Config;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
+using Remora.Discord.API.Abstractions.Rest;
+using Remora.Discord.API.Objects;
+using Remora.Discord.Core;
 
 namespace LDTTeam.Authentication.Modules.Discord.Services
 {
     public class WebhookLoggingQueueService : BackgroundService
     {
-        private readonly Channel<Embed> _embeds;
+        private readonly ILoggingQueue _loggingQueue;
+        private readonly IDiscordRestChannelAPI _channelApi;
+        private readonly IConfiguration _configuration;
 
-        public WebhookLoggingQueueService(Channel<Embed> embeds)
+        public WebhookLoggingQueueService(ILoggingQueue loggingQueue, IDiscordRestChannelAPI channelApi,
+            IConfiguration configuration)
         {
-            _embeds = embeds;
+            _loggingQueue = loggingQueue;
+            _channelApi = channelApi;
+            _configuration = configuration;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            ConnectionFactory factory = new() {HostName = "localhost"};
-            using IConnection connection = factory.CreateConnection();
-            using IModel model = connection.CreateModel();
+            DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
 
-            model.QueueDeclare("embeds",
-                false,
-                false,
-                false,
-                null);
+            if (discordConfig == null)
+                throw new Exception("discord not set in configuration!");
+
+            Snowflake channelSnowflake = new(discordConfig.LoggingChannel);
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                Embed embed = await _embeds.Reader.ReadAsync(stoppingToken);
+                Embed embed = await _loggingQueue.DequeueAsync(stoppingToken);
 
-                string message = JsonSerializer.Serialize(embed);
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                
-                model.BasicPublish("",
-                    "embeds",
-                    null,
-                    messageBytes);
+                await _channelApi.CreateMessageAsync(
+                    channelSnowflake,
+                    embeds: new[] {embed},
+                    ct: stoppingToken
+                );
             }
         }
     }

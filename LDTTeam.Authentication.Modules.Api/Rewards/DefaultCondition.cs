@@ -24,5 +24,10 @@ namespace LDTTeam.Authentication.Modules.Api.Rewards
         {
             return _execute.Invoke(scope, instance, userId);
         }
+
+        public bool Validate(ConditionInstance instance)
+        {
+            return true;
+        }
     }
 }

@@ -8,7 +8,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Octokit;
-using Octokit.Extensions;
 
 namespace LDTTeam.Authentication.Modules.GitHub.Services
 {
@@ -32,11 +31,11 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
         {
             if (_cache.TryGetValue(InstallationClientCacheKey, out GitHubClient client))
                 return client;
-            
-            GitHubClient mewClient = new ResilientGitHubClientFactory()
-                .Create(new ProductHeaderValue("LDTTeam"),
-                    new Credentials(await GetInstallationToken()),
-                    new InMemoryCacheProvider());
+
+            GitHubClient newClient = new(new ProductHeaderValue("LDTTeam"))
+            {
+                Credentials = new Credentials(await GetInstallationToken()),
+            };
 
             MemoryCacheEntryOptions cacheExpiryOptions = new()
             {
@@ -44,8 +43,8 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
                 Priority = CacheItemPriority.High
             };
             
-            _cache.Set(InstallationClientCacheKey, mewClient, cacheExpiryOptions);
-            return mewClient;
+            _cache.Set(InstallationClientCacheKey, newClient, cacheExpiryOptions);
+            return newClient;
         }
 
         private async Task<string> GetInstallationToken()
