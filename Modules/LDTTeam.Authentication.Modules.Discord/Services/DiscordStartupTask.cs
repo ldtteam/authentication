@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using Microsoft.Extensions.Logging;
 using Remora.Discord.Commands.Services;
-using Remora.Discord.Core;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord.Services
@@ -32,7 +31,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
             }
             else
             {
-                Result updateSlash = _slashService.UpdateSlashCommandsAsync(new Snowflake(453039954386223145), cancellationToken).Result;
+                Result updateSlash = _slashService.UpdateSlashCommandsAsync(ct: cancellationToken).Result;
                 if (!updateSlash.IsSuccess)
                 {
                     _logger.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error.Message);
