@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.GitHub.Config;
@@ -12,6 +12,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using Remora.Discord.API.Objects;
+using Team = Octokit.Team;
+using User = Octokit.User;
 
 namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
 {
@@ -21,16 +24,16 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
         private readonly GitHubDatabaseContext _db;
         private readonly IConfiguration _configuration;
         private readonly ILogger<GithubRefreshEventHandler> _logger;
-        private readonly Channel<Embed>? _embeds;
+        private readonly ILoggingQueue _loggingQueue;
 
         public GithubRefreshEventHandler(GitHubService github, GitHubDatabaseContext db, IConfiguration configuration,
-            ILogger<GithubRefreshEventHandler> logger, Channel<Embed>? embeds = null)
+            ILogger<GithubRefreshEventHandler> logger, ILoggingQueue loggingQueue)
         {
             _github = github;
             _db = db;
             _configuration = configuration;
             _logger = logger;
-            _embeds = embeds;
+            _loggingQueue = loggingQueue;
         }
 
         public async Task ExecuteAsync()
@@ -55,30 +58,19 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                 _db.Teams.Remove(dbTeam);
                 _logger.LogDebug($"GitHub team removed: {dbTeam.Slug}");
 
-                if (_embeds != null)
+                List<EmbedField> fields = new()
                 {
-                    await _embeds.Writer.WriteAsync(new Embed
-                    {
-                        Title = "Github Team Deleted",
-                        Description = "Github Team Deletion from GitHub detected and removed from database",
-                        Color = 12788224,
-                        Fields = new List<Embed.Field>
-                        {
-                            new()
-                            {
-                                Name = "Team Id",
-                                Value = dbTeam.Id.ToString(),
-                                Inline = true
-                            },
-                            new()
-                            {
-                                Name = "Team Slug",
-                                Value = dbTeam.Slug,
-                                Inline = true
-                            }
-                        }
-                    });
-                }
+                    new EmbedField("Team Id", dbTeam.Id.ToString(), true),
+                    new EmbedField("Team Slug", dbTeam.Slug, true)
+                };
+
+                await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                {
+                    Title = "Github Team Deleted",
+                    Description = "Github Team Deletion from GitHub detected and removed from database",
+                    Colour = Color.Red,
+                    Fields = fields
+                });
             }
 
             foreach (Team team in teams)
@@ -89,31 +81,20 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                 // team added to github
                 _db.Teams.Add(new DbGitHubTeam(team.Id, team.Slug));
                 _logger.LogDebug($"GitHub team added: {team.Slug}");
-                
-                if (_embeds != null)
+
+                List<EmbedField> fields = new()
                 {
-                    await _embeds.Writer.WriteAsync(new Embed
-                    {
-                        Title = "Github Team Added",
-                        Description = "Github Team Added to GitHub detected and added to database",
-                        Color = 3135592,
-                        Fields = new List<Embed.Field>
-                        {
-                            new()
-                            {
-                                Name = "Team Id",
-                                Value = team.Id.ToString(),
-                                Inline = true
-                            },
-                            new()
-                            {
-                                Name = "Team Slug",
-                                Value = team.Slug,
-                                Inline = true
-                            }
-                        }
-                    });
-                }
+                    new EmbedField("Team Id", team.Id.ToString(), true),
+                    new EmbedField("Team Slug", team.Slug, true)
+                };
+
+                await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                {
+                    Title = "Github Team Added",
+                    Description = "Github Team Added to GitHub detected and added to database",
+                    Colour = Color.Green,
+                    Fields = fields
+                });
             }
 
             await _db.SaveChangesAsync();
@@ -139,37 +120,21 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                 {
                     dbTeam.UserRelationships.Remove(teamRelationship); // user deleted from team
                     _logger.LogDebug($"GitHub user {teamRelationship.UserId} removed from team {dbTeam.Slug}");
-                    
-                    if (_embeds != null)
+
+                    List<EmbedField> fields = new()
                     {
-                        await _embeds.Writer.WriteAsync(new Embed
-                        {
-                            Title = "User Removed from Team",
-                            Description = "A Member was removed from a team on GitHub",
-                            Color = 12788224,
-                            Fields = new List<Embed.Field>
-                            {
-                                new()
-                                {
-                                    Name = "Team Id",
-                                    Value = dbTeam.Id.ToString(),
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "Team Slug",
-                                    Value = dbTeam.Slug,
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "User Id",
-                                    Value = teamRelationship.UserId.ToString(),
-                                    Inline = true
-                                }
-                            }
-                        });
-                    }
+                        new EmbedField("Team Id", dbTeam.Id.ToString(), true),
+                        new EmbedField("Team Slug", dbTeam.Slug, true),
+                        new EmbedField("User Id", teamRelationship.UserId.ToString(), true)
+                    };
+
+                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    {
+                        Title = "User Removed from Team",
+                        Description = "A Member was removed from a team on GitHub",
+                        Colour = Color.OrangeRed,
+                        Fields = fields
+                    });
                 }
 
                 foreach (User user in users)
@@ -181,43 +146,21 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                     dbTeam.UserRelationships.Add(new DbGithubTeamUser(user.Id,
                         dbTeam.Id));
                     _logger.LogDebug($"GitHub user {user.Login} added to team {dbTeam.Slug}");
-                    
-                    if (_embeds != null)
+
+                    List<EmbedField> fields = new()
                     {
-                        await _embeds.Writer.WriteAsync(new Embed
-                        {
-                            Title = "User Added to Team",
-                            Description = "A Member was added to a team on GitHub",
-                            Color = 3135592,
-                            Fields = new List<Embed.Field>
-                            {
-                                new()
-                                {
-                                    Name = "Team Id",
-                                    Value = dbTeam.Id.ToString(),
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "Team Slug",
-                                    Value = dbTeam.Slug,
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "User Id",
-                                    Value = user.Id.ToString(),
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "User Id",
-                                    Value = user.Name,
-                                    Inline = true
-                                }
-                            }
-                        });
-                    }
+                        new EmbedField("Team Id", dbTeam.Id.ToString(), true),
+                        new EmbedField("Team Slug", dbTeam.Slug, true),
+                        new EmbedField("User Id", user.Id.ToString(), true)
+                    };
+                    
+                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    {
+                        Title = "User Added to Team",
+                        Description = "A Member was added to a team on GitHub",
+                        Colour = Color.Green,
+                        Fields = fields
+                    });
                 }
             }
 

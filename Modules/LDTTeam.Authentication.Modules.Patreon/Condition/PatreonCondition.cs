@@ -51,5 +51,24 @@ namespace LDTTeam.Authentication.Modules.Patreon.Condition
 
             return expression.Compile().Invoke(new PatreonMember(member.Id, member.Monthly, member.Lifetime));
         }
+
+        public bool Validate(ConditionInstance instance)
+        {
+            try
+            {
+                ParsingConfig config = new()
+                {
+                    IsCaseSensitive = false
+                };
+                Expression<Func<PatreonMember, bool>> expression =
+                    DynamicExpressionParser.ParseLambda<PatreonMember, bool>(config, true, instance.LambdaString);
+            }
+            catch (Exception _)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

@@ -49,5 +49,26 @@ namespace LDTTeam.Authentication.Modules.GitHub.Condition
 
             return expression.Compile().Invoke(userTeams);
         }
+
+        public bool Validate(ConditionInstance instance)
+        {
+            try
+            {
+                ParsingConfig config = new()
+                {
+                    IsCaseSensitive = false
+                };
+            
+                // we do this first for validation
+                Expression<Func<IReadOnlyList<string>, bool>> expression =
+                    DynamicExpressionParser.ParseLambda<IReadOnlyList<string>, bool>(config, true, instance.LambdaString);
+            }
+            catch (Exception _)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

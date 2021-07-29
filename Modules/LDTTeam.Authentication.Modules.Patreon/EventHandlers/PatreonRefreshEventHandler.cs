@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Patreon.Data;
@@ -9,6 +9,7 @@ using LDTTeam.Authentication.Modules.Patreon.Data.Models;
 using LDTTeam.Authentication.Modules.Patreon.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Remora.Discord.API.Objects;
 
 namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 {
@@ -16,16 +17,16 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
     {
         private readonly PatreonService _patreonService;
         private readonly PatreonDatabaseContext _db;
-        private readonly Channel<Embed>? _embeds;
+        private readonly ILoggingQueue _loggingQueue;
         private readonly ILogger<PatreonRefreshEventHandler> _logger;
 
         public PatreonRefreshEventHandler(PatreonService patreonService, PatreonDatabaseContext db,
-            ILogger<PatreonRefreshEventHandler> logger, Channel<Embed>? embeds = null)
+            ILogger<PatreonRefreshEventHandler> logger, ILoggingQueue loggingQueue)
         {
             _patreonService = patreonService;
             _db = db;
-            _embeds = embeds;
             _logger = logger;
+            _loggingQueue = loggingQueue;
         }
 
         public async Task ExecuteAsync()
@@ -51,36 +52,20 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         continue;
                     }
 
-                    if (_embeds != null)
+                    List<EmbedField> fields = new()
                     {
-                        await _embeds.Writer.WriteAsync(new Embed
-                        {
-                            Title = "Patreon Added",
-                            Description = "Patreon detected and added to database",
-                            Color = 3135592,
-                            Fields = new List<Embed.Field>
-                            {
-                                new()
-                                {
-                                    Name = "Id",
-                                    Value = memberRelationships.User.Data.Id,
-                                    Inline = false
-                                },
-                                new()
-                                {
-                                    Name = "Lifetime",
-                                    Value = memberAttributes.LifetimeCents.ToString(),
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "Monthly",
-                                    Value = memberAttributes.CurrentMonthlyCents.ToString(),
-                                    Inline = true
-                                }
-                            }
-                        });
-                    }
+                        new EmbedField("Id", memberRelationships.User.Data.Id, false),
+                        new EmbedField("Lifetime", memberAttributes.LifetimeCents.ToString(), true),
+                        new EmbedField("Monthly", memberAttributes.CurrentMonthlyCents.ToString(), true)
+                    };
+
+                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    {
+                        Title = "Patreon Added",
+                        Description = "Patreon detected and added to database",
+                        Colour = Color.Green,
+                        Fields = fields
+                    });
 
                     await _db.PatreonMembers.AddAsync(new DbPatreonMember(memberRelationships.User.Data.Id,
                         memberAttributes.LifetimeCents, memberAttributes.CurrentMonthlyCents));
@@ -88,36 +73,20 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 
                 foreach (DbPatreonMember member in members.Where(member => memberIds.All(x => x != member.Id)))
                 {
-                    if (_embeds != null)
+                    List<EmbedField> fields = new()
                     {
-                        await _embeds.Writer.WriteAsync(new Embed
-                        {
-                            Title = "Patreon Removed",
-                            Description = "Patreon not detected and removed from database",
-                            Color = 12788224,
-                            Fields = new List<Embed.Field>
-                            {
-                                new()
-                                {
-                                    Name = "Id",
-                                    Value = member.Id,
-                                    Inline = false
-                                },
-                                new()
-                                {
-                                    Name = "Lifetime",
-                                    Value = member.Lifetime.ToString(),
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "Monthly",
-                                    Value = member.Monthly.ToString(),
-                                    Inline = true
-                                }
-                            }
-                        });
-                    }
+                        new EmbedField("Id", member.Id, false),
+                        new EmbedField("Lifetime", member.Lifetime.ToString(), true),
+                        new EmbedField("Monthly", member.Monthly.ToString(), true)
+                    };
+                    
+                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    {
+                        Title = "Patreon Removed",
+                        Description = "Patreon not detected and removed from database",
+                        Colour = Color.Red,
+                        Fields = fields
+                    });
 
                     _db.Remove(member);
                 }
@@ -126,36 +95,28 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
             }
             catch (Exception e)
             {
-                if (_embeds != null)
+                string message = e.Message;
+                if (message.Length >= 1024)
+                    message = $"{message[..1021]}...";
+                
+                string? stacktrace = e.StackTrace;
+                if (stacktrace?.Length >= 1024)
+                    stacktrace = $"{stacktrace[..1021]}...";
+
+                List<EmbedField> fields = new()
                 {
-                    await _embeds.Writer.WriteAsync(new Embed
-                    {
-                        Title = "Patreon Check Failed!",
-                        Description = "Patreon refresh failed to execute!",
-                        Color = 16711680,
-                        Fields = new List<Embed.Field>
-                        {
-                            new()
-                            {
-                                Name = "Exception Type",
-                                Value = nameof(e),
-                                Inline = true
-                            },
-                            new()
-                            {
-                                Name = "Message",
-                                Value = e.Message,
-                                Inline = true
-                            },
-                            new()
-                            {
-                                Name = "Stacktrace",
-                                Value = e.StackTrace ?? "null",
-                                Inline = false
-                            }
-                        }
-                    });
-                }
+                    new EmbedField("Exception Type", nameof(e), false),
+                    new EmbedField("Message", message, false),
+                    new EmbedField("Stacktrace", stacktrace ?? "null", false)
+                };
+                
+                await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                {
+                    Title = "Patreon Check Failed!",
+                    Description = "Patreon refresh failed to execute!",
+                    Colour = Color.Red,
+                    Fields = fields
+                });
 
                 _logger.LogCritical(e, "Patreon Refresh Failed!");
             }

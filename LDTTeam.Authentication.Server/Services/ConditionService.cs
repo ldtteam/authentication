@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Data;
 using Microsoft.AspNetCore.Identity;
@@ -91,6 +92,30 @@ namespace LDTTeam.Authentication.Server.Services
             }
         }
 
+        public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey)
+        {
+            IdentityUserLogin<string>? loginInfo = await _db.UserLogins.FirstOrDefaultAsync(x =>
+                x.LoginProvider.ToLower() == provider.ToLower() &&
+                x.ProviderKey.ToLower() == providerKey.ToLower());
+
+            string? userId = loginInfo?.UserId;
+            if (userId != null) return await GetRewardsForUser(userId);
+
+            if (provider.ToLower() != "minecraft")
+                return null;
+
+            IdentityUserClaim<string>? claim = await _db.UserClaims
+                .FirstOrDefaultAsync(x =>
+                    x.ClaimType == "urn:minecraft:user:id" && x.ClaimValue.ToLower() == providerKey.ToLower());
+
+            if (claim == null)
+                return null;
+
+            userId = claim.UserId;
+
+            return await GetRewardsForUser(userId);
+        }
+
         public async Task<Dictionary<string, bool>> GetRewardsForUser(string userId)
         {
             Dictionary<string, bool> results = new();
@@ -123,6 +148,54 @@ namespace LDTTeam.Authentication.Server.Services
             }
 
             return results;
+        }
+
+        public async Task AddConditionToReward(string rewardId, string moduleName, string conditionName, string lambda)
+        {
+            ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
+                x.ModuleName.Equals(moduleName,
+                    StringComparison.InvariantCultureIgnoreCase) &&
+                x.Name.Equals(conditionName, StringComparison.InvariantCultureIgnoreCase));
+
+            if (condition == null)
+                throw new AddConditionException("No matching Condition registered for this module and condition name");
+
+            ConditionInstance instance = new()
+            {
+                RewardId = rewardId,
+                ModuleName = condition.ModuleName,
+                ConditionName = condition.Name,
+                LambdaString = lambda
+            };
+
+            if (!condition.Validate(instance))
+                throw new AddConditionException(
+                    "Error, executing newly created instance failed, probably bad lambda, condition not added");
+
+            if (await _db.ConditionInstances.AnyAsync(x =>
+                x.RewardId == rewardId &&
+                x.ModuleName == instance.ModuleName &&
+                x.ConditionName == instance.ConditionName
+            ))
+                throw new AddConditionException(
+                    "Duplicate condition already exists for reward. cannot have duplicates");
+
+            _db.ConditionInstances.Add(instance);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task RemoveConditionFromReward(string rewardId, string moduleName, string conditionName)
+        {
+            ConditionInstance? instance = await _db.ConditionInstances.FirstOrDefaultAsync(x =>
+                x.RewardId.ToLower() == rewardId.ToLower() &&
+                x.ModuleName.ToLower() == moduleName.ToLower() &&
+                x.ConditionName.ToLower() == conditionName.ToLower());
+
+            if (instance == null)
+                throw new RemoveConditionException("Condition instance not found");
+
+            _db.ConditionInstances.Remove(instance);
+            await _db.SaveChangesAsync();
         }
     }
 }

@@ -10,6 +10,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Config
         
         public string BotToken { get; set; }
         
+        public ulong LoggingChannel { get; set; }
         
         // <DiscordServerId, <RewardId, RoleId>>
         public Dictionary<string, Dictionary<string, List<ulong>>> RoleMappings { get; set; } = new();

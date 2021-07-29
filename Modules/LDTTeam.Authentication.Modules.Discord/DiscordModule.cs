@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Channels;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
-using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Modules.Discord.Commands;
 using LDTTeam.Authentication.Modules.Discord.Config;
@@ -55,11 +53,12 @@ namespace LDTTeam.Authentication.Modules.Discord
 
             return services.AddHostedService<WebhookLoggingQueueService>()
                 .AddHostedService<DiscordBackgroundService>()
-                .AddSingleton(Channel.CreateBounded<Embed>(new BoundedChannelOptions(500)))
                 .AddStartupTask<DiscordStartupTask>()
                 .AddDiscordGateway(_ => discordConfig.BotToken)
                 .AddDiscordCommands(true)
-                .AddCommandGroup<TestCommands>()
+                .AddCommandGroup<MyRewardsCommands>()
+                .AddCommandGroup<RewardsCommands>()
+                .AddCommandGroup<RefreshCommand>()
                 .AddResponder<Responder>()
                 .AddDiscordCaching();
         }

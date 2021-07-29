@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Remora.Discord.API.Objects;
 
 namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 {
@@ -25,18 +26,18 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly MinecraftService _minecraftService;
         private readonly IBackgroundEventsQueue _eventsQueue;
-        private readonly Channel<Embed>? _embeds;
+        private readonly ILoggingQueue _loggingQueue;
 
         public ExternalLoginsModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            MinecraftService minecraftService, IBackgroundEventsQueue eventsQueue, Channel<Embed>? embeds = null)
+            MinecraftService minecraftService, IBackgroundEventsQueue eventsQueue, ILoggingQueue loggingQueue)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _minecraftService = minecraftService;
             _eventsQueue = eventsQueue;
-            _embeds = embeds;
+            _loggingQueue = loggingQueue;
         }
 
         public IList<UserLoginInfo> CurrentLogins { get; set; }
@@ -135,37 +136,21 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             await _userManager.AddClaimAsync(user,
                 new Claim("urn:minecraft:user:id", new Guid(minecraftId).ToString()));
             await _signInManager.RefreshSignInAsync(user);
-            
-            if (_embeds != null)
+
+            List<EmbedField> fields = new()
             {
-                await _embeds.Writer.WriteAsync(new Embed
-                {
-                    Title = "User linked minecraft UUID",
-                    Description = "A user has linked a new minecraft UUID to their account!",
-                    Color = 3135592,
-                    Fields = new List<Embed.Field>
-                    {
-                        new()
-                        {
-                            Name = "User Name",
-                            Value = user.UserName!,
-                            Inline = true
-                        },
-                        new()
-                        {
-                            Name = "Minecraft User Name",
-                            Value = Input.MinecraftUsername,
-                            Inline = true
-                        },
-                        new()
-                        {
-                            Name = "UUID",
-                            Value = minecraftId,
-                            Inline = true
-                        }
-                    }
-                });
-            }
+                new EmbedField("User Name", user.UserName!, true),
+                new EmbedField("Minecraft User name", Input.MinecraftUsername, true),
+                new EmbedField("UUID", minecraftId, true)
+            };
+
+            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+            {
+                Title = "User linked minecraft UUID",
+                Description = "A user has linked a new minecraft UUID to their account!",
+                Colour = Color.Green,
+                Fields = fields
+            });
 
             return RedirectToPage("ExternalLogins");
         }
@@ -206,32 +191,22 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                     "The external login was not added. External logins can only be associated with one account.";
                 return RedirectToPage();
             }
-            
-            if (_embeds != null)
+
+            List<EmbedField> fields = new()
             {
-                await _embeds.Writer.WriteAsync(new Embed
-                {
-                    Title = "User linked new OAuth provider",
-                    Description = "A user has linked a new OAuth provider to their account!",
-                    Color = 3135592,
-                    Fields = new List<Embed.Field>
-                    {
-                        new()
-                        {
-                            Name = "User Name",
-                            Value = user.UserName!,
-                            Inline = true
-                        },
-                        new()
-                        {
-                            Name = "Provider",
-                            Value = info.LoginProvider,
-                            Inline = true
-                        }
-                    }
-                });
-            }
-            
+                new EmbedField("User Name", user.UserName!, true),
+                new EmbedField("Provider", info.LoginProvider, true)
+            };
+
+            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+            {
+                Title = "User linked new OAuth provider",
+                Description = "A user has linked a new OAuth provider to their account!",
+                Colour = Color.Green,
+                Fields = fields
+            });
+
+
             await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
             {
                 await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});

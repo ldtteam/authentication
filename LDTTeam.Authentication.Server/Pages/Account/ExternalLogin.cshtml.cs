@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Remora.Discord.API.Objects;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace LDTTeam.Authentication.Server.Pages.Account
@@ -25,19 +26,20 @@ namespace LDTTeam.Authentication.Server.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<ExternalLoginModel> _logger;
         private readonly IBackgroundEventsQueue _eventsQueue;
-        private readonly Channel<Embed>? _embeds;
+        private readonly ILoggingQueue _loggingQueue;
+
 
         public ExternalLoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ILogger<ExternalLoginModel> logger,
-            IBackgroundEventsQueue eventsQueue, Channel<Embed>? embeds = null)
+            IBackgroundEventsQueue eventsQueue, ILoggingQueue loggingQueue)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
             _eventsQueue = eventsQueue;
-            _embeds = embeds;
+            _loggingQueue = loggingQueue;
         }
 
         public string ProviderDisplayName { get; set; } = null!;
@@ -134,30 +136,20 @@ namespace LDTTeam.Authentication.Server.Pages.Account
 
                     _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-                    if (_embeds != null)
+                    List<EmbedField> fields = new()
                     {
-                        await _embeds.Writer.WriteAsync(new Embed
-                        {
-                            Title = "New User Created",
-                            Description = "A new user has signed in on our service!",
-                            Color = 3135592,
-                            Fields = new List<Embed.Field>
-                            {
-                                new()
-                                {
-                                    Name = "User Name",
-                                    Value = user.UserName!,
-                                    Inline = true
-                                },
-                                new()
-                                {
-                                    Name = "Provider",
-                                    Value = info.LoginProvider,
-                                    Inline = true
-                                }
-                            }
-                        });
-                    }
+                        new EmbedField("User Name", user.UserName!, true),
+                        new EmbedField("Provider", info.LoginProvider, true)
+                    };
+
+                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    {
+                        Title = "New User Created",
+                        Description = "A new user has signed in on our service!",
+                        Colour = Color.Green,
+                        Fields = fields
+                    });
+
 
                     AuthenticationProperties props = new();
                     props.StoreTokens(info.AuthenticationTokens);

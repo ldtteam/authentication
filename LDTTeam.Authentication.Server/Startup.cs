@@ -4,6 +4,7 @@ using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
+using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Config;
 using LDTTeam.Authentication.Server.Data;
@@ -61,6 +62,7 @@ namespace LDTTeam.Authentication.Server
             services.AddMemoryCache();
             
             services.AddTransient<IConditionService, ConditionService>();
+            services.AddTransient<IRewardService, RewardService>();
 
             services.AddSingleton<EventsService>();
             services.AddStartupTask<EventsStartupTask>();
@@ -72,6 +74,8 @@ namespace LDTTeam.Authentication.Server
                     queueCapacity = 10;
                 return new BackgroundEventsQueue(queueCapacity);
             });
+            
+            services.AddSingleton<ILoggingQueue>(new LoggingQueue());
 
             services.AddHostedService<EventsQueueService>();
 
