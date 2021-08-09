@@ -76,7 +76,7 @@ jobs:
         run: dotnet publish --runtime linux-x64 -o ${{ steps.tag_version.outputs.new_tag }} LDTTeam.Authentication.Server && zip -r "${{ steps.tag_version.outputs.new_tag }}-release.zip" ${{ steps.tag_version.outputs.new_tag }}
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v0.1.7
         with:
           files: ${{ steps.tag_version.outputs.new_tag }}-release.zip
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
