@@ -7,7 +7,6 @@ using LDTTeam.Authentication.Modules.Api.Extensions;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Modules.Discord.Commands;
 using LDTTeam.Authentication.Modules.Discord.Config;
-using LDTTeam.Authentication.Modules.Discord.Responders;
 using LDTTeam.Authentication.Modules.Discord.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
@@ -59,7 +58,6 @@ namespace LDTTeam.Authentication.Modules.Discord
                 .AddCommandGroup<MyRewardsCommands>()
                 .AddCommandGroup<RewardsCommands>()
                 .AddCommandGroup<RefreshCommand>()
-                .AddResponder<Responder>()
                 .AddDiscordCaching();
         }
 
@@ -93,7 +91,9 @@ namespace LDTTeam.Authentication.Modules.Discord
 
                     bool errored = false;
                     // ReSharper disable once PossibleLossOfFraction
-                    for (int i = 0; i <= Math.Ceiling((double) (guildResult.Entity.ApproximateMemberCount.Value / 1000)); i++)
+                    for (int i = 0;
+                        i <= Math.Ceiling((double) (guildResult.Entity.ApproximateMemberCount.Value / 1000));
+                        i++)
                     {
                         Optional<Snowflake> snowflake;
                         if (members.LastOrDefault()?.User.HasValue == true &&
@@ -169,12 +169,15 @@ namespace LDTTeam.Authentication.Modules.Discord
                                 let role = rolesResult.Entity.FirstOrDefault(x => x.ID == notRewardRole)
                                 where roles.Contains(notRewardRole) && role != null
                                 select role).ToList()!;
-
-
-                        foreach (IRole role in rolesToAdd)
+                        
+                        // don't add roles if only optionals being added
+                        if (rolesToAdd.Count(x => discordConfig.OptionalRoles.Contains(x.ID.Value)) == rolesToAdd.Count)
                         {
-                            await guildApi.AddGuildMemberRoleAsync(serverSnowflake, userSnowflake, role.ID,
-                                "LDTTeam Auth user has rewards for this role");
+                            foreach (IRole role in rolesToAdd)
+                            {
+                                await guildApi.AddGuildMemberRoleAsync(serverSnowflake, userSnowflake, role.ID,
+                                    "LDTTeam Auth user has rewards for this role");
+                            }
                         }
 
                         if (!discordConfig.RemoveUsersFromRoles ||

@@ -14,6 +14,8 @@ namespace LDTTeam.Authentication.Modules.Discord.Config
         
         // <DiscordServerId, <RewardId, RoleId>>
         public Dictionary<string, Dictionary<string, List<ulong>>> RoleMappings { get; set; } = new();
+
+        public List<ulong> OptionalRoles { get; set; } = new();
         
         public bool RemoveUsersFromRoles { get; set; }
 
