@@ -171,7 +171,7 @@ namespace LDTTeam.Authentication.Modules.Discord
                                 select role).ToList()!;
                         
                         // don't add roles if only optionals being added
-                        if (rolesToAdd.Count(x => discordConfig.OptionalRoles.Contains(x.ID.Value)) == rolesToAdd.Count)
+                        if (!rolesToAdd.All(x => discordConfig.OptionalRoles.Contains(x.ID.Value)))
                         {
                             foreach (IRole role in rolesToAdd)
                             {
