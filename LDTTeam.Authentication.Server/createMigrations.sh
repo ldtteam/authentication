@@ -1,1 +1,1 @@
-dotnet ef migrations add Init -o Data/Migrations
+dotnet ef migrations add AddMetrics --context DatabaseContext -o Data/Migrations

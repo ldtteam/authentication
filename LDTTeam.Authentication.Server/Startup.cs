@@ -77,6 +77,7 @@ namespace LDTTeam.Authentication.Server
             
             services.AddSingleton<ILoggingQueue>(new LoggingQueue());
 
+            services.AddHostedService<MetricsHistoryService>();
             services.AddHostedService<EventsQueueService>();
 
             services.Configure<ForwardedHeadersOptions>(options =>

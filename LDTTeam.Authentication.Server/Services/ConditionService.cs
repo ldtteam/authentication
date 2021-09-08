@@ -28,34 +28,33 @@ namespace LDTTeam.Authentication.Server.Services
             _logger = logger;
         }
 
-        public async Task<bool> CheckReward(string provider, string providerKey, string rewardId)
+        public async Task<bool?> CheckReward(string provider, string providerKey, string rewardId)
         {
-            IdentityUserLogin<string>? loginInfo = await _db.UserLogins.FirstOrDefaultAsync(x =>
-                x.LoginProvider.ToLower() == provider.ToLower() &&
-                x.ProviderKey.ToLower() == providerKey.ToLower());
-
-            string? userId = loginInfo?.UserId;
-            if (userId == null)
-            {
-                if (provider.ToLower() != "minecraft")
-                    return false;
-
-                IdentityUserClaim<string>? claim = await _db.UserClaims
-                    .FirstOrDefaultAsync(x =>
-                        x.ClaimType == "urn:minecraft:user:id" && x.ClaimValue.ToLower() == providerKey.ToLower());
-
-                if (claim == null)
-                    return false;
-
-                userId = claim.UserId;
-            }
-
             Reward? reward = await _db.Rewards
                 .Include(x => x.Conditions)
                 .FirstOrDefaultAsync(x => x.Id == rewardId);
 
             if (reward == null)
+                return null;
+
+            IdentityUserLogin<string>? loginInfo = await _db.UserLogins.FirstOrDefaultAsync(x =>
+                x.LoginProvider.ToLower() == provider.ToLower() &&
+                x.ProviderKey.ToLower() == providerKey.ToLower());
+
+            string? userId = loginInfo?.UserId;
+            if (userId != null) return await CheckReward(userId, reward);
+            
+            if (provider.ToLower() != "minecraft")
                 return false;
+
+            IdentityUserClaim<string>? claim = await _db.UserClaims
+                .FirstOrDefaultAsync(x =>
+                    x.ClaimType == "urn:minecraft:user:id" && x.ClaimValue.ToLower() == providerKey.ToLower());
+
+            if (claim == null)
+                return false;
+
+            userId = claim.UserId;
 
             return await CheckReward(userId, reward);
         }
