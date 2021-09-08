@@ -42,7 +42,7 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
                 AbsoluteExpiration = DateTime.Now.AddMinutes(30),
                 Priority = CacheItemPriority.High
             };
-            
+
             _cache.Set(InstallationClientCacheKey, newClient, cacheExpiryOptions);
             return newClient;
         }
@@ -51,7 +51,7 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
         {
             if (_cache.TryGetValue(InstallationTokenCacheKey, out string accessToken))
                 return accessToken;
-            
+
             string jwt = CreateTokenRequestToken();
 
             GitHubClient appClient = new(new ProductHeaderValue("LDTTeam"))
@@ -63,14 +63,15 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
 
             if (githubConfig == null)
                 throw new Exception("github not set in configuration!");
-            
-            Installation installation = await appClient.GitHubApps.GetOrganizationInstallationForCurrent(githubConfig.Organisation);
+
+            Installation installation =
+                await appClient.GitHubApps.GetOrganizationInstallationForCurrent(githubConfig.Organisation);
 
             if (installation == null)
                 throw new Exception($"github installation for org {githubConfig.Organisation} not found");
 
             AccessToken token = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-            
+
             MemoryCacheEntryOptions cacheExpiryOptions = new()
             {
                 AbsoluteExpiration = token.ExpiresAt.Subtract(TimeSpan.FromMinutes(10)),
@@ -78,10 +79,10 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
             };
 
             _cache.Set(InstallationTokenCacheKey, token.Token, cacheExpiryOptions);
-            
+
             return token.Token;
         }
-        
+
         private string CreateTokenRequestToken()
         {
             string privateKey = _environment.IsDevelopment() && File.Exists("privateKey.Development.pem")
@@ -92,8 +93,8 @@ namespace LDTTeam.Authentication.Modules.GitHub.Services
 
             if (githubConfig == null)
                 throw new Exception("github not set in configuration!");
-            
-            GitHubJwtFactory generator = new (
+
+            GitHubJwtFactory generator = new(
                 new FilePrivateKeySource(privateKey),
                 new GitHubJwtFactoryOptions
                 {

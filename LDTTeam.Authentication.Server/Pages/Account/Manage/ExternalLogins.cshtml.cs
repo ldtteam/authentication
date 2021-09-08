@@ -47,7 +47,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
         public bool ShowRemoveButton { get; set; }
 
         [TempData]
-        public string StatusMessage { get; set; }
+        public string? StatusMessage { get; set; }
 
         public Guid? MinecraftId { get; set; }
 
@@ -123,6 +123,10 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 return NotFound("Unable to load user with ID 'user.Id'.");
             }
 
+            if ((await _userManager.GetLoginsAsync(user)).Any(x =>
+                x.LoginProvider.Equals("minecraft", StringComparison.InvariantCultureIgnoreCase)))
+                return await OnGetAsync();
+
             string minecraftId = await _minecraftService.GetUuidFromUsername(Input.MinecraftUsername);
 
             if (minecraftId == null)
@@ -185,10 +189,41 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             }
 
             IdentityResult result = await _userManager.AddLoginAsync(user, info);
-            if (!result.Succeeded)
+            if (result.Errors.All(x => x.Code == "LoginAlreadyAssociated"))
             {
+                ApplicationUser mergeUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                IList<UserLoginInfo> mergeLogins = await _userManager.GetLoginsAsync(mergeUser);
+                IList<Claim> mergeClaims = await _userManager.GetClaimsAsync(mergeUser);
+
+                foreach (UserLoginInfo mergeLogin in mergeLogins)
+                {
+                    await _userManager.RemoveLoginAsync(mergeUser, mergeLogin.LoginProvider, mergeLogin.ProviderKey);
+                    await _userManager.AddLoginAsync(user, mergeLogin);
+                }
+
+                if (!mergeLogins.Any(x =>
+                    x.LoginProvider.Equals("minecraft", StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    Claim? mergeClaim = mergeClaims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
+                    if (mergeClaim != null)
+                        await _userManager.AddClaimAsync(user, mergeClaim);
+                }
+                else
+                {
+                    IList<Claim> claims = await _userManager.GetClaimsAsync(user);
+                    Claim? mcClaim = claims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
+                    if (mcClaim != null)
+                        await _userManager.RemoveClaimAsync(user, mcClaim);
+                }
+
+                await _userManager.DeleteAsync(mergeUser);
+                
                 StatusMessage =
-                    "The external login was not added. External logins can only be associated with one account.";
+                    "The external login was already linked to an existing account, your accounts have been merged.";
+            }
+            else if (!result.Succeeded)
+            {
+                StatusMessage = "There was an error adding your external login";
                 return RedirectToPage();
             }
 
@@ -223,7 +258,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             await _signInManager.RefreshSignInAsync(user);
 
-            StatusMessage = "The external login was added.";
+            StatusMessage ??= "The external login was added.";
             return RedirectToPage();
         }
     }
