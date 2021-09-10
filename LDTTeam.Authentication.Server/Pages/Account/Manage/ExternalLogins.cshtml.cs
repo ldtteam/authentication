@@ -189,7 +189,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             }
 
             IdentityResult result = await _userManager.AddLoginAsync(user, info);
-            if (result.Errors.All(x => x.Code == "LoginAlreadyAssociated"))
+            if (!result.Succeeded && result.Errors.All(x => x.Code == "LoginAlreadyAssociated"))
             {
                 ApplicationUser mergeUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
                 IList<UserLoginInfo> mergeLogins = await _userManager.GetLoginsAsync(mergeUser);
