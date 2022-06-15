@@ -139,7 +139,8 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                     List<EmbedField> fields = new()
                     {
                         new EmbedField("User Name", user.UserName!, true),
-                        new EmbedField("Provider", info.LoginProvider, true)
+                        new EmbedField("Provider", info.LoginProvider, true),
+                        new EmbedField("Provider Key", info.ProviderKey, true)
                     };
 
                     await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
