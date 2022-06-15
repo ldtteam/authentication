@@ -29,8 +29,11 @@ jobs:
         with:
           fetch-depth: '0'
           
+      - name: Fix Issues
+        run: git config --global --add safe.directory /github/workspace
+          
       - name: Bump version tag
-        uses: skillupco/github-tag-action@1.39.0-skco
+        uses: anothrNick/github-tag-action@1.26.0
         id: tag_version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
