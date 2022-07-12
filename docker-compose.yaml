@@ -1,0 +1,40 @@
+version: '3.2'
+
+services:
+  donator-auth:
+    image: container.ldtteam.com/ldtteam/donator-auth:latest
+    ports:
+      - 80:80
+    networks:
+      - internal
+      - traefik
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_PRINT_TELEMETRY_MESSAGE=false
+    volumes:
+      - ${PWD}/appsettings.json:/app/appsettings.json
+      - ${PWD}/privateKey.pem:/app/privateKey.pem
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.port=80
+      - traefik.frontend.rule=Host:auth.minecolonies.com
+
+  postgres:
+    image: postgres:13.3
+    ports:
+      - 5432:5432
+    networks:
+      - internal
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ldtteam-donator-auth-postgres:/var/lib/mysql
+
+volumes:
+  ldtteam-donator-auth-postgres:
+
+networks:
+  internal:
+  traefik:
+    external: true
