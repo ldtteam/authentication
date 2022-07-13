@@ -3,38 +3,53 @@ version: '3.2'
 services:
   donator-auth:
     image: container.ldtteam.com/ldtteam/donator-auth:latest
-    ports:
-      - 80:80
     networks:
       - internal
-      - traefik
+      - traefik-public
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - DOTNET_PRINT_TELEMETRY_MESSAGE=false
     volumes:
-      - ${PWD}/appsettings.json:/app/appsettings.json
-      - ${PWD}/privateKey.pem:/app/privateKey.pem
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik
-      - traefik.port=80
-      - traefik.frontend.rule=Host:auth.minecolonies.com
+      - /opt/share/ldtteam-donator-auth/appsettings.json:/app/appsettings.json
+      - /opt/share/ldtteam-donator-auth/privateKey.pem:/app/privateKey.pem
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type==worker
+          - node.labels.system==production
+          - node.labels.usecase==donator-auth
+      labels:
+        - traefik.enable=true
+        - traefik.constraint-label=traefik-public
+        - traefik.docker.network=traefik-public
+        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        - traefik.http.routers.donator-auth-http.rule=Host(`container.ldtteam.com`)
+        - traefik.http.routers.donator-auth-http.entrypoints=http
+        - traefik.http.routers.donator-auth-http.middlewares=https-redirect
+        - traefik.http.routers.donator-auth-https.rule=Host(`container.ldtteam.com`)
+        - traefik.http.routers.donator-auth-https.entrypoints=https
+        - traefik.http.routers.donator-auth-https.tls=true
+        - traefik.http.routers.donator-auth-https.service=docker-portus
+        - traefik.http.routers.donator-auth-https.tls.certresolver=le
+        - traefik.http.services.donator-auth.loadbalancer.server.port=80
 
   postgres:
     image: postgres:13.3
-    ports:
-      - 5432:5432
     networks:
       - internal
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
-      - ldtteam-donator-auth-postgres:/var/lib/mysql
-
-volumes:
-  ldtteam-donator-auth-postgres:
+      - /opt/share/ldtteam-donator-auth:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type==worker
+          - node.labels.system==production
+          - node.labels.usecase==donator-auth
 
 networks:
   internal:
-  traefik:
+  traefik-public:
     external: true
