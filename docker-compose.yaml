@@ -30,8 +30,8 @@ services:
         - traefik.http.routers.donator-auth-https.rule=Host(`auth.minecolonies.com`)
         - traefik.http.routers.donator-auth-https.entrypoints=https
         - traefik.http.routers.donator-auth-https.tls=true
-        - traefik.http.routers.donator-auth-https.service=docker-portus
-        - traefik.http.routers.donator-auth-https.tls.certresolver=le
+        - traefik.http.routers.donator-auth-https.service=donator-auth
+        - traefik.http.routers.donator-auth-https.tls.certresolver=le-wc
         - traefik.http.services.donator-auth.loadbalancer.server.port=80
 
   postgres:
