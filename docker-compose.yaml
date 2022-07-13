@@ -24,10 +24,10 @@ services:
         - traefik.docker.network=traefik-public
         - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
         - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-        - traefik.http.routers.donator-auth-http.rule=Host(`container.ldtteam.com`)
+        - traefik.http.routers.donator-auth-http.rule=Host(`auth.minecolonies.com`)
         - traefik.http.routers.donator-auth-http.entrypoints=http
         - traefik.http.routers.donator-auth-http.middlewares=https-redirect
-        - traefik.http.routers.donator-auth-https.rule=Host(`container.ldtteam.com`)
+        - traefik.http.routers.donator-auth-https.rule=Host(`auth.minecolonies.com`)
         - traefik.http.routers.donator-auth-https.entrypoints=https
         - traefik.http.routers.donator-auth-https.tls=true
         - traefik.http.routers.donator-auth-https.service=docker-portus
