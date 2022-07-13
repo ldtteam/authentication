@@ -41,7 +41,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
-      - /opt/share/ldtteam-donator-auth:/var/lib/postgresql/data
+      - /opt/share/ldtteam-donator-auth/data:/var/lib/postgresql/data
     deploy:
       placement:
         constraints:
