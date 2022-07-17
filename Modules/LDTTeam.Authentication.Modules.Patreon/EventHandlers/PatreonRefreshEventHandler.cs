@@ -37,11 +37,12 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
             await Semaphore.WaitAsync();
             try
             {
-                List<DbPatreonMember> members = await _db.PatreonMembers.ToListAsync();
-                List<string> memberIds = new();
+                List<DbPatreonMember> members   = await _db.PatreonMembers.ToListAsync();
+                List<string>          memberIds = new();
 
                 await foreach ((PatreonService.MemberAttributes memberAttributes,
-                    PatreonService.MemberRelationships memberRelationships) in _patreonService.RequestMembers())
+                                   PatreonService.MemberRelationships memberRelationships) in _patreonService
+                                   .RequestMembers())
                 {
                     if (memberIds.Contains(memberRelationships.User.Data.Id))
                         continue;
@@ -83,7 +84,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         new EmbedField("Lifetime", member.Lifetime.ToString(), true),
                         new EmbedField("Monthly", member.Monthly.ToString(), true)
                     };
-                    
+
                     await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                     {
                         Title = "Patreon Removed",
@@ -99,12 +100,10 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
             }
             catch (Exception e)
             {
-                Semaphore.Release();
-                
                 string message = e.Message;
                 if (message.Length >= 1024)
                     message = $"{message[..1021]}...";
-                
+
                 string? stacktrace = e.StackTrace;
                 if (stacktrace?.Length >= 1024)
                     stacktrace = $"{stacktrace[..1021]}...";
@@ -115,7 +114,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                     new EmbedField("Message", message, false),
                     new EmbedField("Stacktrace", stacktrace ?? "null", false)
                 };
-                
+
                 await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                 {
                     Title = "Patreon Check Failed!",
@@ -125,6 +124,10 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                 });
 
                 _logger.LogCritical(e, "Patreon Refresh Failed!");
+            }
+            finally
+            {
+                Semaphore.Release();
             }
         }
     }
