@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Patreon.Data;
@@ -20,6 +21,8 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
         private readonly ILoggingQueue _loggingQueue;
         private readonly ILogger<PatreonRefreshEventHandler> _logger;
 
+        private static readonly SemaphoreSlim Semaphore = new(1, 1);
+
         public PatreonRefreshEventHandler(PatreonService patreonService, PatreonDatabaseContext db,
             ILogger<PatreonRefreshEventHandler> logger, ILoggingQueue loggingQueue)
         {
@@ -31,6 +34,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 
         public async Task ExecuteAsync()
         {
+            await Semaphore.WaitAsync();
             try
             {
                 List<DbPatreonMember> members = await _db.PatreonMembers.ToListAsync();
@@ -95,6 +99,8 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
             }
             catch (Exception e)
             {
+                Semaphore.Release();
+                
                 string message = e.Message;
                 if (message.Length >= 1024)
                     message = $"{message[..1021]}...";
