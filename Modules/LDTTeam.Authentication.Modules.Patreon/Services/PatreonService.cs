@@ -129,7 +129,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
             }
 
             HttpRequestMessage request = new(HttpMethod.Post,
-                "https://patreon.com/api/oauth2/token" +
+                "https://www.patreon.com/api/oauth2/token" +
                 "?grant_type=refresh_token" +
                 $"&refresh_token={dbToken.RefreshToken}" +
                 $"&client_id={patreonConfig.ApiClientId}" +
