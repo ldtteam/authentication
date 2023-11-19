@@ -71,7 +71,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     throw new Exception("patreon not set in configuration!");
 
                 HttpRequestMessage request = new(HttpMethod.Get, 
-                    $"https://patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
+                    $"https://www.patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
                     "?include=user" +
                     $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status" + 
                     cursorNext);
