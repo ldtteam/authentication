@@ -141,7 +141,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
             if (response is {RefreshToken: null} or {AccessToken: null})
             {
-                throw new Exception("Refresh or Access token was null!", response);
+                throw new Exception("Refresh or Access token was null!" + response);
             }
 
             dbToken.RefreshToken = response!.RefreshToken!; // just throw an exception if it fails
