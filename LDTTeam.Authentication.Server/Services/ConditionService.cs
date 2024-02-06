@@ -48,7 +48,7 @@ namespace LDTTeam.Authentication.Server.Services
             IdentityUserLogin<string>? loginInfo = logins
                 .FirstOrDefault(x =>
                     x.ProviderKey.ToLower() == providerKey.ToLower() ||
-                    MD5.HashData(Encoding.UTF8.GetBytes(x.ProviderKey.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
+                    SHA512.HashData(Encoding.UTF8.GetBytes(x.ProviderKey.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
                 );
 
             string? userId = loginInfo?.UserId;
@@ -64,7 +64,7 @@ namespace LDTTeam.Authentication.Server.Services
             IdentityUserClaim<string>? claim = claims
                 .FirstOrDefault(x =>
                     x.ClaimValue.ToLower() == providerKey.ToLower() ||
-                    MD5.HashData(Encoding.UTF8.GetBytes(x.ClaimValue.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
+                    SHA512.HashData(Encoding.UTF8.GetBytes(x.ClaimValue.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
                 );
 
             if (claim == null)
