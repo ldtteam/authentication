@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
@@ -17,8 +19,8 @@ namespace LDTTeam.Authentication.Server.Services
 {
     public class ConditionService : IConditionService
     {
-        private readonly DatabaseContext _db;
-        private readonly IServiceProvider _services;
+        private readonly DatabaseContext           _db;
+        private readonly IServiceProvider          _services;
         private readonly ILogger<ConditionService> _logger;
 
         public ConditionService(DatabaseContext db, IServiceProvider services, ILogger<ConditionService> logger)
@@ -37,19 +39,33 @@ namespace LDTTeam.Authentication.Server.Services
             if (reward == null)
                 return null;
 
-            IdentityUserLogin<string>? loginInfo = await _db.UserLogins.FirstOrDefaultAsync(x =>
-                x.LoginProvider.ToLower() == provider.ToLower() &&
-                x.ProviderKey.ToLower() == providerKey.ToLower());
+            List<IdentityUserLogin<string>> logins = await _db.UserLogins
+                .Where(x =>
+                    x.LoginProvider.ToLower() == provider.ToLower()
+                )
+                .ToListAsync();
+
+            IdentityUserLogin<string>? loginInfo = logins
+                .FirstOrDefault(x =>
+                    x.ProviderKey.ToLower() == providerKey.ToLower() ||
+                    MD5.HashData(Encoding.UTF8.GetBytes(x.ProviderKey.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
+                );
 
             string? userId = loginInfo?.UserId;
             if (userId != null) return await CheckReward(userId, reward);
-            
+
             if (provider.ToLower() != "minecraft")
                 return false;
 
-            IdentityUserClaim<string>? claim = await _db.UserClaims
-                .FirstOrDefaultAsync(x =>
-                    x.ClaimType == "urn:minecraft:user:id" && x.ClaimValue.ToLower() == providerKey.ToLower());
+            List<IdentityUserClaim<string>> claims = await _db.UserClaims
+                .Where(x => x.ClaimType == "urn:minecraft:user:id")
+                .ToListAsync();
+
+            IdentityUserClaim<string>? claim = claims
+                .FirstOrDefault(x =>
+                    x.ClaimValue.ToLower() == providerKey.ToLower() ||
+                    MD5.HashData(Encoding.UTF8.GetBytes(x.ClaimValue.ToLower())) == Encoding.UTF8.GetBytes(providerKey)
+                );
 
             if (claim == null)
                 return false;
@@ -64,7 +80,7 @@ namespace LDTTeam.Authentication.Server.Services
             try
             {
                 CancellationTokenSource source = new();
-                using IServiceScope scope = _services.CreateScope();
+                using IServiceScope     scope  = _services.CreateScope();
 
                 foreach (ConditionInstance conditionInstance in reward.Conditions)
                 {
@@ -76,8 +92,8 @@ namespace LDTTeam.Authentication.Server.Services
                     if (condition == null) continue;
 
                     if (!await condition.ExecuteAsync(scope, conditionInstance,
-                        userId,
-                        source.Token)) continue;
+                            userId,
+                            source.Token)) continue;
 
                     return true;
                 }
@@ -172,10 +188,10 @@ namespace LDTTeam.Authentication.Server.Services
                     "Error, executing newly created instance failed, probably bad lambda, condition not added");
 
             if (await _db.ConditionInstances.AnyAsync(x =>
-                x.RewardId == rewardId &&
-                x.ModuleName == instance.ModuleName &&
-                x.ConditionName == instance.ConditionName
-            ))
+                    x.RewardId == rewardId &&
+                    x.ModuleName == instance.ModuleName &&
+                    x.ConditionName == instance.ConditionName
+                ))
                 throw new AddConditionException(
                     "Duplicate condition already exists for reward. cannot have duplicates");
 
