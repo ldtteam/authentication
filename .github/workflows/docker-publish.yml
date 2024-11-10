@@ -23,17 +23,13 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: '0'
-          
-      - name: Fix Issues
-        run: git config --global --add safe.directory /github/workspace
-          
-      - name: Bump version tag
-        uses: anothrNick/github-tag-action@1.26.0
-        id: tag_version
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@v1.71.0 # Don't use @master or @v1 unless you're happy to test the latest version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
