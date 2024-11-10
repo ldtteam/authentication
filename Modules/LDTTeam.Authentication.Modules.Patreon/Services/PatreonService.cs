@@ -13,26 +13,19 @@ using LDTTeam.Authentication.Modules.Patreon.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace LDTTeam.Authentication.Modules.Patreon.Services
 {
-    public class PatreonService
+    public class PatreonService(
+        IMemoryCache cache,
+        IConfiguration configuration,
+        PatreonDatabaseContext db,
+        IHttpClientFactory httpClientFactory,
+        ILogger<PatreonService> logger)
     {
-        private readonly IMemoryCache _cache;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly PatreonDatabaseContext _db;
 
         private const string PatreonAccessTokenCacheKey = "PATREON_ACCESS_TOKEN";
-
-        public PatreonService(IMemoryCache cache, IConfiguration configuration, PatreonDatabaseContext db,
-            IHttpClientFactory httpClientFactory)
-        {
-            _cache = cache;
-            _configuration = configuration;
-            _db = db;
-            _httpClientFactory = httpClientFactory;
-        }
 
         public class MemberAttributes
         {
@@ -61,7 +54,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
         public async IAsyncEnumerable<PatreonMember> RequestMembers()
         {
-            PatreonConfig? patreonConfig = _configuration.GetSection("patreon").Get<PatreonConfig>();
+            PatreonConfig? patreonConfig = configuration.GetSection("patreon").Get<PatreonConfig>();
 
             string? cursorNext = null;
 
@@ -73,11 +66,23 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 HttpRequestMessage request = new(HttpMethod.Get, 
                     $"https://www.patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
                     "?include=user" +
+                    $"&{WebUtility.UrlEncode("page[count]")}=500" +
                     $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status" + 
                     cursorNext);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await RequestAccessToken());
 
-                HttpResponseMessage responseMessage = await _httpClientFactory.CreateClient().SendAsync(request);
+                var responseMessage = await httpClientFactory.CreateClient().SendAsync(request);
+
+                if (responseMessage.StatusCode != HttpStatusCode.OK)
+                {
+                    if (responseMessage.StatusCode != HttpStatusCode.TooManyRequests)
+                        throw new Exception("Failed to get members from Patreon: " + responseMessage.StatusCode);
+                    
+                    logger.LogWarning("Rate limited by Patreon, waiting 1 minute before retrying.");   
+                    await Task.Delay(TimeSpan.FromMinutes(1));
+                    continue;
+                }
+                
                 PatreonMembersResponse? response =
                     await responseMessage.Content.ReadFromJsonAsync<PatreonMembersResponse>();
                 
@@ -106,15 +111,15 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
         public async Task<string> RequestAccessToken()
         {
-            if (_cache.TryGetValue(PatreonAccessTokenCacheKey, out string accessToken))
+            if (cache.TryGetValue(PatreonAccessTokenCacheKey, out string accessToken))
                 return accessToken;
 
-            PatreonConfig? patreonConfig = _configuration.GetSection("patreon").Get<PatreonConfig>();
+            PatreonConfig? patreonConfig = configuration.GetSection("patreon").Get<PatreonConfig>();
 
             if (patreonConfig == null)
                 throw new Exception("patreon not set in configuration!");
 
-            DbToken? dbToken = await _db.Token
+            DbToken? dbToken = await db.Token
                 .OrderBy(x => x.Id)
                 .FirstOrDefaultAsync();
 
@@ -125,7 +130,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     Id = Guid.NewGuid(),
                     RefreshToken = patreonConfig.InitializingApiRefreshToken
                 };
-                await _db.Token.AddAsync(dbToken);
+                await db.Token.AddAsync(dbToken);
             }
 
             HttpRequestMessage request = new(HttpMethod.Post,
@@ -135,7 +140,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 $"&client_id={patreonConfig.ApiClientId}" +
                 $"&client_secret={patreonConfig.ApiClientSecret}");
 
-            HttpResponseMessage responseMessage = await _httpClientFactory.CreateClient().SendAsync(request);
+            HttpResponseMessage responseMessage = await httpClientFactory.CreateClient().SendAsync(request);
 
             AccessTokenResponse? response = await responseMessage.Content.ReadFromJsonAsync<AccessTokenResponse>();
 
@@ -146,7 +151,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
             dbToken.RefreshToken = response!.RefreshToken!; // just throw an exception if it fails
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
             MemoryCacheEntryOptions cacheExpiryOptions = new()
             {
@@ -154,7 +159,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 Priority = CacheItemPriority.High
             };
 
-            _cache.Set(PatreonAccessTokenCacheKey, response.AccessToken, cacheExpiryOptions);
+            cache.Set(PatreonAccessTokenCacheKey, response.AccessToken, cacheExpiryOptions);
 
             return response.AccessToken!;
         }
