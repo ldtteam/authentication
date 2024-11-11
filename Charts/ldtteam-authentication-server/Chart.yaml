@@ -1,0 +1,13 @@
+apiVersion: v2
+name: ldtteam-authentication-server
+description: A helm chart that installs the LDTTeam auth service
+
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: postgresql
+    version: "16.1.2"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+
