@@ -22,8 +22,6 @@ namespace LDTTeam.Authentication.Server.Services
     {
         public async Task<bool?> CheckReward(string provider, string providerKey, string rewardId, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Checking reward {RewardId} for {Provider} {ProviderKey}", rewardId, provider, providerKey);
-            
             if (!provider.Equals("minecraft", StringComparison.CurrentCultureIgnoreCase))
                 return false;
             
@@ -58,15 +56,12 @@ namespace LDTTeam.Authentication.Server.Services
 
         private async Task<bool> CheckReward(string userId, Reward reward, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Checking reward {RewardId} for {UserId}", reward.Id, userId);
-            
             try
             {
                 using IServiceScope     scope  = services.CreateScope();
 
                 foreach (ConditionInstance conditionInstance in reward.Conditions)
                 {
-                    logger.LogDebug("Checking condition {ConditionName} for {UserId}", conditionInstance.ConditionName, userId);
                     ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
                         x.ModuleName.Equals(conditionInstance.ModuleName,
                             StringComparison.InvariantCultureIgnoreCase) &&
@@ -92,8 +87,6 @@ namespace LDTTeam.Authentication.Server.Services
 
         public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey, CancellationToken token)
         {
-            logger.LogInformation("Getting rewards for {Provider} {ProviderKey}", provider, providerKey);
-            
             IdentityUserLogin<string>? loginInfo = await db.UserLogins.FirstOrDefaultAsync(x =>
                 x.LoginProvider.ToLower() == provider.ToLower() &&
                 x.ProviderKey.ToLower() == providerKey.ToLower(), 
@@ -121,8 +114,6 @@ namespace LDTTeam.Authentication.Server.Services
 
         public async Task<Dictionary<string, bool>> GetRewardsForUser(string userId, CancellationToken token)
         {
-            logger.LogInformation("Getting rewards for {UserId}", userId);
-            
             Dictionary<string, bool> results = new();
             await foreach (Reward dbReward in db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable().WithCancellation(token))
             {
@@ -134,8 +125,6 @@ namespace LDTTeam.Authentication.Server.Services
 
         public async Task<Dictionary<string, List<string>>> GetRewardsForProvider(string provider, CancellationToken token)
         {
-            logger.LogInformation("Getting rewards for {Provider}", provider);
-            
             List<IdentityUserLogin<string>>? logins = await db.UserLogins.Where(x =>
                     x.LoginProvider.ToLower() == provider.ToLower())
                 .ToListAsync(cancellationToken: token);
@@ -159,8 +148,6 @@ namespace LDTTeam.Authentication.Server.Services
 
         public async Task AddConditionToReward(string rewardId, string moduleName, string conditionName, string lambda, CancellationToken token)
         {
-            logger.LogInformation("Adding condition {ConditionName} to {RewardId}", conditionName, rewardId);
-            
             ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
                 x.ModuleName.Equals(moduleName,
                     StringComparison.InvariantCultureIgnoreCase) &&
@@ -194,8 +181,6 @@ namespace LDTTeam.Authentication.Server.Services
 
         public async Task RemoveConditionFromReward(string rewardId, string moduleName, string conditionName, CancellationToken token)
         {
-            logger.LogInformation("Removing condition {ConditionName} from {RewardId}", conditionName, rewardId);
-            
             ConditionInstance? instance = await db.ConditionInstances.FirstOrDefaultAsync(x =>
                 x.RewardId.ToLower() == rewardId.ToLower() &&
                 x.ModuleName.ToLower() == moduleName.ToLower() &&
