@@ -12,9 +12,6 @@ on:
       - 'master'
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - 'master'
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -46,6 +43,8 @@ jobs:
           GIT_API_TAGGING: false
 
   publish:
+    needs:
+      - tag
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -82,11 +81,10 @@ jobs:
           context: .
           file: LDTTeam.Authentication.Server/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.tag.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
     
   chart:
-    if: github.event_name != 'pull_request'
     needs:
       - tag
     permissions:
