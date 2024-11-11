@@ -58,11 +58,11 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                 _db.Teams.Remove(dbTeam);
                 _logger.LogDebug($"GitHub team removed: {dbTeam.Slug}");
 
-                List<EmbedField> fields = new()
-                {
-                    new EmbedField("Team Id", dbTeam.Id.ToString(), true),
-                    new EmbedField("Team Slug", dbTeam.Slug, true)
-                };
+                List<EmbedField> fields =
+                [
+                    new("Team Id", dbTeam.Id.ToString(), true),
+                    new("Team Slug", dbTeam.Slug, true)
+                ];
 
                 await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                 {
@@ -79,14 +79,14 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                     continue; // team already sync with db
 
                 // team added to github
-                _db.Teams.Add(new DbGitHubTeam(team.Id, team.Slug));
+                _db.Teams.Add(new DbGitHubTeam((int) team.Id, team.Slug));
                 _logger.LogDebug($"GitHub team added: {team.Slug}");
 
-                List<EmbedField> fields = new()
-                {
-                    new EmbedField("Team Id", team.Id.ToString(), true),
-                    new EmbedField("Team Slug", team.Slug, true)
-                };
+                List<EmbedField> fields =
+                [
+                    new("Team Id", team.Id.ToString(), true),
+                    new("Team Slug", team.Slug, true)
+                ];
 
                 await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                 {
@@ -110,7 +110,7 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
 
                 foreach (User user in users.Where(x => dbUsers.All(y => y.Id != x.Id)))
                 {
-                    await _db.Users.AddAsync(new DbGitHubUser(user.Id));
+                    await _db.Users.AddAsync(new DbGitHubUser((int) user.Id));
                 }
 
                 await _db.SaveChangesAsync();
@@ -121,12 +121,12 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                     dbTeam.UserRelationships.Remove(teamRelationship); // user deleted from team
                     _logger.LogDebug($"GitHub user {teamRelationship.UserId} removed from team {dbTeam.Slug}");
 
-                    List<EmbedField> fields = new()
-                    {
-                        new EmbedField("Team Id", dbTeam.Id.ToString(), true),
-                        new EmbedField("Team Slug", dbTeam.Slug, true),
-                        new EmbedField("User Id", teamRelationship.UserId.ToString(), true)
-                    };
+                    List<EmbedField> fields =
+                    [
+                        new("Team Id", dbTeam.Id.ToString(), true),
+                        new("Team Slug", dbTeam.Slug, true),
+                        new("User Id", teamRelationship.UserId.ToString(), true)
+                    ];
 
                     await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                     {
@@ -143,16 +143,16 @@ namespace LDTTeam.Authentication.Modules.GitHub.EventHandlers
                         continue; // user already synced with db
 
                     // user added to team
-                    dbTeam.UserRelationships.Add(new DbGithubTeamUser(user.Id,
+                    dbTeam.UserRelationships.Add(new DbGithubTeamUser((int) user.Id,
                         dbTeam.Id));
                     _logger.LogDebug($"GitHub user {user.Login} added to team {dbTeam.Slug}");
 
-                    List<EmbedField> fields = new()
-                    {
-                        new EmbedField("Team Id", dbTeam.Id.ToString(), true),
-                        new EmbedField("Team Slug", dbTeam.Slug, true),
-                        new EmbedField("User Id", user.Id.ToString(), true)
-                    };
+                    List<EmbedField> fields =
+                    [
+                        new("Team Id", dbTeam.Id.ToString(), true),
+                        new("Team Slug", dbTeam.Slug, true),
+                        new("User Id", user.Id.ToString(), true)
+                    ];
                     
                     await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                     {

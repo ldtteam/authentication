@@ -17,8 +17,8 @@ using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Caching.Extensions;
 using Remora.Discord.Commands.Extensions;
-using Remora.Discord.Core;
 using Remora.Discord.Gateway.Extensions;
+using Remora.Rest.Core;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord

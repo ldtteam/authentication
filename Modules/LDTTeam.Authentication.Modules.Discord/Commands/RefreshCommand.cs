@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -7,9 +6,9 @@ using LDTTeam.Authentication.Modules.Api.Utils;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Contexts;
+using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord.Commands
@@ -17,15 +16,15 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
     public class RefreshCommand : CommandGroup
     {
         private readonly InteractionContext _context;
-        private readonly IDiscordRestWebhookAPI _channelApi;
+        private readonly IFeedbackService _feedbackService;
         private readonly IBackgroundEventsQueue _eventsQueue;
 
-        public RefreshCommand(InteractionContext context, IDiscordRestWebhookAPI channelApi,
-            IBackgroundEventsQueue eventsQueue)
+        public RefreshCommand(InteractionContext context,
+            IBackgroundEventsQueue eventsQueue, IFeedbackService feedbackService)
         {
             _context = context;
-            _channelApi = channelApi;
             _eventsQueue = eventsQueue;
+            _feedbackService = feedbackService;
         }
 
         [Command("refresh")]
@@ -33,42 +32,48 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
         public async Task<IResult> RemoveRewardConditionCommand([Description("Optional provider to refresh")]
             string? provider = null)
         {
-            if (!_context.Member.Value.Permissions.Value.HasPermission(DiscordPermission.Administrator))
+            var member = _context.Interaction.Member;
+            if (!member.HasValue)
             {
-                return await _channelApi.CreateFollowupMessageAsync
-                (
-                    _context.ApplicationID,
-                    _context.Token,
-                    embeds: new[]
-                    {
-                        new Embed
-                        {
-                            Title = "No Permission",
-                            Description =
-                                "You require Administrator permissions for this command",
-                            Colour = Color.DarkRed
-                        }
-                    },
-                    flags: MessageFlags.Ephemeral,
-                    ct: CancellationToken
+                return await _feedbackService.SendContextualErrorAsync(
+                    "Command needs a user to run"
                 );
+            }
+            
+            var permissions = member.Value.Permissions;
+            if (!permissions.HasValue)
+            {
+                return await _feedbackService.SendContextualErrorAsync(
+                    "Command needs a user to run"
+                );
+            }
+            
+            if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
+            {
+                return await _feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No Permission",
+                        Description =
+                            "You require Administrator permissions for this command",
+                        Colour = Color.DarkRed
+                    });
             }
 
             await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
             {
                 await events._refreshContentEvent.InvokeAsync(scope,
-                    provider == null ? null : new List<string> {provider});
+                    provider == null ? null : [provider]);
                 await events._postRefreshContentEvent.InvokeAsync(scope);
             }, CancellationToken);
 
-            return await _channelApi.CreateFollowupMessageAsync
-            (
-                _context.ApplicationID,
-                _context.Token,
-                "done!",
-                flags: MessageFlags.Ephemeral,
-                ct: CancellationToken
-            );
+            return await _feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "Refreshed",
+                    Description = "Refreshed provider(s)",
+                    Colour = Color.Green
+                });
         }
     }
 }

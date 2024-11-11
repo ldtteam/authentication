@@ -7,9 +7,9 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="5.0.8" />
-      <PackageReference Include="Remora.Discord.API" Version="24.0.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.10" />
+      <PackageReference Include="Remora.Discord.API" Version="78.0.0" />
     </ItemGroup>
 
 </Project>

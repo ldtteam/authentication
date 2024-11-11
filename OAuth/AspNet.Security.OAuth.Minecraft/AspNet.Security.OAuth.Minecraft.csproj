@@ -6,7 +6,7 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="JetBrains.Annotations" PrivateAssets="All" />
+        <PackageReference Include="JetBrains.Annotations" PrivateAssets="All" Version="2024.3.0" />
     </ItemGroup>
     
 </Project>

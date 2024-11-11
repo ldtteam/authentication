@@ -6,7 +6,7 @@ using LDTTeam.Authentication.Modules.Discord.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Remora.Discord.Commands.Services;
-using Remora.Discord.Core;
+using Remora.Rest.Core;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord.Services
@@ -24,14 +24,14 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
             _configuration = configuration;
         }
 
-        public Task ExecuteAsync(CancellationToken cancellationToken)
+        public async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
 
             if (discordConfig == null)
                 throw new Exception("discord not set in configuration!");
-            
-            Result checkSlashSupport = _slashService.SupportsSlashCommands();
+
+            Result checkSlashSupport = await _slashService.UpdateSlashCommandsAsync(ct: cancellationToken);
             if (!checkSlashSupport.IsSuccess)
             {
                 _logger.LogWarning
@@ -45,15 +45,14 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
                 foreach (string server in discordConfig.RoleMappings.Keys)
                 {
                     if (!ulong.TryParse(server, out ulong serverId)) continue;
-                    Result updateSlash = _slashService.UpdateSlashCommandsAsync(new Snowflake(serverId), cancellationToken).Result;
+                    
+                    Result updateSlash = await _slashService.UpdateSlashCommandsAsync(new Snowflake(serverId), ct: cancellationToken);
                     if (!updateSlash.IsSuccess)
                     {
                         _logger.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error.Message);
                     }
                 }
             }
-            
-            return Task.CompletedTask;
         }
     }
 }
