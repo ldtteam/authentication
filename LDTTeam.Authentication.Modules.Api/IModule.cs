@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using LDTTeam.Authentication.Modules.Api.Events;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,7 @@ namespace LDTTeam.Authentication.Modules.Api
             return services;
         }
 
-        public void EventsSubscription(IServiceProvider services, EventsService events)
+        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
         {
         }
     }

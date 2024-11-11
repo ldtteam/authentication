@@ -17,73 +17,56 @@ using Microsoft.Extensions.Logging;
 
 namespace LDTTeam.Authentication.Server.Services
 {
-    public class ConditionService : IConditionService
+    public class ConditionService(DatabaseContext db, IServiceProvider services, ILogger<ConditionService> logger)
+        : IConditionService
     {
-        private readonly DatabaseContext           _db;
-        private readonly IServiceProvider          _services;
-        private readonly ILogger<ConditionService> _logger;
-
-        public ConditionService(DatabaseContext db, IServiceProvider services, ILogger<ConditionService> logger)
+        public async Task<bool?> CheckReward(string provider, string providerKey, string rewardId, CancellationToken cancellationToken)
         {
-            _db = db;
-            _services = services;
-            _logger = logger;
-        }
-
-        public async Task<bool?> CheckReward(string provider, string providerKey, string rewardId)
-        {
-            Reward? reward = await _db.Rewards
+            logger.LogInformation("Checking reward {RewardId} for {Provider} {ProviderKey}", rewardId, provider, providerKey);
+            
+            if (!provider.Equals("minecraft", StringComparison.CurrentCultureIgnoreCase))
+                return false;
+            
+            var reward = await db.Rewards
                 .Include(x => x.Conditions)
-                .FirstOrDefaultAsync(x => x.Id == rewardId);
+                .FirstOrDefaultAsync(x => x.Id == rewardId, cancellationToken: cancellationToken);
 
             if (reward == null)
                 return null;
 
-            List<IdentityUserLogin<string>> logins = await _db.UserLogins
-                .Where(x =>
-                    x.LoginProvider.ToLower() == provider.ToLower()
-                )
-                .ToListAsync();
+            IdentityUserLogin<string>? loginInfo = await db.UserLogins
+                .FirstOrDefaultAsync(x =>
+                    x.LoginProvider.Equals(provider, StringComparison.CurrentCultureIgnoreCase) && 
+                    x.ProviderKey.Equals(providerKey, StringComparison.CurrentCultureIgnoreCase), cancellationToken: cancellationToken);
 
-            IdentityUserLogin<string>? loginInfo = logins
-                .FirstOrDefault(x =>
-                    x.ProviderKey.ToLower() == providerKey.ToLower() ||
-                    SHA512.HashData(Encoding.UTF8.GetBytes(x.ProviderKey.ToLower())) == Convert.FromHexString(providerKey)
-                );
+            var userId = loginInfo?.UserId;
+            if (userId != null) return await CheckReward(userId, reward, cancellationToken);
 
-            string? userId = loginInfo?.UserId;
-            if (userId != null) return await CheckReward(userId, reward);
-
-            if (provider.ToLower() != "minecraft")
-                return false;
-
-            List<IdentityUserClaim<string>> claims = await _db.UserClaims
-                .Where(x => x.ClaimType == "urn:minecraft:user:id")
-                .ToListAsync();
-
-            IdentityUserClaim<string>? claim = claims
-                .FirstOrDefault(x =>
-                    x.ClaimValue.ToLower() == providerKey.ToLower() ||
-                    SHA512.HashData(Encoding.UTF8.GetBytes(x.ClaimValue.ToLower())) == Convert.FromHexString(providerKey)
-                );
+            IdentityUserClaim<string>? claim = await db.UserClaims
+                .FirstOrDefaultAsync(x =>
+                    x.ClaimValue != null &&
+                    x.ClaimType == "urn:minecraft:user:id" && 
+                    x.ClaimValue.Equals(providerKey, StringComparison.CurrentCultureIgnoreCase), cancellationToken: cancellationToken);
 
             if (claim == null)
                 return false;
 
             userId = claim.UserId;
 
-            return await CheckReward(userId, reward);
+            return await CheckReward(userId, reward, cancellationToken);
         }
 
-        private async Task<bool> CheckReward(string userId, Reward reward)
+        private async Task<bool> CheckReward(string userId, Reward reward, CancellationToken cancellationToken)
         {
+            logger.LogInformation("Checking reward {RewardId} for {UserId}", reward.Id, userId);
+            
             try
             {
-                CancellationTokenSource source = new();
-                using IServiceScope     scope  = _services.CreateScope();
+                using IServiceScope     scope  = services.CreateScope();
 
                 foreach (ConditionInstance conditionInstance in reward.Conditions)
                 {
+                    logger.LogDebug("Checking condition {ConditionName} for {UserId}", conditionInstance.ConditionName, userId);
                     ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
                         x.ModuleName.Equals(conditionInstance.ModuleName,
                             StringComparison.InvariantCultureIgnoreCase) &&
@@ -93,7 +76,7 @@ namespace LDTTeam.Authentication.Server.Services
 
                     if (!await condition.ExecuteAsync(scope, conditionInstance,
                             userId,
-                            source.Token)) continue;
+                            cancellationToken)) continue;
 
                     return true;
                 }
@@ -102,60 +85,69 @@ namespace LDTTeam.Authentication.Server.Services
             }
             catch (Exception e)
             {
-                _logger.LogCritical(e, "Api Controller Failed!");
+                logger.LogCritical(e, "Api Controller Failed!");
                 return false;
             }
         }
 
-        public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey)
+        public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey, CancellationToken token)
         {
-            IdentityUserLogin<string>? loginInfo = await _db.UserLogins.FirstOrDefaultAsync(x =>
+            logger.LogInformation("Getting rewards for {Provider} {ProviderKey}", provider, providerKey);
+            
+            IdentityUserLogin<string>? loginInfo = await db.UserLogins.FirstOrDefaultAsync(x =>
                 x.LoginProvider.ToLower() == provider.ToLower() &&
-                x.ProviderKey.ToLower() == providerKey.ToLower());
+                x.ProviderKey.ToLower() == providerKey.ToLower(), 
+                cancellationToken: token);
 
-            string? userId = loginInfo?.UserId;
-            if (userId != null) return await GetRewardsForUser(userId);
+            var userId = loginInfo?.UserId;
+            if (userId != null) return await GetRewardsForUser(userId, token);
 
             if (provider.ToLower() != "minecraft")
                 return null;
 
-            IdentityUserClaim<string>? claim = await _db.UserClaims
+            IdentityUserClaim<string>? claim = await db.UserClaims
                 .FirstOrDefaultAsync(x =>
-                    x.ClaimType == "urn:minecraft:user:id" && x.ClaimValue.ToLower() == providerKey.ToLower());
+                    x.ClaimValue != null &&
+                    x.ClaimType == "urn:minecraft:user:id" && 
+                    x.ClaimValue.ToLower() == providerKey.ToLower(), cancellationToken: token);
 
             if (claim == null)
                 return null;
 
             userId = claim.UserId;
 
-            return await GetRewardsForUser(userId);
+            return await GetRewardsForUser(userId, token);
         }
 
-        public async Task<Dictionary<string, bool>> GetRewardsForUser(string userId)
+        public async Task<Dictionary<string, bool>> GetRewardsForUser(string userId, CancellationToken token)
         {
+            logger.LogInformation("Getting rewards for {UserId}", userId);
+            
             Dictionary<string, bool> results = new();
-            await foreach (Reward dbReward in _db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable())
+            await foreach (Reward dbReward in db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable().WithCancellation(token))
             {
-                results.Add(dbReward.Id, await CheckReward(userId, dbReward));
+                results.Add(dbReward.Id, await CheckReward(userId, dbReward, token));
             }
 
             return results;
         }
 
-        public async Task<Dictionary<string, List<string>>> GetRewardsForProvider(string provider)
+        public async Task<Dictionary<string, List<string>>> GetRewardsForProvider(string provider, CancellationToken token)
         {
-            List<IdentityUserLogin<string>>? logins = await _db.UserLogins.Where(x =>
+            logger.LogInformation("Getting rewards for {Provider}", provider);
+            
+            List<IdentityUserLogin<string>>? logins = await db.UserLogins.Where(x =>
                     x.LoginProvider.ToLower() == provider.ToLower())
-                .ToListAsync();
+                .ToListAsync(cancellationToken: token);
 
             Dictionary<string, List<string>> results = new();
-            await foreach (Reward dbReward in _db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable())
+            await foreach (Reward dbReward in db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable().WithCancellation(token))
             {
                 List<string> users = new();
 
                 foreach (IdentityUserLogin<string> login in logins)
                 {
-                    if (await CheckReward(login.UserId, dbReward))
+                    if (await CheckReward(login.UserId, dbReward, token))
                         users.Add(login.ProviderKey);
                 }
 
@@ -165,8 +157,10 @@ namespace LDTTeam.Authentication.Server.Services
             return results;
         }
 
-        public async Task AddConditionToReward(string rewardId, string moduleName, string conditionName, string lambda)
+        public async Task AddConditionToReward(string rewardId, string moduleName, string conditionName, string lambda, CancellationToken token)
         {
+            logger.LogInformation("Adding condition {ConditionName} to {RewardId}", conditionName, rewardId);
+            
             ICondition? condition = Conditions.Registry.FirstOrDefault(x =>
                 x.ModuleName.Equals(moduleName,
                     StringComparison.InvariantCultureIgnoreCase) &&
@@ -187,30 +181,31 @@ namespace LDTTeam.Authentication.Server.Services
                 throw new AddConditionException(
                     "Error, executing newly created instance failed, probably bad lambda, condition not added");
 
-            if (await _db.ConditionInstances.AnyAsync(x =>
+            if (await db.ConditionInstances.AnyAsync(x =>
                     x.RewardId == rewardId &&
                     x.ModuleName == instance.ModuleName &&
-                    x.ConditionName == instance.ConditionName
-                ))
+                    x.ConditionName == instance.ConditionName, cancellationToken: token))
                 throw new AddConditionException(
                     "Duplicate condition already exists for reward. cannot have duplicates");
 
-            _db.ConditionInstances.Add(instance);
-            await _db.SaveChangesAsync();
+            db.ConditionInstances.Add(instance);
+            await db.SaveChangesAsync(token);
         }
 
-        public async Task RemoveConditionFromReward(string rewardId, string moduleName, string conditionName)
+        public async Task RemoveConditionFromReward(string rewardId, string moduleName, string conditionName, CancellationToken token)
         {
-            ConditionInstance? instance = await _db.ConditionInstances.FirstOrDefaultAsync(x =>
+            logger.LogInformation("Removing condition {ConditionName} from {RewardId}", conditionName, rewardId);
+            
+            ConditionInstance? instance = await db.ConditionInstances.FirstOrDefaultAsync(x =>
                 x.RewardId.ToLower() == rewardId.ToLower() &&
                 x.ModuleName.ToLower() == moduleName.ToLower() &&
-                x.ConditionName.ToLower() == conditionName.ToLower());
+                x.ConditionName.ToLower() == conditionName.ToLower(), cancellationToken: token);
 
             if (instance == null)
                 throw new RemoveConditionException("Condition instance not found");
 
-            _db.ConditionInstances.Remove(instance);
-            await _db.SaveChangesAsync();
+            db.ConditionInstances.Remove(instance);
+            await db.SaveChangesAsync(token);
         }
     }
 }

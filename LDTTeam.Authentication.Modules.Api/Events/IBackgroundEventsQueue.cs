@@ -8,7 +8,7 @@ namespace LDTTeam.Authentication.Modules.Api.Events
 {
     public interface IBackgroundEventsQueue
     {
-        Task QueueBackgroundWorkItemAsync(Func<EventsService, IServiceScope, CancellationToken, Task> workItem);
+        Task QueueBackgroundWorkItemAsync(Func<EventsService, IServiceScope, CancellationToken, Task> workItem, CancellationToken token);
 
         ValueTask<Func<EventsService, IServiceScope, CancellationToken, Task>> DequeueAsync(
             CancellationToken cancellationToken);
@@ -33,14 +33,14 @@ namespace LDTTeam.Authentication.Modules.Api.Events
         }
 
         public async Task QueueBackgroundWorkItemAsync(
-            Func<EventsService, IServiceScope, CancellationToken, Task> workItem)
+            Func<EventsService, IServiceScope, CancellationToken, Task> workItem, CancellationToken token)
         {
             if (workItem == null)
             {
                 throw new ArgumentNullException(nameof(workItem));
             }
 
-            await _queue.Writer.WriteAsync(workItem);
+            await _queue.Writer.WriteAsync(workItem, token);
         }
 
         public async ValueTask<Func<EventsService, IServiceScope, CancellationToken, Task>> DequeueAsync(

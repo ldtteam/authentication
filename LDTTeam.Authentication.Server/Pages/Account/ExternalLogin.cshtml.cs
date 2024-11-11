@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
@@ -20,29 +21,15 @@ using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 namespace LDTTeam.Authentication.Server.Pages.Account
 {
     [AllowAnonymous]
-    public class ExternalLoginModel : PageModel
+    public class ExternalLoginModel(
+        SignInManager<ApplicationUser> signInManager,
+        UserManager<ApplicationUser> userManager,
+        ILogger<ExternalLoginModel> logger,
+        IBackgroundEventsQueue eventsQueue,
+        ILoggingQueue loggingQueue)
+        : PageModel
     {
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<ExternalLoginModel> _logger;
-        private readonly IBackgroundEventsQueue _eventsQueue;
-        private readonly ILoggingQueue _loggingQueue;
-
-
-        public ExternalLoginModel(
-            SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager,
-            ILogger<ExternalLoginModel> logger,
-            IBackgroundEventsQueue eventsQueue, ILoggingQueue loggingQueue)
-        {
-            _signInManager = signInManager;
-            _userManager = userManager;
-            _logger = logger;
-            _eventsQueue = eventsQueue;
-            _loggingQueue = loggingQueue;
-        }
-
-        public string ProviderDisplayName { get; set; } = null!;
+        public string? ProviderDisplayName { get; set; }
 
         public string? ReturnUrl { get; set; }
 
@@ -54,16 +41,16 @@ namespace LDTTeam.Authentication.Server.Pages.Account
             return RedirectToPage("./Login");
         }
 
-        public IActionResult OnPost(string provider, string? returnUrl = null)
+        public IActionResult OnPost(string provider, string? returnUrl)
         {
             // Request a redirect to the external login provider.
-            string redirectUrl = Url.Page("./ExternalLogin", "Callback", new {returnUrl});
+            var redirectUrl = Url.Page("./ExternalLogin", "Callback", new {returnUrl});
             AuthenticationProperties properties =
-                _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+                signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
 
-        public async Task<IActionResult> OnGetCallbackAsync(string? returnUrl = null, string? remoteError = null)
+        public async Task<IActionResult> OnGetCallbackAsync(string? returnUrl, string? remoteError, CancellationToken token)
         {
             returnUrl ??= Url.Content("~/");
             if (remoteError != null)
@@ -72,7 +59,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                 return RedirectToPage("./Login", new {ReturnUrl = returnUrl});
             }
 
-            ExternalLoginInfo info = await _signInManager.GetExternalLoginInfoAsync();
+            ExternalLoginInfo? info = await signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
                 ErrorMessage = "Error loading external login information.";
@@ -80,19 +67,24 @@ namespace LDTTeam.Authentication.Server.Pages.Account
             }
 
             AuthenticationProperties props = new();
-            props.StoreTokens(info.AuthenticationTokens);
+            props.StoreTokens(info.AuthenticationTokens ?? []);
             props.IsPersistent = true;
 
             // Sign in the user with this external login provider if the user already has a login.
-            SignInResult result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey,
+            SignInResult result = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey,
                 false, true);
             if (result.Succeeded)
             {
-                ApplicationUser user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                await _signInManager.SignInWithClaimsAsync(user, info.AuthenticationProperties,
+                ApplicationUser? user = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (user == null)
+                {
+                    ErrorMessage = "Error loading external login information.";
+                    return RedirectToPage("./Login", new {ReturnUrl = returnUrl});
+                }
+                await signInManager.SignInWithClaimsAsync(user, info.AuthenticationProperties,
                     info.Principal.Claims.Select(c => new Claim(c.Type, c.Value)));
 
-                _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name,
+                logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name,
                     info.LoginProvider);
                 return LocalRedirect(returnUrl);
             }
@@ -102,14 +94,14 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                 return RedirectToPage("./Lockout");
             }
 
-            return await OnPostConfirmationAsync(returnUrl);
+            return await OnPostConfirmationAsync(returnUrl, token);
         }
 
-        public async Task<IActionResult> OnPostConfirmationAsync(string? returnUrl = null)
+        public async Task<IActionResult> OnPostConfirmationAsync(string? returnUrl, CancellationToken token)
         {
             returnUrl ??= Url.Content("~/");
             // Get the information about the user from the external login provider
-            ExternalLoginInfo info = await _signInManager.GetExternalLoginInfoAsync();
+            var info = await signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
                 ErrorMessage = "Error loading external login information during confirmation.";
@@ -122,28 +114,28 @@ namespace LDTTeam.Authentication.Server.Pages.Account
 
             ApplicationUser user = new() {UserName = name};
 
-            IdentityResult result = await _userManager.CreateAsync(user);
+            IdentityResult result = await userManager.CreateAsync(user);
             if (result.Succeeded)
             {
-                result = await _userManager.AddLoginAsync(user, info);
+                result = await userManager.AddLoginAsync(user, info);
                 if (result.Succeeded)
                 {
-                    await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+                    await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
                     {
-                        await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                        await events._refreshContentEvent.InvokeAsync(scope, [info.LoginProvider]);
                         await events._postRefreshContentEvent.InvokeAsync(scope);
-                    });
+                    }, token);
 
-                    _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                    logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-                    List<EmbedField> fields = new()
-                    {
-                        new EmbedField("User Name", user.UserName!, true),
-                        new EmbedField("Provider", info.LoginProvider, true),
-                        new EmbedField("Provider Key", info.ProviderKey, true)
-                    };
+                    List<EmbedField> fields =
+                    [
+                        new("User Name", user.UserName!, true),
+                        new("Provider", info.LoginProvider, true),
+                        new("Provider Key", info.ProviderKey, true)
+                    ];
 
-                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    await loggingQueue.QueueBackgroundWorkItemAsync(new Embed
                     {
                         Title = "New User Created",
                         Description = "A new user has signed in on our service!",
@@ -153,10 +145,10 @@ namespace LDTTeam.Authentication.Server.Pages.Account
 
 
                     AuthenticationProperties props = new();
-                    props.StoreTokens(info.AuthenticationTokens);
+                    props.StoreTokens(info.AuthenticationTokens ?? []);
                     props.IsPersistent = true;
 
-                    await _signInManager.SignInAsync(user, props, info.LoginProvider);
+                    await signInManager.SignInAsync(user, props, info.LoginProvider);
 
                     return LocalRedirect(returnUrl);
                 }
@@ -164,26 +156,26 @@ namespace LDTTeam.Authentication.Server.Pages.Account
             else if (result.Errors.Any(x => x.Code == "DuplicateUserName"))
             {
                 user = new ApplicationUser {UserName = $"{info.Principal.Identity?.Name}{Guid.NewGuid():N}"};
-                result = await _userManager.CreateAsync(user);
+                result = await userManager.CreateAsync(user);
 
                 if (result.Succeeded)
                 {
-                    result = await _userManager.AddLoginAsync(user, info);
+                    result = await userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
-                        await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+                        await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
                         {
-                            await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                            await events._refreshContentEvent.InvokeAsync(scope, [info.LoginProvider]);
                             await events._postRefreshContentEvent.InvokeAsync(scope);
-                        });
+                        }, token);
 
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                        logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                         AuthenticationProperties props = new();
-                        props.StoreTokens(info.AuthenticationTokens);
+                        props.StoreTokens(info.AuthenticationTokens ?? []);
                         props.IsPersistent = true;
 
-                        await _signInManager.SignInAsync(user, props, info.LoginProvider);
+                        await signInManager.SignInAsync(user, props, info.LoginProvider);
 
                         return LocalRedirect(returnUrl);
                     }

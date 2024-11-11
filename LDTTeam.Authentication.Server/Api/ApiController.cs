@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Rewards;
@@ -16,57 +17,48 @@ namespace LDTTeam.Authentication.Server.Api
 {
     [ApiController]
     [Route("Api")]
-    public class ApiController : ControllerBase
+    public class ApiController(
+        IBackgroundEventsQueue eventsQueue,
+        IConditionService conditionService,
+        DatabaseContext context)
+        : ControllerBase
     {
-        private readonly IBackgroundEventsQueue _eventsQueue;
-        private readonly IConditionService _conditionService;
-        private readonly DatabaseContext _context;
-
-        public ApiController(IBackgroundEventsQueue eventsQueue, IConditionService conditionService,
-            DatabaseContext context)
-        {
-            _eventsQueue = eventsQueue;
-            _conditionService = conditionService;
-            _context = context;
-        }
-
         [HttpGet("webhook/{provider}")]
         [HttpPost("webhook/{provider}")]
-        public async Task<ActionResult> WebhookEndpoint(string provider)
+        public async Task<ActionResult> WebhookEndpoint(string provider, CancellationToken token)
         {
             if (provider == "all")
             {
-                await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+                await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
                 {
                     await events._refreshContentEvent.InvokeAsync(scope, null);
                     await events._postRefreshContentEvent.InvokeAsync(scope);
-                });
+                }, token);
                 return Ok();
             }
 
-            await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+            await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
             {
-                await events._refreshContentEvent.InvokeAsync(scope, new List<string> {provider});
+                await events._refreshContentEvent.InvokeAsync(scope, [provider]);
                 await events._postRefreshContentEvent.InvokeAsync(scope);
-            });
+            }, token);
             return Ok();
         }
 
         [HttpGet("{provider}/{providerKey}/{rewardId}")]
-        public async Task<ActionResult<bool>> Endpoint(string provider, string providerKey, string rewardId)
+        public async Task<ActionResult<bool>> Endpoint(string provider, string providerKey, string rewardId, CancellationToken token)
         {
-            bool? check = await _conditionService.CheckReward(provider, providerKey, rewardId);
+            bool? check = await conditionService.CheckReward(provider, providerKey, rewardId, token);
 
             if (check == null)
                 return NotFound();
             
             try
             {
-                EndpointMetric? metric = await _context.Metrics.FirstOrDefaultAsync(x =>
+                EndpointMetric? metric = await context.Metrics.FirstOrDefaultAsync(x =>
                     x.Provider.ToLower() == provider.ToLower() &&
                     x.RewardId.ToLower() == rewardId.ToLower() &&
-                    x.Result == check
-                );
+                    x.Result == check, cancellationToken: token);
 
                 if (metric == null)
                 {
@@ -78,11 +70,11 @@ namespace LDTTeam.Authentication.Server.Api
                         Count = 0
                     };
 
-                    await _context.AddAsync(metric);
+                    await context.AddAsync(metric, token);
                 }
                 metric.Count++;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync(token);
             }
             catch (Exception e)
             {
@@ -93,17 +85,19 @@ namespace LDTTeam.Authentication.Server.Api
         }
 
         [HttpGet("/metrics")]
-        public async Task<ActionResult<List<EndpointMetric>>> Metrics()
+        public async Task<ActionResult<List<EndpointMetric>>> Metrics(CancellationToken token)
         {
-            return await _context.Metrics
+            return await context.Metrics
                 .OrderBy(x => x.Id)
-                .ToListAsync();
+                .ToListAsync(cancellationToken: token);
         }
  
         [HttpGet("/metrics/{id:guid}")]
-        public async Task<ActionResult<List<HistoricalEndpointMetric>>> HistoricalMetrics(Guid id, bool all = false)
+        public async Task<ActionResult<List<HistoricalEndpointMetric>>> HistoricalMetrics(Guid id, bool? loadAll, CancellationToken token)
         {
-            IQueryable<HistoricalEndpointMetric> query = _context.HistoricalMetrics
+            var all = loadAll ?? false;
+            
+            IQueryable<HistoricalEndpointMetric> query = context.HistoricalMetrics
                 .Where(x => x.Metric.Id == id);
 
             DateTimeOffset sevenDaysAgo = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(7));
@@ -111,7 +105,7 @@ namespace LDTTeam.Authentication.Server.Api
             if (!all)
                 query = query.Where(x => x.DateTime > sevenDaysAgo);
             
-            return await query.ToListAsync();
+            return await query.ToListAsync(cancellationToken: token);
         }
     }
 }

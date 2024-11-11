@@ -59,7 +59,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                 await events._refreshContentEvent.InvokeAsync(scope,
                     provider == null ? null : new List<string> {provider});
                 await events._postRefreshContentEvent.InvokeAsync(scope);
-            });
+            }, CancellationToken);
 
             return await _channelApi.CreateFollowupMessageAsync
             (

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.GitHub.Condition;
 using LDTTeam.Authentication.Modules.GitHub.Services;
@@ -49,7 +50,7 @@ namespace LDTTeam.Authentication.Modules.GitHub
                 .AddStartupTask<GitHubDatabaseMigrationTask>();
         }
 
-        public void EventsSubscription(IServiceProvider services, EventsService events)
+        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
         {
             events.RefreshContentEvent += async (scope, modules) =>
             {

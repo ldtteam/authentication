@@ -33,7 +33,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
         public async Task<Result> MyRewardsCommand()
         {
             Dictionary<string, bool>? rewards =
-                await _conditionService.GetRewardsForUser("discord", _context.User.ID.ToString());
+                await _conditionService.GetRewardsForUser("discord", _context.User.ID.ToString(), CancellationToken);
 
             Result<IMessage> reply;
             if (rewards == null)

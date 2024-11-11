@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
@@ -23,14 +24,14 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 
         public Dictionary<string, bool> RewardsDictionary { get; set; } = null!;
 
-        public async Task<ActionResult> OnGetAsync()
+        public async Task<ActionResult> OnGetAsync(CancellationToken token)
         {
             ApplicationUser? user = await _userManager.GetUserAsync(User);
 
             if (user == null)
                 return NotFound();
 
-            RewardsDictionary = await _conditionService.GetRewardsForUser(user.Id);
+            RewardsDictionary = await _conditionService.GetRewardsForUser(user.Id, token);
 
             return Page();
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
@@ -61,12 +62,12 @@ namespace LDTTeam.Authentication.Modules.Discord
                 .AddDiscordCaching();
         }
 
-        public void EventsSubscription(IServiceProvider services, EventsService events)
+        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
         {
             events.PostRefreshContentEvent += async sp =>
             {
                 IConditionService conditionService = sp.ServiceProvider.GetRequiredService<IConditionService>();
-                Dictionary<string, List<string>> rewards = await conditionService.GetRewardsForProvider("discord");
+                Dictionary<string, List<string>> rewards = await conditionService.GetRewardsForProvider("discord", token);
                 IDiscordRestGuildAPI guildApi = sp.ServiceProvider.GetRequiredService<IDiscordRestGuildAPI>();
                 IConfiguration configuration = sp.ServiceProvider.GetRequiredService<IConfiguration>();
 

@@ -52,7 +52,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
             else
             {
                 Dictionary<string, bool>? rewards =
-                    await _conditionService.GetRewardsForUser("discord", user.ID.ToString());
+                    await _conditionService.GetRewardsForUser("discord", user.ID.ToString(), CancellationToken);
 
                 if (rewards == null)
                 {
@@ -315,7 +315,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     {
                         try
                         {
-                            await _conditionService.AddConditionToReward(rewardId, moduleName, conditionName, lambda);
+                            await _conditionService.AddConditionToReward(rewardId, moduleName, conditionName, lambda, CancellationToken);
                             
                             reply = await Reply(new Embed
                             {
@@ -379,7 +379,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     {
                         try
                         {
-                            await _conditionService.RemoveConditionFromReward(rewardId, moduleName, conditionName);
+                            await _conditionService.RemoveConditionFromReward(rewardId, moduleName, conditionName, CancellationToken);
                             
                             reply = await Reply(new Embed
                             {

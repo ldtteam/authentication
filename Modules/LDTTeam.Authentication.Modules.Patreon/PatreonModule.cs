@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
@@ -48,7 +49,7 @@ namespace LDTTeam.Authentication.Modules.Patreon
                 .AddStartupTask<PatreonDatabaseMigrationTask>();
         }
 
-        public void EventsSubscription(IServiceProvider services, EventsService events)
+        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
         {
             events.RefreshContentEvent += async (scope, modules) =>
             {

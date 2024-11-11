@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LDTTeam.Authentication.Modules.Minecraft.Services
@@ -20,15 +21,13 @@ namespace LDTTeam.Authentication.Modules.Minecraft.Services
         public record UuidResponseDto(string Id, string Name);
 
         // ReSharper disable once MemberCanBeMadeStatic.Global
-        public async Task<string?> GetUuidFromUsername(string username)
+        public async Task<string?> GetUuidFromUsername(string username, CancellationToken token)
         {
             //_httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(new Uri("https://api.mojang.com/profiles/minecraft"), new[] {username});
-            
+            var response = await _httpClient.PostAsJsonAsync(new Uri("https://api.mojang.com/profiles/minecraft"), new[] {username}, cancellationToken: token);
             if (!response.IsSuccessStatusCode) return null;
-
-            List<UuidResponseDto>? elements = await response.Content.ReadFromJsonAsync<List<UuidResponseDto>>();
+            var elements = await response.Content.ReadFromJsonAsync<List<UuidResponseDto>>(cancellationToken: token);
             return elements?.FirstOrDefault()?.Id;
         }
         

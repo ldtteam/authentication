@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
@@ -20,29 +21,17 @@ using Remora.Discord.API.Objects;
 namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 {
     [Authorize]
-    public class ExternalLoginsModel : PageModel
+    public class ExternalLoginsModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        MinecraftService minecraftService,
+        IBackgroundEventsQueue eventsQueue,
+        ILoggingQueue loggingQueue)
+        : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly MinecraftService _minecraftService;
-        private readonly IBackgroundEventsQueue _eventsQueue;
-        private readonly ILoggingQueue _loggingQueue;
+        public IList<UserLoginInfo>? CurrentLogins { get; set; }
 
-        public ExternalLoginsModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            MinecraftService minecraftService, IBackgroundEventsQueue eventsQueue, ILoggingQueue loggingQueue)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _minecraftService = minecraftService;
-            _eventsQueue = eventsQueue;
-            _loggingQueue = loggingQueue;
-        }
-
-        public IList<UserLoginInfo> CurrentLogins { get; set; }
-
-        public IList<AuthenticationScheme> OtherLogins { get; set; }
+        public IList<AuthenticationScheme>? OtherLogins { get; set; }
 
         public bool ShowRemoveButton { get; set; }
 
@@ -57,26 +46,25 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
         public class InputModel
         {
             [Display(Name = "Minecraft Username")]
-            public string MinecraftUsername { get; set; }
+            public string? MinecraftUsername { get; init; }
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(CancellationToken token)
         {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound("Unable to load user with ID 'user.Id'.");
             }
 
-            string minecraftId = User.Claims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id")?.Value;
-
+            var minecraftId = User.Claims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id")?.Value;
             if (minecraftId != null)
             {
                 MinecraftId = new Guid(minecraftId);
 
                 if (MinecraftId != null)
                 {
-                    string username = await _minecraftService.GetUsernameFromUuid(MinecraftId.Value);
+                    var username = await minecraftService.GetUsernameFromUuid(MinecraftId.Value);
                     Input = new InputModel
                     {
                         MinecraftUsername = username
@@ -84,8 +72,8 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 }
             }
 
-            CurrentLogins = await _userManager.GetLoginsAsync(user);
-            OtherLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync())
+            CurrentLogins = await userManager.GetLoginsAsync(user);
+            OtherLogins = (await signInManager.GetExternalAuthenticationSchemesAsync())
                 .Where(auth => CurrentLogins.All(ul => auth.Name != ul.LoginProvider))
                 .ToList();
             ShowRemoveButton = user.PasswordHash != null || CurrentLogins.Count > 1;
@@ -94,61 +82,60 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostRemoveLoginAsync(string loginProvider, string providerKey)
         {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID 'user.Id'.");
+                return NotFound($"Unable to load user with ID {User}.");
             }
 
-            IdentityResult result = await _userManager.RemoveLoginAsync(user, loginProvider, providerKey);
+            IdentityResult result = await userManager.RemoveLoginAsync(user, loginProvider, providerKey);
             if (!result.Succeeded)
             {
                 StatusMessage = "The external login was not removed.";
                 return RedirectToPage();
             }
 
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
             StatusMessage = "The external login was removed.";
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostLinkMinecraftAsync()
+        public async Task<IActionResult> OnPostLinkMinecraftAsync(CancellationToken token)
         {
             if (Input.MinecraftUsername == null)
-                return await OnGetAsync();
+                return await OnGetAsync(token);
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound("Unable to load user with ID 'user.Id'.");
             }
 
-            if ((await _userManager.GetLoginsAsync(user)).Any(x =>
+            if ((await userManager.GetLoginsAsync(user)).Any(x =>
                 x.LoginProvider.Equals("minecraft", StringComparison.InvariantCultureIgnoreCase)))
-                return await OnGetAsync();
+                return await OnGetAsync(token);
 
-            string minecraftId = await _minecraftService.GetUuidFromUsername(Input.MinecraftUsername);
-
+            var minecraftId = await minecraftService.GetUuidFromUsername(Input.MinecraftUsername, token);
             if (minecraftId == null)
             {
                 StatusMessage = "Error Minecraft username was invalid";
-                return await OnGetAsync();
+                return await OnGetAsync(token);
             }
 
-            await _userManager.RemoveClaimsAsync(user,
-                (await _userManager.GetClaimsAsync(user)).Where(x => x.Type == "urn:minecraft:user:id"));
-            await _userManager.AddClaimAsync(user,
+            await userManager.RemoveClaimsAsync(user,
+                (await userManager.GetClaimsAsync(user)).Where(x => x.Type == "urn:minecraft:user:id"));
+            await userManager.AddClaimAsync(user,
                 new Claim("urn:minecraft:user:id", new Guid(minecraftId).ToString()));
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
 
-            List<EmbedField> fields = new()
-            {
-                new EmbedField("User Name", user.UserName!, true),
-                new EmbedField("Minecraft User name", Input.MinecraftUsername, true),
-                new EmbedField("UUID", minecraftId, true)
-            };
+            List<EmbedField> fields =
+            [
+                new("User Name", user.UserName!, true),
+                new("Minecraft User name", Input.MinecraftUsername, true),
+                new("UUID", minecraftId, true)
+            ];
 
-            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+            await loggingQueue.QueueBackgroundWorkItemAsync(new Embed
             {
                 Title = "User linked minecraft UUID",
                 Description = "A user has linked a new minecraft UUID to their account!",
@@ -166,39 +153,45 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
             // Request a redirect to the external login provider to link a login for the current user
-            string redirectUrl = Url.Page("./ExternalLogins", "LinkLoginCallback");
+            string? redirectUrl = Url.Page("./ExternalLogins", "LinkLoginCallback");
             AuthenticationProperties properties =
-                _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl,
-                    _userManager.GetUserId(User));
+                signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl,
+                    userManager.GetUserId(User));
             return new ChallengeResult(provider, properties);
         }
 
-        public async Task<IActionResult> OnGetLinkLoginCallbackAsync()
+        public async Task<IActionResult> OnGetLinkLoginCallbackAsync(CancellationToken token)
         {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID 'user.Id'.");
             }
 
-            ExternalLoginInfo info = await _signInManager.GetExternalLoginInfoAsync(user.Id);
+            var info = await signInManager.GetExternalLoginInfoAsync(user.Id);
             if (info == null)
             {
                 throw new InvalidOperationException(
                     $"Unexpected error occurred loading external login info for user with ID '{user.Id}'.");
             }
 
-            IdentityResult result = await _userManager.AddLoginAsync(user, info);
+            IdentityResult result = await userManager.AddLoginAsync(user, info);
             if (!result.Succeeded && result.Errors.All(x => x.Code == "LoginAlreadyAssociated"))
             {
-                ApplicationUser mergeUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                IList<UserLoginInfo> mergeLogins = await _userManager.GetLoginsAsync(mergeUser);
-                IList<Claim> mergeClaims = await _userManager.GetClaimsAsync(mergeUser);
+                var mergeUser = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (mergeUser == null)
+                {
+                    StatusMessage = "There was an error adding your external login";
+                    return RedirectToPage();
+                }
+                
+                IList<UserLoginInfo> mergeLogins = await userManager.GetLoginsAsync(mergeUser);
+                IList<Claim> mergeClaims = await userManager.GetClaimsAsync(mergeUser);
 
                 foreach (UserLoginInfo mergeLogin in mergeLogins)
                 {
-                    await _userManager.RemoveLoginAsync(mergeUser, mergeLogin.LoginProvider, mergeLogin.ProviderKey);
-                    await _userManager.AddLoginAsync(user, mergeLogin);
+                    await userManager.RemoveLoginAsync(mergeUser, mergeLogin.LoginProvider, mergeLogin.ProviderKey);
+                    await userManager.AddLoginAsync(user, mergeLogin);
                 }
 
                 if (!mergeLogins.Any(x =>
@@ -206,17 +199,17 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 {
                     Claim? mergeClaim = mergeClaims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
                     if (mergeClaim != null)
-                        await _userManager.AddClaimAsync(user, mergeClaim);
+                        await userManager.AddClaimAsync(user, mergeClaim);
                 }
                 else
                 {
-                    IList<Claim> claims = await _userManager.GetClaimsAsync(user);
+                    IList<Claim> claims = await userManager.GetClaimsAsync(user);
                     Claim? mcClaim = claims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
                     if (mcClaim != null)
-                        await _userManager.RemoveClaimAsync(user, mcClaim);
+                        await userManager.RemoveClaimAsync(user, mcClaim);
                 }
 
-                await _userManager.DeleteAsync(mergeUser);
+                await userManager.DeleteAsync(mergeUser);
                 
                 StatusMessage =
                     "The external login was already linked to an existing account, your accounts have been merged.";
@@ -227,14 +220,14 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 return RedirectToPage();
             }
 
-            List<EmbedField> fields = new()
-            {
-                new EmbedField("User Name", user.UserName!, true),
-                new EmbedField("Provider", info.LoginProvider, true),
-                new EmbedField("Provider Key", info.ProviderKey, true)
-            };
+            List<EmbedField> fields =
+            [
+                new("User Name", user.UserName!, true),
+                new("Provider", info.LoginProvider, true),
+                new("Provider Key", info.ProviderKey, true)
+            ];
 
-            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+            await loggingQueue.QueueBackgroundWorkItemAsync(new Embed
             {
                 Title = "User linked new OAuth provider",
                 Description = "A user has linked a new OAuth provider to their account!",
@@ -243,21 +236,21 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
             });
 
 
-            await _eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
+            await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
             {
-                await events._refreshContentEvent.InvokeAsync(scope, new List<string> {info.LoginProvider});
+                await events._refreshContentEvent.InvokeAsync(scope, [info.LoginProvider]);
                 await events._postRefreshContentEvent.InvokeAsync(scope);
-            });
+            }, token);
 
             if (info.LoginProvider == "Minecraft")
             {
-                await _userManager.RemoveClaimsAsync(user,
-                    (await _userManager.GetClaimsAsync(user)).Where(x => x.Type == "urn:minecraft:user:id"));
+                await userManager.RemoveClaimsAsync(user,
+                    (await userManager.GetClaimsAsync(user)).Where(x => x.Type == "urn:minecraft:user:id"));
             }
 
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
 
             StatusMessage ??= "The external login was added.";
             return RedirectToPage();

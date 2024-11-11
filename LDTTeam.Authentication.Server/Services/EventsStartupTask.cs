@@ -26,7 +26,7 @@ namespace LDTTeam.Authentication.Server.Services
         {
             foreach (IModule module in Modules.List)
             {
-                module.EventsSubscription(_services, _eventsService);
+                module.EventsSubscription(_services, _eventsService, cancellationToken);
             }
 
             await _eventsService._conditionRegistration.InvokeAsync();
