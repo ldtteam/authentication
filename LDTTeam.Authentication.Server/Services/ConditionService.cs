@@ -36,8 +36,8 @@ namespace LDTTeam.Authentication.Server.Services
 
             IdentityUserLogin<string>? loginInfo = await db.UserLogins
                 .FirstOrDefaultAsync(x =>
-                    x.LoginProvider.Equals(provider, StringComparison.CurrentCultureIgnoreCase) && 
-                    x.ProviderKey.Equals(providerKey, StringComparison.CurrentCultureIgnoreCase), cancellationToken: cancellationToken);
+                    x.LoginProvider == provider && 
+                    x.ProviderKey == providerKey, cancellationToken: cancellationToken);
 
             var userId = loginInfo?.UserId;
             if (userId != null) return await CheckReward(userId, reward, cancellationToken);
@@ -46,7 +46,7 @@ namespace LDTTeam.Authentication.Server.Services
                 .FirstOrDefaultAsync(x =>
                     x.ClaimValue != null &&
                     x.ClaimType == "urn:minecraft:user:id" && 
-                    x.ClaimValue.Equals(providerKey, StringComparison.CurrentCultureIgnoreCase), cancellationToken: cancellationToken);
+                    x.ClaimValue == providerKey, cancellationToken: cancellationToken);
 
             if (claim == null)
                 return false;
