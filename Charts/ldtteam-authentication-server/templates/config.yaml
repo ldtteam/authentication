@@ -20,9 +20,9 @@ data:
         }
       },
       "ConnectionStrings": {
-        "postgres": "Server=tasks.postgres;Port=5432;User Id=ldtteam-auth;Password=LdtteamAuth185;Database=authentication;Integrated Security=false;",
-        "postgres_github": "Server=tasks.postgres;Port=5432;User Id=ldtteam-auth;Password=LdtteamAuth185;Database=github;Integrated Security=false;",
-        "postgres_patreon": "Server=tasks.postgres;Port=5432;User Id=ldtteam-auth;Password=LdtteamAuth185;Database=patreon;Integrated Security=false;"
+        "postgres": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=authentication;Integrated Security=false;",
+        "postgres_github": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=github;Integrated Security=false;",
+        "postgres_patreon": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=patreon;Integrated Security=false;"
       },
       "GitHub": {
         "ClientId": "Iv1.1dd3379574845528",
