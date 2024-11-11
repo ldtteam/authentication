@@ -49,6 +49,10 @@ spec:
             - name: appsettings
               mountPath: /app/appsettings.json
               subPath: appsettings.json
+            - name: secrets
+              mountPath: /app/privateKey.pem
+              readOnly: true  
+              subPath: privateKey.pem
           env:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.BotToken") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.ClientSecret") .) | nindent 12}}
@@ -61,4 +65,10 @@ spec:
       volumes:        
         - name: appsettings
           configMap:
-            name: {{ include "ldtteam-authentication-server.fullname" . }}    
+            name: {{ include "ldtteam-authentication-server.fullname" . }}   
+        - name: secrets
+          secret:
+            secretName: {{ include "ldtteam-authentication-server.fullname" . }}
+            items:
+              - key: Github.PrivateKey
+                path: privateKey.pem
