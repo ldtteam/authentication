@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -18,12 +19,12 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
     [Group("rewards")]
     public class RewardsCommands : CommandGroup
     {
-        private readonly InteractionContext _context;
+        private readonly IInteractionContext _context;
         private readonly IFeedbackService _feedbackService;
         private readonly IConditionService _conditionService;
         private readonly IRewardService _rewardService;
 
-        public RewardsCommands(InteractionContext context, IFeedbackService feedbackService,
+        public RewardsCommands(IInteractionContext context, IFeedbackService feedbackService,
             IConditionService conditionService, IRewardService rewardService)
         {
             _context = context;
@@ -335,12 +336,12 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
         [Group("conditions")]
         public class RewardConditionsCommands : CommandGroup
         {
-            private readonly InteractionContext _context;
+            private readonly IInteractionContext _context;
             private readonly IFeedbackService _feedbackService;
             private readonly IConditionService _conditionService;
             private readonly IRewardService _rewardService;
 
-            public RewardConditionsCommands(InteractionContext context, IFeedbackService feedbackService,
+            public RewardConditionsCommands(IInteractionContext context, IFeedbackService feedbackService,
                 IConditionService conditionService, IRewardService rewardService)
             {
                 _context = context;

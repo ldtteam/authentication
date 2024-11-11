@@ -15,11 +15,11 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 {
     public class MyRewardsCommands : CommandGroup
     {
-        private readonly InteractionContext _context;
+        private readonly IInteractionContext _context;
         private readonly IFeedbackService _feedbackService;
         private readonly IConditionService _conditionService;
 
-        public MyRewardsCommands(InteractionContext context,
+        public MyRewardsCommands(IInteractionContext context,
             IFeedbackService feedbackService,
             IConditionService conditionService)
         {

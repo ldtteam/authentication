@@ -15,11 +15,11 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 {
     public class RefreshCommand : CommandGroup
     {
-        private readonly InteractionContext _context;
+        private readonly IInteractionContext _context;
         private readonly IFeedbackService _feedbackService;
         private readonly IBackgroundEventsQueue _eventsQueue;
 
-        public RefreshCommand(InteractionContext context,
+        public RefreshCommand(IInteractionContext context,
             IBackgroundEventsQueue eventsQueue, IFeedbackService feedbackService)
         {
             _context = context;
