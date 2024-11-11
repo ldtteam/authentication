@@ -43,10 +43,13 @@ jobs:
           
           # Now this inserted a version with a v prefix, we need to remove only that initial v
           sed -i "1s/version: v\(.*\)/version: \1/g" Chart.yaml
+
+      - name: Add Bitnami chart repository
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
         
       - name: Install chart dependencies
         run: helm dependency update Charts/ldtteam-authentication-server
-          
+    
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
         with:
