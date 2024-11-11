@@ -17,3 +17,6 @@ Directories:
 # Hosting Requirements
 
 Currently the only hosting requirement is a postgres database.
+
+# Chart information
+This chart will be published on github.
