@@ -23,12 +23,13 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:     
-  build:
+  tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
-
+    outputs: 
+      tag: ${{ steps.tag.outputs.new_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,12 +37,24 @@ jobs:
           fetch-depth: '0'
 
       - name: Bump version and push tag
+        id: tag
         uses: anothrNick/github-tag-action@1.71.0 # Don't use @master or @v1 unless you're happy to test the latest version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
           DEFAULT_BUMP: patch
           GIT_API_TAGGING: false
+
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: '0'
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -71,3 +84,17 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+    
+  chart:
+    if: github.event_name != 'pull_request'
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/chart-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+    
+      
+        

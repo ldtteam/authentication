@@ -1,10 +1,16 @@
 name: Release Charts
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+  workflow_call:
+    inputs:
+      tag:
+        description: 'The tag to release'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  statuses: write
 
 jobs:
   release:
@@ -30,10 +36,10 @@ jobs:
       - name: Update Helm Chart Version
         working-directory: Charts/ldtteam-authentication-server
         run: |
-          # The current version is stored in github.ref_name, we need to rewrite the charts.yaml file with the new version
+          # The current version is stored in inputs.tag, we need to rewrite the charts.yaml file with the new version
           # However we can only replace the version: property if it is at the start of a line
-          echo "Updating Chart.yaml version to ${{ github.ref_name }}"
-          sed -i "s/^version: \(.*\)/version: ${{ github.ref_name }}/g" Chart.yaml
+          echo "Updating Chart.yaml version to ${{ inputs.tag }}"
+          sed -i "s/^version: \(.*\)/version: ${{ inputs.tag }}/g" Chart.yaml
           
           # Now this inserted a version with a v prefix, we need to remove only that initial v
           sed -i "1s/version: v\(.*\)/version: \1/g" Chart.yaml
