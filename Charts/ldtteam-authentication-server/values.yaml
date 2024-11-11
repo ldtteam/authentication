@@ -74,7 +74,7 @@ postgresql:
   enabled: true
   global:
     postgresql:
-      postgresqlDatabase: "donator-auth"
-      postgresqlUsername: "ldtteam-donator-auth"
-      postgresqlPassword: "DonatorAuth1!"
-      servicePort: "5432"
+      auth:
+        username: "ldtteam-donator-auth"
+        password: "DonatorAuth1!"
+        database: "donator-auth"
