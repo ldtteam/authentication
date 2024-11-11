@@ -75,6 +75,6 @@ postgresql:
   global:
     postgresql:
       postgresqlDatabase: "donator-auth"
-      postgresqlPassword: "ldtteam-donator-auth"
-      postgresqlUsername: "DonatorAuth1!"
+      postgresqlUsername: "ldtteam-donator-auth"
+      postgresqlPassword: "DonatorAuth1!"
       servicePort: "5432"
