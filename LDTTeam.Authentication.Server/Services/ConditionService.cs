@@ -34,7 +34,7 @@ namespace LDTTeam.Authentication.Server.Services
 
             IdentityUserLogin<string>? loginInfo = await db.UserLogins
                 .FirstOrDefaultAsync(x =>
-                    x.LoginProvider == provider && 
+                    x.LoginProvider.ToLower() == provider.ToLower() && 
                     x.ProviderKey == providerKey, cancellationToken: cancellationToken);
 
             var userId = loginInfo?.UserId;
