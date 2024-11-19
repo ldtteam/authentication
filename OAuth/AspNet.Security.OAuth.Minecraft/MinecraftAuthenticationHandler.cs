@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,6 +31,41 @@ namespace AspNet.Security.OAuth.Minecraft
         {
         }
 
+        protected override string BuildChallengeUrl(AuthenticationProperties properties, string redirectUri)
+        {
+            var scopeParameter = properties.GetParameter<ICollection<string>>(OAuthChallengeProperties.ScopeKey);
+            var scope = scopeParameter != null ? FormatScope(scopeParameter) : FormatScope();
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "client_id", Options.ClientId },
+                { "scope", scope },
+                { "response_type", "code" },
+                { "redirect_uri", redirectUri },
+                { "prompt", "select_account" },
+            };
+
+            if (Options.UsePkce)
+            {
+                var bytes = new byte[32];
+                RandomNumberGenerator.Fill(bytes);
+                var codeVerifier = Microsoft.AspNetCore.Authentication.Base64UrlTextEncoder.Encode(bytes);
+
+                // Store this for use during the code redemption.
+                properties.Items.Add(OAuthConstants.CodeVerifierKey, codeVerifier);
+
+                var challengeBytes = SHA256.HashData(Encoding.UTF8.GetBytes(codeVerifier));
+                var codeChallenge = WebEncoders.Base64UrlEncode(challengeBytes);
+
+                parameters[OAuthConstants.CodeChallengeKey] = codeChallenge;
+                parameters[OAuthConstants.CodeChallengeMethodKey] = OAuthConstants.CodeChallengeMethodS256;
+            }
+
+            parameters["state"] = Options.StateDataFormat.Protect(properties);
+
+            return QueryHelpers.AddQueryString(Options.AuthorizationEndpoint, parameters!);
+        }
+
         protected override async Task<OAuthTokenResponse> ExchangeCodeAsync(OAuthCodeExchangeContext context)
         {
             Dictionary<string, string> tokenRequestParameters = new()
@@ -39,7 +76,6 @@ namespace AspNet.Security.OAuth.Minecraft
                 {"code", context.Code},
                 {"scope", "Xboxlive.signin Xboxlive.offline_access"},
                 {"grant_type", "authorization_code"},
-                {"prompt", "select_account"},
             };
 
             // PKCE https://tools.ietf.org/html/rfc7636#section-4.5, see BuildChallengeUrl
