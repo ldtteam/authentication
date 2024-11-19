@@ -39,6 +39,7 @@ namespace AspNet.Security.OAuth.Minecraft
                 {"code", context.Code},
                 {"scope", "Xboxlive.signin Xboxlive.offline_access"},
                 {"grant_type", "authorization_code"},
+                {"prompt", "select_account"},
             };
 
             // PKCE https://tools.ietf.org/html/rfc7636#section-4.5, see BuildChallengeUrl
