@@ -83,3 +83,11 @@ postgresql:
         username: "ldtteam-donator-auth"
         password: "DonatorAuth1!"
         database: "donator-auth"
+
+postgresha:
+  enabled: true
+  global:
+    postgresql:
+      username: "ldtteam-donator-auth"
+      password: "DonatorAuth1!"
+      database: "donator-auth"
