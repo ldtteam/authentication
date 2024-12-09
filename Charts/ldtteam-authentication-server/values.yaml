@@ -86,6 +86,12 @@ postgresql:
 
 postgresha:
   enabled: true
+  persistance:
+    accessModes:
+    - ReadWriteMany
+    ### @param primary.persistence.size PVC Storage Request for PostgreSQL volume
+    ###
+    size: 25Gi
   global:
     postgresql:
       username: "ldtteam-donator-auth"
