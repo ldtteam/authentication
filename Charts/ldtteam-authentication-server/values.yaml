@@ -90,6 +90,11 @@ postgresha:
     accessModes:
     - ReadWriteMany
     size: 25Gi
+  postgresql:
+    readinessProbe:
+      initialDelaySeconds: 300
+      failureThreshold: 15
+      periodSeconds: 60
   global:
     postgresql:
       username: "ldtteam-donator-auth"
