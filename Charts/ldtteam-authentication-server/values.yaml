@@ -85,12 +85,10 @@ postgresql:
         database: "donator-auth"
 
 postgresha:
-  enabled: false
+  enabled: true
   persistence:
     accessModes:
     - ReadWriteMany
-    ### @param primary.persistence.size PVC Storage Request for PostgreSQL volume
-    ###
     size: 25Gi
   global:
     postgresql:
