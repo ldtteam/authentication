@@ -95,6 +95,10 @@ postgresha:
       initialDelaySeconds: 300
       failureThreshold: 15
       periodSeconds: 60
+    livenessProbe:
+      initialDelaySeconds: 300
+      failureThreshold: 15
+      periodSeconds: 60
   global:
     postgresql:
       username: "ldtteam-donator-auth"
