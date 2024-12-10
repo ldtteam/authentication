@@ -85,7 +85,7 @@ postgresql:
         database: "donator-auth"
 
 postgresha:
-  enabled: true
+  enabled: false
   persistence:
     accessModes:
     - ReadWriteMany
