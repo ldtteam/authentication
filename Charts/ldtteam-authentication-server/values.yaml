@@ -86,7 +86,7 @@ postgresql:
 
 postgresha:
   enabled: true
-  persistance:
+  persistence:
     accessModes:
     - ReadWriteMany
     ### @param primary.persistence.size PVC Storage Request for PostgreSQL volume
