@@ -1,1 +1,10 @@
-{"image":"mcr.microsoft.com/devcontainers/base:ubuntu"}
+{
+    "image":"mcr.microsoft.com/devcontainers/dotnet:8.0",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csdevkit"
+            ]
+        }
+    }
+}
