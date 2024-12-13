@@ -85,7 +85,7 @@ postgresql:
         database: "donator-auth"
 
 postgresha:
-  enabled: true
+  enabled: false
   persistence:
     accessModes:
     - ReadWriteOnce
@@ -99,10 +99,4 @@ postgresha:
       initialDelaySeconds: 300
       failureThreshold: 15
       periodSeconds: 60
-  global:
-    postgresql:
-      username: "ldtteam-donator-auth"
-      password: "DonatorAuth1!"
-      database: "donator-auth"
-      repmgrUsername: "ldtteam-donator-auth"
-      repmgrPassword: "DonatorAuth1!"
+      
