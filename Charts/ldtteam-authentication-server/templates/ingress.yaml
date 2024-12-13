@@ -18,10 +18,10 @@ spec:
   ingressClassName: "nginx"
   tls:
     - hosts:
-       - {{ .Values.ingress.hostName }}
+       - {{ .Values.ingress.hostname }}
       secretName: auth-minecolonies-tls
   rules:
-    - host: {{ .Values.ingress.hostName | quote }}
+    - host: {{ .Values.ingress.hostname | quote }}
       http:
         paths:
           - path: /
