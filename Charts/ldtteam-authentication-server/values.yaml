@@ -57,6 +57,8 @@ autoscaling:
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
+
+extraEnv: []
   
 postgresql:
   enabled: true

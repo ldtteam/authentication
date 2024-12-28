@@ -62,6 +62,7 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingRefreshToken") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patron.ApiClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
       volumes:        
         - name: appsettings
           configMap:
