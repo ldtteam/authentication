@@ -14,6 +14,9 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffering: 'on'
     nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
     nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+    {{- if .Values.ingress.annotations }}
+    {{ toYaml .Values.ingress.annotations }}
+    {{- end }}
 spec:
   ingressClassName: "nginx"
   tls:
