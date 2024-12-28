@@ -73,7 +73,6 @@ postgresha:
   enabled: false
   global:
     postgresql:
-      username: "ldtteam-donator-auth"
       password: "DonatorAuth1!"
       database: "donator-auth" 
   persistence:
