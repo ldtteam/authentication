@@ -58,7 +58,7 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
-extraEnv: []
+environment:
   
 postgresql:
   enabled: true
