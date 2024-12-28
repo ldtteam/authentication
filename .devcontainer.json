@@ -1,5 +1,10 @@
 {
     "image":"mcr.microsoft.com/devcontainers/dotnet:8.0",
+
+    "features": {
+        "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
+    },
+
     "customizations": {
         "vscode": {
             "extensions": [
