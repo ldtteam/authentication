@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -25,7 +26,7 @@ namespace LDTTeam.Authentication.Modules.Minecraft.Services
         {
             //_httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
-            HttpResponseMessage response = await _httpClient.GetAsync(new Uri($"https://api.mojang.com/users/profiles/minecraft/{username}"), cancellationToken: token);
+            HttpResponseMessage response = await _httpClient.GetAsync(new Uri($"https://api.mojang.com/users/profiles/minecraft/{WebUtility.UrlEncode(username)}"), cancellationToken: token);
             if (!response.IsSuccessStatusCode) return null;
             List<UuidResponseDto>? elements = await response.Content.ReadFromJsonAsync<List<UuidResponseDto>>(cancellationToken: token);
             return elements?.FirstOrDefault()?.Id;
