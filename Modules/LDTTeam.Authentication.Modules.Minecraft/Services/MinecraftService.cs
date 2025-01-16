@@ -25,9 +25,9 @@ namespace LDTTeam.Authentication.Modules.Minecraft.Services
         {
             //_httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
-            var response = await _httpClient.PostAsJsonAsync(new Uri("https://api.mojang.com/profiles/minecraft"), new[] {username}, cancellationToken: token);
+            HttpResponseMessage response = await _httpClient.GetAsync(new Uri($"https://api.mojang.com/users/profiles/minecraft/{username}"), cancellationToken: token);
             if (!response.IsSuccessStatusCode) return null;
-            var elements = await response.Content.ReadFromJsonAsync<List<UuidResponseDto>>(cancellationToken: token);
+            List<UuidResponseDto>? elements = await response.Content.ReadFromJsonAsync<List<UuidResponseDto>>(cancellationToken: token);
             return elements?.FirstOrDefault()?.Id;
         }
         
