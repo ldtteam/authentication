@@ -20,9 +20,9 @@ data:
         }
       },
       "ConnectionStrings": {
-        "postgres": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=authentication;",
-        "postgres_github": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=github;",
-        "postgres_patreon": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=patreon;"
+        "postgres": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=authentication;Timeout=600;",
+        "postgres_github": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=github;Timeout=600;",
+        "postgres_patreon": "Server=donator-auth-postgresql.donator-auth.svc.cluster.local;Port=5432;User Id=ldtteam-donator-auth;Password=DonatorAuth1!;Database=patreon;Timeout=600;"
       },
       "GitHub": {
         "ClientId": "Iv1.1dd3379574845528",
