@@ -52,7 +52,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                     DbPatreonMember? member = members.FirstOrDefault(x => x.Id == memberRelationships.User.Data.Id);
                     if (member != null)
                     {
-                        member.Lifetime = memberAttributes.LifetimeCents;
+                        //We take the biggest amount of lifetime contributions
+                        //It should be monotonically rising but patreon is shit and it does not.
+                        member.Lifetime = memberAttributes.LifetimeCents > member.Lifetime ? memberAttributes.LifetimeCents : member.Lifetime;
                         member.Monthly = memberAttributes.CurrentMonthlyCents;
                         continue;
                     }
