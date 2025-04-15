@@ -46,21 +46,21 @@ livenessProbe:
   httpGet:
     path: /
     port: http
-  initialDelaySeconds: 300
+  initialDelaySeconds: 90
   failureThreshold: 2
   periodSeconds: 60
 readinessProbe:
   httpGet:
     path: /
     port: http
-  initialDelaySeconds: 300
+  initialDelaySeconds: 60
   failureThreshold: 15
   periodSeconds: 60
 startupProbe:
   httpGet:
     path: /
     port: http
-  initialDelaySeconds: 300
+  initialDelaySeconds: 0
   failureThreshold: 100
   periodSeconds: 60
 
@@ -98,11 +98,11 @@ postgresha:
     size: 25Gi
   postgresql:
     readinessProbe:
-      initialDelaySeconds: 300
+      initialDelaySeconds: 90
       failureThreshold: 15
       periodSeconds: 60
     livenessProbe:
-      initialDelaySeconds: 300
+      initialDelaySeconds: 90
       failureThreshold: 15
       periodSeconds: 60
       
