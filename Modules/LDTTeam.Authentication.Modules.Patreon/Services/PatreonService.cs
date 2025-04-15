@@ -142,6 +142,14 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
             HttpResponseMessage responseMessage = await httpClientFactory.CreateClient().SendAsync(request);
 
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                logger.LogCritical("Failed to get access token from Patreon: " + responseMessage.StatusCode);
+                logger.LogWarning(await responseMessage.Content.ReadAsStringAsync());
+                
+                throw new Exception("Failed to get access token from Patreon: " + responseMessage.StatusCode);
+            }
+            
             AccessTokenResponse? response = await responseMessage.Content.ReadFromJsonAsync<AccessTokenResponse>();
 
             if (response is {RefreshToken: null} or {AccessToken: null})
