@@ -140,6 +140,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 $"&client_id={patreonConfig.ApiClientId}" +
                 $"&client_secret={patreonConfig.ApiClientSecret}");
 
+            logger.LogWarning("Requesting new tokens using: " + request.RequestUri);
             HttpResponseMessage responseMessage = await httpClientFactory.CreateClient().SendAsync(request);
 
             if (!responseMessage.IsSuccessStatusCode)
