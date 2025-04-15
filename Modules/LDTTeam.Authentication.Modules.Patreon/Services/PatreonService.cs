@@ -125,6 +125,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
             if (dbToken == null)
             {
+                logger.LogWarning("Patreon access token not found in database. Using initial refresh token: " +
+                                  patreonConfig.InitializingApiRefreshToken);
+                
                 dbToken = new DbToken
                 {
                     Id = Guid.NewGuid(),

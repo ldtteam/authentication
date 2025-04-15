@@ -64,7 +64,7 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "GitHub.ClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Minecraft.ClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 12}}
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingRefreshToken") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingApiRefreshToken") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ApiClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
       volumes:        
