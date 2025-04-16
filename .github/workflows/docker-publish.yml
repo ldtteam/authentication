@@ -83,8 +83,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.tag.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            PROJECT_VERSION=${{ needs.tag.outputs.tag }}
   
   chart:
     needs:

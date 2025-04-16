@@ -16,7 +16,6 @@ public class StartupAnnouncementTask(ILoggingQueue queue) : IStartupTask
         Embed embed = new Embed
         {
             Title = "Patreon API Manager Started",
-            Description = "Started version: " + Assembly.GetEntryAssembly()?.GetName().Version,
             Colour = Color.GreenYellow,
         };
 
