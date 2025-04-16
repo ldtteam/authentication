@@ -147,6 +147,13 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                 }
 
                 await _db.SaveChangesAsync();
+                
+                await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                {
+                    Title = "Patreon Refresh completed",
+                    Description = "All patreon members have been refreshed",
+                    Colour = Color.Navy
+                });
             }
             catch (Exception e)
             {
