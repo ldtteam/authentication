@@ -34,6 +34,18 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
             [JsonPropertyName("currently_entitled_amount_cents")]
             public long CurrentMonthlyCents { get; set; }
+            
+            [JsonPropertyName("will_pay_amount_cents")]
+            public long WillPayMonthlyCents { get; set; }
+            
+            [JsonPropertyName("last_charge_status")]
+            public string? LastChargeStatus { get; set; }
+            
+            [JsonPropertyName("last_charge_date")]
+            public string? LastChargeDate { get; set; }
+            
+            [JsonPropertyName("patron_status")]
+            public string? PatronStatus { get; set; }
         }
 
         public record UserData(string Id);
@@ -67,7 +79,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     $"https://www.patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
                     "?include=user" +
                     $"&{WebUtility.UrlEncode("page[count]")}=500" +
-                    $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status" + 
+                    $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status,will_pay_amount_cents,last_charge_status,last_charge_date" + 
                     cursorNext);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await RequestAccessToken());
 

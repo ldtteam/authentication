@@ -32,7 +32,8 @@ data:
       "Patreon": {
         "ClientId": "vczZ_-e9ZkZ8dF5d-0ely8pL0yMq5U2wNq_-mCPiMCfsDpJjfY7XJdLreqbjqKu6",
         "ApiClientId": "uWqCHPyalFE27zDU_OU87INED-_GUxpfm5vpSO9xpO9jTqJSOjABUt9IVJsissGQ",
-        "CampaignId": 355933
+        "CampaignId": 355933,
+        "NormalizeDollarsToEuros": true
       },
       "Minecraft": {
         "ClientId": "c44fb555-70db-4457-92f7-78309c6e62b8"
@@ -62,3 +63,4 @@ data:
         "LoggingChannel": 867386116490919976
       }
     }
+    

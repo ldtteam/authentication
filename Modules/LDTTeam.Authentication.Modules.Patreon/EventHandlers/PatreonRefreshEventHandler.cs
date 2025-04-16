@@ -5,10 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api.Logging;
+using LDTTeam.Authentication.Modules.Patreon.Config;
 using LDTTeam.Authentication.Modules.Patreon.Data;
 using LDTTeam.Authentication.Modules.Patreon.Data.Models;
 using LDTTeam.Authentication.Modules.Patreon.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Remora.Discord.API.Objects;
 
@@ -20,16 +22,18 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
         private readonly PatreonDatabaseContext _db;
         private readonly ILoggingQueue _loggingQueue;
         private readonly ILogger<PatreonRefreshEventHandler> _logger;
+        private readonly IConfiguration _configuration;
 
         private static readonly SemaphoreSlim Semaphore = new(1, 1);
 
         public PatreonRefreshEventHandler(PatreonService patreonService, PatreonDatabaseContext db,
-            ILogger<PatreonRefreshEventHandler> logger, ILoggingQueue loggingQueue)
+            ILogger<PatreonRefreshEventHandler> logger, ILoggingQueue loggingQueue, IConfiguration configuration)
         {
             _patreonService = patreonService;
             _db = db;
             _logger = logger;
             _loggingQueue = loggingQueue;
+            _configuration = configuration;
         }
 
         public async Task ExecuteAsync()
@@ -39,6 +43,12 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
             {
                 List<DbPatreonMember> members   = await _db.PatreonMembers.ToListAsync();
                 List<string>          memberIds = new();
+                PatreonConfig? patreonConfig = _configuration.GetSection("patreon").Get<PatreonConfig>();
+
+                if (patreonConfig == null)
+                {
+                    throw new Exception("Patreon not set in configuration!");
+                }
 
                 await foreach ((PatreonService.MemberAttributes memberAttributes,
                                    PatreonService.MemberRelationships memberRelationships) in _patreonService
@@ -49,21 +59,59 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 
                     memberIds.Add(memberRelationships.User.Data.Id);
 
+                    var lifetime = memberAttributes.LifetimeCents;
+                    var monthly = memberAttributes.CurrentMonthlyCents;
+                    if (monthly == 0 &&
+                        memberAttributes.PatronStatus == "active_patron" &&
+                        memberAttributes is { LastChargeDate: not null, LastChargeStatus: "Paid" } &&
+                        patreonConfig.NormalizeDollarsToEuros)
+                    {
+                        if (memberAttributes.WillPayMonthlyCents != 0)
+                        {
+                            monthly = memberAttributes.WillPayMonthlyCents;
+                        }
+                        else
+                        {
+                            List<EmbedField> inconsistentFields = new()
+                            {
+                                new EmbedField("Id", memberRelationships.User.Data.Id, false),
+                                new EmbedField("Lifetime", lifetime.ToString(), true),
+                                new EmbedField("Monthly", monthly.ToString(), true)
+                            };
+                            
+                            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                            {
+                                Title = "Patreon Data Inconsistent",
+                                Description = "Supposedly active patreon detected, yet no monthly amount set",
+                                Colour = Color.OrangeRed,
+                                Fields = inconsistentFields
+                            });
+                            
+                            _logger.LogWarning("Member {Id} has no monthly amount set, but is active. Setting to 0",
+                                memberRelationships.User.Data.Id);
+                        }
+                    }
+                    
                     DbPatreonMember? member = members.FirstOrDefault(x => x.Id == memberRelationships.User.Data.Id);
                     if (member != null)
                     {
+                        if (member.Lifetime > lifetime)
+                        {
+                            lifetime = member.Lifetime;
+                        }
+                        
                         //We take the biggest amount of lifetime contributions
                         //It should be monotonically rising but patreon is shit and it does not.
-                        member.Lifetime = memberAttributes.LifetimeCents > member.Lifetime ? memberAttributes.LifetimeCents : member.Lifetime;
-                        member.Monthly = memberAttributes.CurrentMonthlyCents;
+                        member.Lifetime = lifetime;
+                        member.Monthly = monthly;
                         continue;
                     }
 
                     List<EmbedField> fields = new()
                     {
                         new EmbedField("Id", memberRelationships.User.Data.Id, false),
-                        new EmbedField("Lifetime", memberAttributes.LifetimeCents.ToString(), true),
-                        new EmbedField("Monthly", memberAttributes.CurrentMonthlyCents.ToString(), true)
+                        new EmbedField("Lifetime", lifetime.ToString(), true),
+                        new EmbedField("Monthly", monthly.ToString(), true)
                     };
 
                     await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed

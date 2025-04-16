@@ -2,6 +2,8 @@ namespace LDTTeam.Authentication.Modules.Patreon.Config
 {
     public class PatreonConfig
     {
+        public bool NormalizeDollarsToEuros { get; set; }
+        
         public string ClientId { get; set; }
         
         public string ClientSecret { get; set; }
