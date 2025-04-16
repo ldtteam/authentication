@@ -68,7 +68,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                     {
                         if (memberAttributes.WillPayMonthlyCents != 0)
                         {
-                            monthly = memberAttributes.WillPayMonthlyCents;
+                            monthly = (long)(memberAttributes.WillPayMonthlyCents * 1.2f); //We multiply because patreon is shit, this covers both the currency conversion accurately enough and the patreon share
                         }
                         else
                         {
