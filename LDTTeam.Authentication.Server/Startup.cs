@@ -9,6 +9,7 @@ using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Config;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Services;
+using LDTTeam.Authentication.Server.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -103,6 +104,8 @@ namespace LDTTeam.Authentication.Server
                 services.AddFluffySpoonLetsEncryptFileCertificatePersistence();
                 services.AddFluffySpoonLetsEncryptMemoryChallengePersistence();
             }
+
+            services.AddStartupTask<StartupAnnouncementTask>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
