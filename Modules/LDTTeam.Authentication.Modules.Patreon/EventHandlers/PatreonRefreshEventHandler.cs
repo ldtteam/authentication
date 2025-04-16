@@ -59,6 +59,15 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 
                     memberIds.Add(memberRelationships.User.Data.Id);
 
+                    _logger.LogInformation("Member {Id} found, lifetime: {LifeTime}, monthly: {Monthly}, will pay: {WillPay}, patron status: {PatronStatus}, last charge date: {LastChargeDate}, last charge status: {LastChargeStatus}", 
+                        memberRelationships.User.Data.Id, 
+                        memberAttributes.LifetimeCents, 
+                        memberAttributes.CurrentMonthlyCents,
+                        memberAttributes.WillPayMonthlyCents,
+                        memberAttributes.PatronStatus,
+                        memberAttributes.LastChargeDate,
+                        memberAttributes.LastChargeStatus);
+                    
                     var lifetime = memberAttributes.LifetimeCents;
                     var monthly = memberAttributes.CurrentMonthlyCents;
                     if (monthly == 0 &&
