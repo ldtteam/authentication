@@ -78,86 +78,100 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
             }
             else
             {
-                Dictionary<string, List<string>>? rewards =
-                    await _conditionService.GetRewardsForProvider("discord", CancellationToken);
+                try
+                {
+                    Dictionary<string, List<string>>? rewards =
+                        await _conditionService.GetRewardsForProvider("discord", CancellationToken);
 
-                if (!rewards.Values.Any(x => x.Contains(user.ID.ToString())))
+                    if (!rewards.Values.Any(x => x.Contains(user.ID.ToString())))
+                    {
+                        reply = await _feedbackService.SendContextualEmbedAsync(
+                            new Embed
+                            {
+                                Title = "User not found",
+                                Description =
+                                    $"User {user.Username} was not found in rewards for provider",
+                                Colour = Color.Red
+                            });
+                    }
+                    else
+                    {
+                        IEnumerable<KeyValuePair<string, List<string>>> list = rewards
+                            .Where(x => x.Value.Contains(user.ID.ToString()));
+
+                        StringBuilder builder = new();
+
+                        foreach (KeyValuePair<string, List<string>> keyValuePair in list)
+                        {
+                            builder.Append($"TESTING: {keyValuePair.Key} | {keyValuePair.Value.Count}");
+                            string? val = keyValuePair.Value.FirstOrDefault(x => x == user.ID.ToString());
+                            builder.Append($"TESTING 2: {val}");
+                        }
+
+                        List<string> userRewards = rewards
+                            .Where(x => x.Value.Contains(user.ID.ToString()))
+                            .Select(x => x.Key)
+                            .ToList();
+
+                        foreach (string reward in userRewards)
+                        {
+                            builder.Append($"reward: {reward}");
+                        }
+
+                        DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
+
+                        Dictionary<string, List<Snowflake>> rewardRoles = discordConfig!
+                            .RoleMappings[_context.Interaction.GuildID.Value.ToString()]
+                            .ToDictionary(
+                                x => x.Key,
+                                x => x.Value.Select(y => new Snowflake(y)).ToList()
+                            );
+
+                        // roles to award
+                        List<Snowflake> rewardedRoles = rewardRoles
+                            .Where(x => userRewards.Contains(x.Key))
+                            .SelectMany(x => x.Value)
+                            .Distinct()
+                            .Select(x => x)
+                            .ToList();
+
+                        foreach (Snowflake reward in rewardedRoles)
+                        {
+                            builder.Append($"rewarded roles: {reward.ToString()}");
+                        }
+
+                        // roles not rewarded less rewardedRoles
+                        List<Snowflake> notRewardedRoles = rewardRoles
+                            .Where(x => !userRewards.Contains(x.Key))
+                            .SelectMany(x => x.Value)
+                            .Where(x => !rewardedRoles.Contains(x))
+                            .Distinct()
+                            .Select(x => x)
+                            .ToList();
+
+                        foreach (Snowflake reward in notRewardedRoles)
+                        {
+                            builder.Append($"not rewarded roles: {reward.ToString()}");
+                        }
+
+                        reply = await _feedbackService.SendContextualEmbedAsync(
+                            new Embed
+                            {
+                                Title = $"{user.Username}'s rewards",
+                                Colour = Color.Green,
+                                Description = builder.ToString()
+                            });
+                    }
+                }
+                catch (Exception e)
                 {
                     reply = await _feedbackService.SendContextualEmbedAsync(
                         new Embed
                         {
                             Title = "User not found",
                             Description =
-                                $"User {user.Username} was not found in rewards for provider",
+                                $"Comand received exception: {e.Message}",
                             Colour = Color.Red
-                        });
-                }
-                else
-                {
-                    IEnumerable<KeyValuePair<string, List<string>>> list = rewards
-                        .Where(x => x.Value.Contains(user.ID.ToString()));
-
-                    StringBuilder builder = new();
-
-                    foreach (KeyValuePair<string, List<string>> keyValuePair in list)
-                    {
-                        builder.Append($"TESTING: {keyValuePair.Key} | {keyValuePair.Value.Count}");
-                        string? val = keyValuePair.Value.FirstOrDefault(x => x == user.ID.ToString());
-                        builder.Append($"TESTING 2: {val}");
-                    }
-
-                    List<string> userRewards = rewards
-                        .Where(x => x.Value.Contains(user.ID.ToString()))
-                        .Select(x => x.Key)
-                        .ToList();
-
-                    foreach (string reward in userRewards)
-                    {
-                        builder.Append($"reward: {reward}");
-                    }
-                    
-                    DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
-                    
-                    Dictionary<string, List<Snowflake>> rewardRoles = discordConfig!
-                        .RoleMappings[_context.Interaction.GuildID.Value.ToString()]
-                        .ToDictionary(
-                            x => x.Key,
-                            x => x.Value.Select(y => new Snowflake(y)).ToList()
-                        );
-
-                    // roles to award
-                    List<Snowflake> rewardedRoles = rewardRoles
-                        .Where(x => userRewards.Contains(x.Key))
-                        .SelectMany(x => x.Value)
-                        .Distinct()
-                        .Select(x => x)
-                        .ToList();
-                    
-                    foreach (Snowflake reward in rewardedRoles)
-                    {
-                        builder.Append($"rewarded roles: {reward.ToString()}");
-                    }
-
-                    // roles not rewarded less rewardedRoles
-                    List<Snowflake> notRewardedRoles = rewardRoles
-                        .Where(x => !userRewards.Contains(x.Key))
-                        .SelectMany(x => x.Value)
-                        .Where(x => !rewardedRoles.Contains(x))
-                        .Distinct()
-                        .Select(x => x)
-                        .ToList();
-                    
-                    foreach (Snowflake reward in notRewardedRoles)
-                    {
-                        builder.Append($"not rewarded roles: {reward.ToString()}");
-                    }
-
-                    reply = await _feedbackService.SendContextualEmbedAsync(
-                        new Embed
-                        {
-                            Title = $"{user.Username}'s rewards",
-                            Colour = Color.Green,
-                            Description = builder.ToString()
                         });
                 }
             }
