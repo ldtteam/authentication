@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
+using LDTTeam.Authentication.Modules.Discord.Config;
+using Microsoft.Extensions.Configuration;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
+using Remora.Rest.Core;
 using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord.Commands
@@ -20,23 +24,29 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
     public class RewardsCommands : CommandGroup
     {
         private readonly IInteractionContext _context;
-        private readonly IFeedbackService _feedbackService;
-        private readonly IConditionService _conditionService;
-        private readonly IRewardService _rewardService;
+        private readonly IFeedbackService    _feedbackService;
+        private readonly IConditionService   _conditionService;
+        private readonly IRewardService      _rewardService;
+        private readonly IConfiguration      _configuration;
 
-        public RewardsCommands(IInteractionContext context, IFeedbackService feedbackService,
-            IConditionService conditionService, IRewardService rewardService)
+        public RewardsCommands(
+            IInteractionContext context,
+            IFeedbackService    feedbackService,
+            IConditionService   conditionService,
+            IRewardService      rewardService,
+            IConfiguration      configuration
+        )
         {
             _context = context;
             _feedbackService = feedbackService;
             _conditionService = conditionService;
             _rewardService = rewardService;
+            _configuration = configuration;
         }
 
-        [Command("user")]
-        [Description("Lists a user's LDTTeam Auth rewards")]
-        public async Task<IResult> UserRewardsCommand([Description("User to get rewards for")]
-            IUser user)
+        [Command("test")]
+        [Description("Test a user's LDTTeam Auth rewards")]
+        public async Task<IResult> TestRewardsCommand([Description("User to get rewards for")] IUser user)
         {
             var member = _context.Interaction.Member;
             if (!member.HasValue)
@@ -45,7 +55,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             var permissions = member.Value.Permissions;
             if (!permissions.HasValue)
             {
@@ -53,7 +63,130 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
+            Result<IMessage> reply;
+            if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
+            {
+                reply = await _feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No Permission",
+                        Description =
+                            "You require Administrator permissions for this command",
+                        Colour = Color.DarkRed
+                    });
+            }
+            else
+            {
+                Dictionary<string, List<string>>? rewards =
+                    await _conditionService.GetRewardsForProvider("discord", CancellationToken);
+
+                if (!rewards.Values.Any(x => x.Contains(user.ID.ToString())))
+                {
+                    reply = await _feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = "User not found",
+                            Description =
+                                $"User {user.Username} was not found in rewards for provider",
+                            Colour = Color.Red
+                        });
+                }
+                else
+                {
+                    IEnumerable<KeyValuePair<string, List<string>>> list = rewards
+                        .Where(x => x.Value.Contains(user.ID.ToString()));
+
+                    StringBuilder builder = new();
+
+                    foreach (KeyValuePair<string, List<string>> keyValuePair in list)
+                    {
+                        builder.Append($"TESTING: {keyValuePair.Key} | {keyValuePair.Value.Count}");
+                        string? val = keyValuePair.Value.FirstOrDefault(x => x == user.ID.ToString());
+                        builder.Append($"TESTING 2: {val}");
+                    }
+
+                    List<string> userRewards = rewards
+                        .Where(x => x.Value.Contains(user.ID.ToString()))
+                        .Select(x => x.Key)
+                        .ToList();
+
+                    foreach (string reward in userRewards)
+                    {
+                        builder.Append($"reward: {reward}");
+                    }
+                    
+                    DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
+                    
+                    Dictionary<string, List<Snowflake>> rewardRoles = discordConfig!
+                        .RoleMappings[_context.Interaction.GuildID.Value.ToString()]
+                        .ToDictionary(
+                            x => x.Key,
+                            x => x.Value.Select(y => new Snowflake(y)).ToList()
+                        );
+
+                    // roles to award
+                    List<Snowflake> rewardedRoles = rewardRoles
+                        .Where(x => userRewards.Contains(x.Key))
+                        .SelectMany(x => x.Value)
+                        .Distinct()
+                        .Select(x => x)
+                        .ToList();
+                    
+                    foreach (Snowflake reward in rewardedRoles)
+                    {
+                        builder.Append($"rewarded roles: {reward.ToString()}");
+                    }
+
+                    // roles not rewarded less rewardedRoles
+                    List<Snowflake> notRewardedRoles = rewardRoles
+                        .Where(x => !userRewards.Contains(x.Key))
+                        .SelectMany(x => x.Value)
+                        .Where(x => !rewardedRoles.Contains(x))
+                        .Distinct()
+                        .Select(x => x)
+                        .ToList();
+                    
+                    foreach (Snowflake reward in notRewardedRoles)
+                    {
+                        builder.Append($"not rewarded roles: {reward.ToString()}");
+                    }
+
+                    reply = await _feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = $"{user.Username}'s rewards",
+                            Colour = Color.Green,
+                            Description = builder.ToString()
+                        });
+                }
+            }
+
+            return !reply.IsSuccess
+                ? Result.FromError(reply)
+                : Result.FromSuccess();
+        }
+
+        [Command("user")]
+        [Description("Lists a user's LDTTeam Auth rewards")]
+        public async Task<IResult> UserRewardsCommand([Description("User to get rewards for")] IUser user)
+        {
+            var member = _context.Interaction.Member;
+            if (!member.HasValue)
+            {
+                return await _feedbackService.SendContextualErrorAsync(
+                    "Command needs a user to run"
+                );
+            }
+
+            var permissions = member.Value.Permissions;
+            if (!permissions.HasValue)
+            {
+                return await _feedbackService.SendContextualErrorAsync(
+                    "Command needs a user to run"
+                );
+            }
+
             Result<IMessage> reply;
             if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
             {
@@ -117,7 +250,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             var permissions = member.Value.Permissions;
             if (!permissions.HasValue)
             {
@@ -125,7 +258,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             Result<IMessage> reply;
             if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
             {
@@ -182,7 +315,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             var permissions = member.Value.Permissions;
             if (!permissions.HasValue)
             {
@@ -190,7 +323,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             Result<IMessage> reply;
             if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
             {
@@ -211,7 +344,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 
                     if (reward == null)
                     {
-                        reply =  await _feedbackService.SendContextualEmbedAsync(
+                        reply = await _feedbackService.SendContextualEmbedAsync(
                             new Embed
                             {
                                 Title = "Missing Reward",
@@ -269,8 +402,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 
         [Command("remove")]
         [Description("Removes a reward")]
-        public async Task<IResult> RemoveRewardCommand([Description("The to be removed reward's ID")]
-            string rewardId)
+        public async Task<IResult> RemoveRewardCommand([Description("The to be removed reward's ID")] string rewardId)
         {
             var member = _context.Interaction.Member;
             if (!member.HasValue)
@@ -279,7 +411,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             var permissions = member.Value.Permissions;
             if (!permissions.HasValue)
             {
@@ -287,7 +419,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     "Command needs a user to run"
                 );
             }
-            
+
             Result<IMessage> reply;
             if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
             {
@@ -337,12 +469,16 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
         public class RewardConditionsCommands : CommandGroup
         {
             private readonly IInteractionContext _context;
-            private readonly IFeedbackService _feedbackService;
-            private readonly IConditionService _conditionService;
-            private readonly IRewardService _rewardService;
+            private readonly IFeedbackService    _feedbackService;
+            private readonly IConditionService   _conditionService;
+            private readonly IRewardService      _rewardService;
 
-            public RewardConditionsCommands(IInteractionContext context, IFeedbackService feedbackService,
-                IConditionService conditionService, IRewardService rewardService)
+            public RewardConditionsCommands(
+                IInteractionContext context,
+                IFeedbackService    feedbackService,
+                IConditionService   conditionService,
+                IRewardService      rewardService
+            )
             {
                 _context = context;
                 _feedbackService = feedbackService;
@@ -359,7 +495,8 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                 string moduleName,
                 [Description("Module's Condition Name")]
                 string conditionName,
-                [Description("Module Lambda")] string lambda)
+                [Description("Module Lambda")] string lambda
+            )
             {
                 var member = _context.Interaction.Member;
                 if (!member.HasValue)
@@ -368,7 +505,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         "Command needs a user to run"
                     );
                 }
-            
+
                 var permissions = member.Value.Permissions;
                 if (!permissions.HasValue)
                 {
@@ -376,8 +513,8 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         "Command needs a user to run"
                     );
                 }
-                    
-                
+
+
                 Result<IMessage> reply;
                 if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
                 {
@@ -409,8 +546,9 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     {
                         try
                         {
-                            await _conditionService.AddConditionToReward(rewardId, moduleName, conditionName, lambda, CancellationToken);
-                            
+                            await _conditionService.AddConditionToReward(rewardId, moduleName, conditionName, lambda,
+                                CancellationToken);
+
                             reply = await _feedbackService.SendContextualEmbedAsync(
                                 new Embed
                                 {
@@ -430,12 +568,12 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         }
                     }
                 }
-                
+
                 return !reply.IsSuccess
                     ? Result.FromError(reply)
                     : Result.FromSuccess();
             }
-            
+
             [Command("remove")]
             [Description("Removes condition from reward")]
             public async Task<IResult> RemoveRewardConditionCommand(
@@ -444,7 +582,8 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                 [Description("Module Name for condition")]
                 string moduleName,
                 [Description("Module's Condition Name")]
-                string conditionName)
+                string conditionName
+            )
             {
                 var member = _context.Interaction.Member;
                 if (!member.HasValue)
@@ -453,7 +592,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         "Command needs a user to run"
                     );
                 }
-            
+
                 var permissions = member.Value.Permissions;
                 if (!permissions.HasValue)
                 {
@@ -461,8 +600,8 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         "Command needs a user to run"
                     );
                 }
-                    
-                
+
+
                 Result<IMessage> reply;
                 if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
                 {
@@ -494,8 +633,9 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                     {
                         try
                         {
-                            await _conditionService.RemoveConditionFromReward(rewardId, moduleName, conditionName, CancellationToken);
-                            
+                            await _conditionService.RemoveConditionFromReward(rewardId, moduleName, conditionName,
+                                CancellationToken);
+
                             reply = await _feedbackService.SendContextualEmbedAsync(
                                 new Embed
                                 {
@@ -515,7 +655,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                         }
                     }
                 }
-                
+
                 return !reply.IsSuccess
                     ? Result.FromError(reply)
                     : Result.FromSuccess();
