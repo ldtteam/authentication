@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -80,8 +81,10 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
             {
                 try
                 {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
                     Dictionary<string, List<string>>? rewards =
                         await _conditionService.GetRewardsForProvider("discord", CancellationToken);
+                    stopwatch.Stop();
 
                     if (!rewards.Values.Any(x => x.Contains(user.ID.ToString())))
                     {
@@ -100,12 +103,13 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                             .Where(x => x.Value.Contains(user.ID.ToString()));
 
                         StringBuilder builder = new();
+                        builder.Append($"Stopwatch db call: {stopwatch.ElapsedMilliseconds}ms\n");
 
                         foreach (KeyValuePair<string, List<string>> keyValuePair in list)
                         {
-                            builder.Append($"TESTING: {keyValuePair.Key} | {keyValuePair.Value.Count}");
+                            builder.Append($"TESTING: {keyValuePair.Key} | {keyValuePair.Value.Count}\n");
                             string? val = keyValuePair.Value.FirstOrDefault(x => x == user.ID.ToString());
-                            builder.Append($"TESTING 2: {val}");
+                            builder.Append($"TESTING 2: {val}\n");
                         }
 
                         List<string> userRewards = rewards
@@ -115,7 +119,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 
                         foreach (string reward in userRewards)
                         {
-                            builder.Append($"reward: {reward}");
+                            builder.Append($"reward: {reward}\n");
                         }
 
                         DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
@@ -137,7 +141,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 
                         foreach (Snowflake reward in rewardedRoles)
                         {
-                            builder.Append($"rewarded roles: {reward.ToString()}");
+                            builder.Append($"rewarded roles: {reward.ToString()}\n");
                         }
 
                         // roles not rewarded less rewardedRoles
@@ -151,7 +155,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
 
                         foreach (Snowflake reward in notRewardedRoles)
                         {
-                            builder.Append($"not rewarded roles: {reward.ToString()}");
+                            builder.Append($"not rewarded roles: {reward.ToString()}\n");
                         }
 
                         reply = await _feedbackService.SendContextualEmbedAsync(

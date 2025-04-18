@@ -1,1 +1,1 @@
-dotnet ef migrations add AddMetrics --context DatabaseContext -o Data/Migrations
+dotnet ef migrations add AddLoginIndex --context DatabaseContext -o Data/Migrations
