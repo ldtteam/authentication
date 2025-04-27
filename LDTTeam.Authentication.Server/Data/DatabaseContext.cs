@@ -1,7 +1,6 @@
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Data.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,9 +32,6 @@ namespace LDTTeam.Authentication.Server.Data
 
             builder.Entity<ConditionInstance>()
                 .HasKey(x => new {x.RewardId, x.ModuleName, x.ConditionName});
-
-            builder.Entity<IdentityUserLogin<string>>()
-                .HasIndex(x => x.LoginProvider);
         }
     }
 }
