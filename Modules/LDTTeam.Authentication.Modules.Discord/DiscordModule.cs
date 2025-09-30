@@ -57,12 +57,16 @@ namespace LDTTeam.Authentication.Modules.Discord
                 .AddHostedService<DiscordBackgroundService>()
                 .AddHostedService<DiscordSyncRolesBackgroundService>()
                 .AddScoped<DiscordRoleSyncService>()
+                .AddTransient<DiscordRoleAssignmentService>()
+                .AddTransient<DiscordRoleRewardService>()
                 .AddStartupTask<DiscordStartupTask>()
                 .AddDiscordGateway(_ => discordConfig.BotToken)
                 .AddDiscordCommands(true)
-                .AddCommandGroup<MyRewardsCommands>()
-                .AddCommandGroup<RewardsCommands>()
-                .AddCommandGroup<RefreshCommand>()
+                .AddCommandTree()
+                .WithCommandGroup<MyRewardsCommands>()
+                .WithCommandGroup<RewardsCommands>()
+                .WithCommandGroup<RefreshCommand>()
+                .Finish()
                 .AddDiscordCaching();
         }
 

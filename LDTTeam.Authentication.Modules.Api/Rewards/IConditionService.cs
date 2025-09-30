@@ -12,7 +12,11 @@ namespace LDTTeam.Authentication.Modules.Api.Rewards
 
         public Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey, CancellationToken token);
         
+        public IAsyncEnumerable<string> GetActiveRewardsForUser(string provider, string providerKey, CancellationToken token);
+        
         public Task<Dictionary<string, bool>> GetRewardsForUser(string userId, CancellationToken token);
+        
+        public IAsyncEnumerable<string> GetActiveRewardsForUser(string userId, CancellationToken token);
 
         public Task AddConditionToReward(string rewardId, string moduleName, string conditionName, string lambda, CancellationToken token);
 

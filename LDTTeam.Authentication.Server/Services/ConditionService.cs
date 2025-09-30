@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -84,8 +85,8 @@ namespace LDTTeam.Authentication.Server.Services
                 return false;
             }
         }
-
-        public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey, CancellationToken token)
+        
+        private async Task<string?> GetUserIdFor(string provider, string providerKey, CancellationToken token)
         {
             IdentityUserLogin<string>? loginInfo = await db.UserLogins.FirstOrDefaultAsync(x =>
                 x.LoginProvider.ToLower() == provider.ToLower() &&
@@ -93,7 +94,7 @@ namespace LDTTeam.Authentication.Server.Services
                 cancellationToken: token);
 
             var userId = loginInfo?.UserId;
-            if (userId != null) return await GetRewardsForUser(userId, token);
+            if (userId != null) return userId;
 
             if (provider.ToLower() != "minecraft")
                 return null;
@@ -104,12 +105,24 @@ namespace LDTTeam.Authentication.Server.Services
                     x.ClaimType == "urn:minecraft:user:id" && 
                     x.ClaimValue.ToLower() == providerKey.ToLower(), cancellationToken: token);
 
-            if (claim == null)
-                return null;
+            return claim?.UserId;
+        }
 
-            userId = claim.UserId;
+        public async Task<Dictionary<string, bool>?> GetRewardsForUser(string provider, string providerKey, CancellationToken token)
+        {
+            var userId = await GetUserIdFor(provider, providerKey, token);
+            if (userId == null) return null;
 
             return await GetRewardsForUser(userId, token);
+        }
+
+        public async IAsyncEnumerable<string> GetActiveRewardsForUser(string provider, string providerKey, [EnumeratorCancellation] CancellationToken token)
+        {
+            var userId = await GetUserIdFor(provider, providerKey, token);
+            if (userId == null) yield break;
+
+            await foreach (var reward in GetActiveRewardsForUser(userId, token))
+                yield return reward;
         }
 
         public async Task<Dictionary<string, bool>> GetRewardsForUser(string userId, CancellationToken token)
@@ -121,6 +134,15 @@ namespace LDTTeam.Authentication.Server.Services
             }
 
             return results;
+        }
+
+        public async IAsyncEnumerable<string> GetActiveRewardsForUser(string userId, [EnumeratorCancellation] CancellationToken token)
+        {
+            await foreach (Reward dbReward in db.Rewards.Include(x => x.Conditions).AsAsyncEnumerable().WithCancellation(token))
+            {
+                if (await CheckReward(userId, dbReward, token))
+                    yield return dbReward.Id;
+            }
         }
 
         public async Task<Dictionary<string, List<string>>> GetRewardsForProvider(string provider, CancellationToken token)

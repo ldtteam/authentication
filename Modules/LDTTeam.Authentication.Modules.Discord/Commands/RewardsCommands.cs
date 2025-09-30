@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Modules.Discord.Config;
+using LDTTeam.Authentication.Modules.Discord.Services;
 using Microsoft.Extensions.Configuration;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -24,17 +25,17 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
     public class RewardsCommands : CommandGroup
     {
         private readonly IInteractionContext _context;
-        private readonly IFeedbackService    _feedbackService;
-        private readonly IConditionService   _conditionService;
-        private readonly IRewardService      _rewardService;
-        private readonly IConfiguration      _configuration;
+        private readonly IFeedbackService _feedbackService;
+        private readonly IConditionService _conditionService;
+        private readonly IRewardService _rewardService;
+        private readonly IConfiguration _configuration;
 
         public RewardsCommands(
             IInteractionContext context,
-            IFeedbackService    feedbackService,
-            IConditionService   conditionService,
-            IRewardService      rewardService,
-            IConfiguration      configuration
+            IFeedbackService feedbackService,
+            IConditionService conditionService,
+            IRewardService rewardService,
+            IConfiguration configuration
         )
         {
             _context = context;
@@ -483,15 +484,15 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
         public class RewardConditionsCommands : CommandGroup
         {
             private readonly IInteractionContext _context;
-            private readonly IFeedbackService    _feedbackService;
-            private readonly IConditionService   _conditionService;
-            private readonly IRewardService      _rewardService;
+            private readonly IFeedbackService _feedbackService;
+            private readonly IConditionService _conditionService;
+            private readonly IRewardService _rewardService;
 
             public RewardConditionsCommands(
                 IInteractionContext context,
-                IFeedbackService    feedbackService,
-                IConditionService   conditionService,
-                IRewardService      rewardService
+                IFeedbackService feedbackService,
+                IConditionService conditionService,
+                IRewardService rewardService
             )
             {
                 _context = context;
@@ -667,6 +668,91 @@ namespace LDTTeam.Authentication.Modules.Discord.Commands
                                     Colour = Color.Red
                                 });
                         }
+                    }
+                }
+
+                return !reply.IsSuccess
+                    ? Result.FromError(reply)
+                    : Result.FromSuccess();
+            }
+        }
+
+        [Group("roles")]
+        public class RoleCommands : CommandGroup
+        {
+            private IInteractionContext _context;
+            private IFeedbackService _feedbackService;
+            private readonly DiscordRoleAssignmentService _roleAssignmentService;
+
+            public RoleCommands(
+                IInteractionContext context,
+                IFeedbackService feedbackService,
+                DiscordRoleAssignmentService roleAssignmentService
+            )
+            {
+                _context = context;
+                _feedbackService = feedbackService;
+                _roleAssignmentService = roleAssignmentService;
+            }
+
+            [Command("refresh")]
+            [Description("Refreshes a given users roles based on their LDTTeam Auth rewards")]
+            public async Task<IResult> UserRefreshRolesCommand(
+                [Description("User to refresh the role rewards for")] IUser user)
+            {
+                var member = _context.Interaction.Member;
+                if (!member.HasValue)
+                {
+                    return await _feedbackService.SendContextualErrorAsync(
+                        "Command needs a user to run"
+                    );
+                }
+
+                var permissions = member.Value.Permissions;
+                if (!permissions.HasValue)
+                {
+                    return await _feedbackService.SendContextualErrorAsync(
+                        "Command needs a user to run"
+                    );
+                }
+
+                Result<IMessage> reply;
+                if (!permissions.Value.HasPermission(DiscordPermission.Administrator))
+                {
+                    reply = await _feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = "No Permission",
+                            Description =
+                                "You require Administrator permissions for this command",
+                            Colour = Color.DarkRed
+                        });
+                }
+                else
+                {
+                    try
+                    {
+                        await _roleAssignmentService.ForMember(user.ID)
+                            .UpdateAllRewards();
+                        
+                        reply = await _feedbackService.SendContextualEmbedAsync(
+                            new Embed
+                            {
+                                Title = $"{user.Username}'s reward are refreshed.",
+                                Colour = Color.Green,
+                                Description = "Their roles should now be up to date."
+                            });
+                    }
+                    catch (Exception e)
+                    {
+                        reply = await _feedbackService.SendContextualEmbedAsync(
+                            new Embed
+                            {
+                                Title = "Failure to refresh roles",
+                                Description =
+                                    $"Comand received exception: {e.Message}",
+                                Colour = Color.Red
+                            });
                     }
                 }
 
