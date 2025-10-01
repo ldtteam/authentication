@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using FluffySpoon.AspNet.LetsEncrypt;
 using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using LDTTeam.Authentication.Modules.Api;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
 
 namespace LDTTeam.Authentication.Server
 {
@@ -85,6 +87,7 @@ namespace LDTTeam.Authentication.Server
             {
                 options.ForwardedHeaders =
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Add(IPNetwork.Parse("10.0.0.0/8"));
             });
             
             LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
@@ -115,7 +118,11 @@ namespace LDTTeam.Authentication.Server
                 new ForwardedHeadersOptions
                 {
                     ForwardedHeaders = 
-                        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                    KnownNetworks =
+                    {
+                        IPNetwork.Parse("10.0.0.0/8")
+                    }
                 });
 
             if (env.IsDevelopment())
