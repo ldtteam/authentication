@@ -86,7 +86,7 @@ namespace LDTTeam.Authentication.Server
                 options.ForwardedHeaders =
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
-
+            
             LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
 
             if (config?.Enabled == true)
@@ -114,7 +114,8 @@ namespace LDTTeam.Authentication.Server
             app.UseForwardedHeaders(
                 new ForwardedHeadersOptions
                 {
-                    ForwardedHeaders = ForwardedHeaders.XForwardedProto
+                    ForwardedHeaders = 
+                        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
                 });
 
             if (env.IsDevelopment())
