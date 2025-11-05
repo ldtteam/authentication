@@ -61,7 +61,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
             public RelationshipsUser User { get; set; } = null!;
             
             [JsonPropertyName("currently_entitled_tiers")]
-            public IList<Tier>? CurrentlyEntitledTiers { get; set; } = [];
+            public List<Tier>? CurrentlyEntitledTiers { get; set; } = [];
         }
 
         public class Tier
