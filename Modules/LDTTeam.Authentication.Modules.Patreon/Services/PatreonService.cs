@@ -61,7 +61,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
             public RelationshipsUser User { get; set; } = null!;
             
             [JsonPropertyName("currently_entitled_tiers")]
-            public IList<Tier>? CurrentlyEntitledTiers { get; set; } = [];
+            public IList<Tier> CurrentlyEntitledTiers { get; set; } = [];
         }
 
         public class Tier
@@ -96,6 +96,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     "?include=user,currently_entitled_tiers" +
                     $"&{WebUtility.UrlEncode("page[count]")}=500" +
                     $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status,will_pay_amount_cents,last_charge_status,last_charge_date,is_gifted" +
+                    $"&{WebUtility.UrlEncode("fields[currently_entitled_tiers]")}=title" +
                     cursorNext);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await RequestAccessToken());
 
