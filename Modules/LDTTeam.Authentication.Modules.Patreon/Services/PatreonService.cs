@@ -46,29 +46,13 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
             
             [JsonPropertyName("patron_status")]
             public string? PatronStatus { get; set; }
-            
-            [JsonPropertyName("is_gifted")]
-            public bool? IsGifted { get; set; }
         }
 
         public record UserData(string Id);
 
         public record RelationshipsUser(UserData Data);
 
-        public class MemberRelationships
-        {
-            [JsonPropertyName("user")] 
-            public RelationshipsUser User { get; set; } = null!;
-            
-            [JsonPropertyName("currently_entitled_tiers")]
-            public IList<Tier> CurrentlyEntitledTiers { get; set; } = [];
-        }
-
-        public class Tier
-        {
-            [JsonPropertyName("title")]
-            public string Title { get; set; } = null!;
-        }
+        public record MemberRelationships(RelationshipsUser User);
 
         public record PatreonMember(MemberAttributes Attributes, MemberRelationships Relationships);
 
@@ -93,9 +77,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
                 HttpRequestMessage request = new(HttpMethod.Get, 
                     $"https://www.patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
-                    "?include=user,currently_entitled_tiers" +
+                    "?include=user" +
                     $"&{WebUtility.UrlEncode("page[count]")}=500" +
-                    $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status,will_pay_amount_cents,last_charge_status,last_charge_date,is_gifted" + 
+                    $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status,will_pay_amount_cents,last_charge_status,last_charge_date" + 
                     cursorNext);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await RequestAccessToken());
 
