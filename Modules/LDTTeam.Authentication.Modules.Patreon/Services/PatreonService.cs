@@ -126,7 +126,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
                 var body = await responseMessage.Content.ReadAsStringAsync();
                 //Write the body to a temp file for debugging
-                await File.WriteAllTextAsync( DateTime.Now.ToString(CultureInfo.InvariantCulture) + "_patreon_response.json", body);
+                await File.WriteAllTextAsync( DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss") + "_patreon_response.json", body);
 
                 var response =
                     JsonSerializer.Deserialize<PatreonMembersResponse>(body);
