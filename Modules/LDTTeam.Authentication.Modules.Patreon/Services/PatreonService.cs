@@ -86,7 +86,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
         public record PatreonMembersResponse(List<PatreonMember>? Data, RequestMeta Meta);
 
-        public async IAsyncEnumerable<Member> RequestMembers()
+        public async IAsyncEnumerable<PatreonMember> RequestMembers()
         {
             PatreonConfig? patreonConfig = configuration.GetSection("patreon").Get<PatreonConfig>();
 
@@ -138,16 +138,59 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 
                 if (response == null)
                     throw new Exception();
+                
+                Dictionary<IncludedDataReference, string> tiers = new();
+                foreach (var included in response.Included)
+                {
+                    if (included.Type == "tier")
+                    {
+                        tiers[new IncludedDataReference
+                        {
+                            Type = included.Type,
+                            Id = included.Id
+                        }] = included.Attributes["title"].ToString() ?? "";
+                    }
+                }
 
                 foreach (var member in response.Data)
                 {
-                    yield return member;
+                    yield return MapMemberInformation(member, tiers);
                 }
                 
                 if (response.Meta.Pagination.Cursors?.Next == null)
                     yield break;
                 cursorNext = $"&{WebUtility.UrlEncode("page[cursor]")}={response.Meta.Pagination.Cursors?.Next}";
             }
+        }
+
+        private PatreonMember MapMemberInformation(Member member, Dictionary<IncludedDataReference, string> tiers)
+        {
+            return new PatreonMember(
+                new MemberAttributes
+                {
+                    LifetimeCents = member.Attributes.CampaignLifetimeSupportCents,
+                    CurrentMonthlyCents = member.Attributes.CurrentlyEntitledAmountCents,
+                    WillPayMonthlyCents = member.Attributes.WillPayAmountCents,
+                    LastChargeStatus = member.Attributes.LastChargeStatus,
+                    LastChargeDate = member.Attributes.LastChargeDate,
+                    PatronStatus = member.Attributes.PatronStatus,
+                    IsGifted = member.Attributes.IsGifted
+                },
+                new MemberRelationships
+                {
+                    User = new RelationshipsUser(
+                        new UserData(member.Relationships.User.Data.Id)
+                    ),
+                    CurrentlyEntitledTiers = new CurrentlyEntitledTiers(
+                        member.Relationships.CurrentlyEntitledTiers.Data
+                            .Select(tierRef => new Tier
+                            {
+                                Title = tiers.GetValueOrDefault(tierRef, "Unknown Tier")
+                            })
+                            .ToList()
+                    )
+                }
+            );
         }
 
         private class AccessTokenResponse

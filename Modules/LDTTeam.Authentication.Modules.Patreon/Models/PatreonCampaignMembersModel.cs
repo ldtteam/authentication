@@ -37,10 +37,10 @@ public class MemberRelationships
 
 public class CurrentlyEntitledTiers
 {
-    public List<TierData> Data { get; set; }
+    public List<IncludedDataReference> Data { get; set; }
 }
 
-public class TierData
+public class IncludedDataReference
 {
     public string Id { get; set; }
     public string Type { get; set; }
