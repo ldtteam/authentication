@@ -18,6 +18,13 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 {
     public class PatreonRefreshEventHandler
     {
+        private static readonly IDictionary<string, long> TierMapping = new Dictionary<string, long>
+        {
+            //{"Tier Name", Amount in Cents}
+            {"citizen", 10000},
+            {"settler", 5000}
+        };
+        
         private readonly PatreonService _patreonService;
         private readonly PatreonDatabaseContext _db;
         private readonly ILoggingQueue _loggingQueue;
@@ -59,14 +66,16 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
 
                     memberIds.Add(memberRelationships.User.Data.Id);
 
-                    _logger.LogInformation("Member {Id} found, lifetime: {LifeTime}, monthly: {Monthly}, will pay: {WillPay}, patron status: {PatronStatus}, last charge date: {LastChargeDate}, last charge status: {LastChargeStatus}", 
+                    _logger.LogInformation("Member {Id} found, lifetime: {LifeTime}, monthly: {Monthly}, will pay: {WillPay}, patron status: {PatronStatus}, last charge date: {LastChargeDate}, last charge status: {LastChargeStatus}, gifted: {IsGifted}, tiers: {Tiers}", 
                         memberRelationships.User.Data.Id, 
                         memberAttributes.LifetimeCents, 
                         memberAttributes.CurrentMonthlyCents,
                         memberAttributes.WillPayMonthlyCents,
                         memberAttributes.PatronStatus,
                         memberAttributes.LastChargeDate,
-                        memberAttributes.LastChargeStatus);
+                        memberAttributes.LastChargeStatus,
+                        memberAttributes.IsGifted,
+                        memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title).Aggregate((s, s1) => s + ", " + s1));
                     
                     var lifetime = memberAttributes.LifetimeCents;
                     var monthly = memberAttributes.CurrentMonthlyCents;
@@ -123,16 +132,60 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         new EmbedField("Monthly", monthly.ToString(), true)
                     };
 
-                    await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                    if (!(memberAttributes.IsGifted ?? false))
                     {
-                        Title = "Patreon Added",
-                        Description = "Patreon detected and added to database",
-                        Colour = Color.Green,
-                        Fields = fields
-                    });
+                        await _db.PatreonMembers.AddAsync(new DbPatreonMember(memberRelationships.User.Data.Id,
+                            memberAttributes.LifetimeCents, memberAttributes.CurrentMonthlyCents));
+                        
+                        await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                        {
+                            Title = "Patreon Added",
+                            Description = "Patreon detected and added to database",
+                            Colour = Color.Green,
+                            Fields = fields
+                        });
+                    }
+                    else
+                    {
+                        var highestTierInCents = 0L;
+                        foreach (var tier in memberRelationships.CurrentlyEntitledTiers.Data)
+                        {
+                            if (TierMapping.ContainsKey(tier.Title.ToLowerInvariant()))
+                            {
+                                highestTierInCents = Math.Max(highestTierInCents, TierMapping[tier.Title.ToLowerInvariant()]);
+                            }
+                        }
 
-                    await _db.PatreonMembers.AddAsync(new DbPatreonMember(memberRelationships.User.Data.Id,
-                        memberAttributes.LifetimeCents, memberAttributes.CurrentMonthlyCents));
+                        if (highestTierInCents == 0L)
+                        {
+                            List<EmbedField> undetectedFields = new()
+                            {
+                                new EmbedField("Id", member.Id, false),
+                                new EmbedField("Tiers", String.Join(", ", memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title)), false)
+                            };
+                            
+                            await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                            {
+                                Title = "Gifted Patreon Undetected",
+                                Description = "Could not detect tier for gifted patron",
+                                Colour = Color.Brown,
+                                Fields = undetectedFields
+                            });
+                            
+                            continue;
+                        }
+                        
+                        await _db.PatreonMembers.AddAsync(new DbPatreonMember(memberRelationships.User.Data.Id,
+                            highestTierInCents, highestTierInCents));
+                        
+                        await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed
+                        {
+                            Title = "Patreon Added",
+                            Description = "Gifted Patreon detected and added to database",
+                            Colour = Color.Aqua,
+                            Fields = fields
+                        });
+                    }
                 }
 
                 foreach (DbPatreonMember member in members.Where(member => memberIds.All(x => x != member.Id)))
