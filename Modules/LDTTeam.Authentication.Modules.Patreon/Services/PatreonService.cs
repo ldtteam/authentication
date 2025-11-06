@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Patreon.Config;
 using LDTTeam.Authentication.Modules.Patreon.Data;
 using LDTTeam.Authentication.Modules.Patreon.Data.Models;
+using LDTTeam.Authentication.Modules.Patreon.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -83,9 +84,9 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
         public record RequestMeta(MetaPagination Pagination);
 
-        public record PatreonMembersResponse(List<PatreonMember> Data, RequestMeta Meta);
+        public record PatreonMembersResponse(List<PatreonMember>? Data, RequestMeta Meta);
 
-        public async IAsyncEnumerable<PatreonMember> RequestMembers()
+        public async IAsyncEnumerable<Member> RequestMembers()
         {
             PatreonConfig? patreonConfig = configuration.GetSection("patreon").Get<PatreonConfig>();
 
@@ -127,14 +128,18 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 var body = await responseMessage.Content.ReadAsStringAsync();
                 //Write the body to a temp file for debugging
                 await File.WriteAllTextAsync( DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss") + "_patreon_response.json", body);
-
-                var response =
-                    JsonSerializer.Deserialize<PatreonMembersResponse>(body);
+                
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                };
+                var response = JsonSerializer.Deserialize<PatreonRoot?>(body, options);
                 
                 if (response == null)
                     throw new Exception();
 
-                foreach (PatreonMember member in response.Data)
+                foreach (var member in response.Data)
                 {
                     yield return member;
                 }
