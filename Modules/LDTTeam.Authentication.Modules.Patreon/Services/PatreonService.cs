@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Patreon.Config;
@@ -93,6 +96,13 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                 if (patreonConfig == null)
                     throw new Exception("patreon not set in configuration!");
 
+                //// Sample response for (url decoded)
+                /// https://www.patreon.com/api/oauth2/v2/campaigns/{campaign_id}/members?
+                /// include=currently_entitled_tiers,address&
+                /// fields[member]=full_name,is_follower,last_charge_date,last_charge_status,lifetime_support_cents,currently_entitled_amount_cents,patron_status&
+                /// fields[tier]=amount_cents,created_at,description,discord_role_ids,edited_at,patron_count,published,published_at,requires_shipping,title,url&
+                /// fields[address]=addressee,city,line_1,line_2,phone_number,postal_code,state
+                
                 HttpRequestMessage request = new(HttpMethod.Get, 
                     $"https://www.patreon.com/api/oauth2/v2/campaigns/{patreonConfig.CampaignId}/members" +
                     "?include=user,currently_entitled_tiers" +
@@ -113,9 +123,13 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     await Task.Delay(TimeSpan.FromMinutes(1));
                     continue;
                 }
-                
-                PatreonMembersResponse? response =
-                    await responseMessage.Content.ReadFromJsonAsync<PatreonMembersResponse>();
+
+                var body = await responseMessage.Content.ReadAsStringAsync();
+                //Write the body to a temp file for debugging
+                await File.WriteAllTextAsync( DateTime.Now.ToString(CultureInfo.InvariantCulture) + "_patreon_response.json", body);
+
+                var response =
+                    JsonSerializer.Deserialize<PatreonMembersResponse>(body);
                 
                 if (response == null)
                     throw new Exception();
