@@ -75,7 +75,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         memberAttributes.LastChargeDate,
                         memberAttributes.LastChargeStatus,
                         memberAttributes.IsGifted,
-                        memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title).Aggregate((s, s1) => s + ", " + s1));
+                        String.Join(", ", memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title)));
                     
                     var lifetime = memberAttributes.LifetimeCents;
                     var monthly = memberAttributes.CurrentMonthlyCents;
