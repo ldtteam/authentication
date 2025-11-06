@@ -75,7 +75,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                         memberAttributes.LastChargeDate,
                         memberAttributes.LastChargeStatus,
                         memberAttributes.IsGifted,
-                        memberRelationships.CurrentlyEntitledTiers.Select(t => t.Title).Aggregate((s, s1) => s + ", " + s1));
+                        memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title).Aggregate((s, s1) => s + ", " + s1));
                     
                     var lifetime = memberAttributes.LifetimeCents;
                     var monthly = memberAttributes.CurrentMonthlyCents;
@@ -148,7 +148,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                     else
                     {
                         var highestTierInCents = 0L;
-                        foreach (var tier in memberRelationships.CurrentlyEntitledTiers)
+                        foreach (var tier in memberRelationships.CurrentlyEntitledTiers.Data)
                         {
                             if (TierMapping.ContainsKey(tier.Title.ToLowerInvariant()))
                             {
@@ -161,7 +161,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.EventHandlers
                             List<EmbedField> undetectedFields = new()
                             {
                                 new EmbedField("Id", member.Id, false),
-                                new EmbedField("Tiers", String.Join(", ", memberRelationships.CurrentlyEntitledTiers.Select(t => t.Title)), false)
+                                new EmbedField("Tiers", String.Join(", ", memberRelationships.CurrentlyEntitledTiers.Data.Select(t => t.Title)), false)
                             };
                             
                             await _loggingQueue.QueueBackgroundWorkItemAsync(new Embed

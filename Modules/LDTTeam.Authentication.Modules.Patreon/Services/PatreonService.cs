@@ -55,13 +55,15 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
 
         public record RelationshipsUser(UserData Data);
 
+        public record CurrentlyEntitledTiers(List<Tier> Data);
+        
         public class MemberRelationships
         {
             [JsonPropertyName("user")] 
             public RelationshipsUser User { get; set; } = null!;
             
             [JsonPropertyName("currently_entitled_tiers")]
-            public List<Tier>? CurrentlyEntitledTiers { get; set; } = [];
+            public CurrentlyEntitledTiers CurrentlyEntitledTiers { get; set; } = null!;
         }
 
         public class Tier
@@ -96,6 +98,7 @@ namespace LDTTeam.Authentication.Modules.Patreon.Services
                     "?include=user,currently_entitled_tiers" +
                     $"&{WebUtility.UrlEncode("page[count]")}=500" +
                     $"&{WebUtility.UrlEncode("fields[member]")}=campaign_lifetime_support_cents,currently_entitled_amount_cents,patron_status,will_pay_amount_cents,last_charge_status,last_charge_date,is_gifted" +
+                    $"&{WebUtility.UrlEncode("fields[tier]")}=amount_cents,created_at,description,discord_role_ids,edited_at,patron_count,published,published_at,requires_shipping,title,url" +
                     cursorNext);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await RequestAccessToken());
 
