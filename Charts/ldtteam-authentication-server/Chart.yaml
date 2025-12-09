@@ -8,7 +8,7 @@ version: 0.1.0
 dependencies:
   - name: postgresql
     version: "16.1.2"
-    repository: https://charts.bitnami.com/bitnami
+    repository: oci://registry-1.docker.io/bitnamicharts/postgresql
     condition: postgresql.enabled
   - name: postgresql-ha
     version: "15.0.4"
