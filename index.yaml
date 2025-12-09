@@ -2,6 +2,15 @@ apiVersion: v1
 entries:
   ldtteam-authentication-server:
   - apiVersion: v2
+    created: "2025-12-09T09:51:02.008722991Z"
+    description: A helm chart that installs the LDTTeam auth service
+    digest: 4593bc852e0ac0183bdf7e1646c66f494bb8453646d0344060e2a490b549de9f
+    name: ldtteam-authentication-server
+    type: application
+    urls:
+    - https://github.com/ldtteam/authentication/releases/download/ldtteam-authentication-server-v0.5.124/ldtteam-authentication-server-v0.5.124.tgz
+    version: v0.5.124
+  - apiVersion: v2
     created: "2025-12-02T14:50:16.771272406Z"
     dependencies:
     - condition: postgresql.enabled
@@ -1540,4 +1549,4 @@ entries:
     urls:
     - https://github.com/ldtteam/authentication/releases/download/ldtteam-authentication-server-v0.5.35/ldtteam-authentication-server-v0.5.35.tgz
     version: v0.5.35
-generated: "2025-12-02T14:50:16.771608155Z"
+generated: "2025-12-09T09:51:02.009125761Z"
