@@ -15,8 +15,6 @@ metadata:
     app.kubernetes.io/name: postgresql
   name: data-donator-auth-postgresql-0
   namespace: donator-auth
-  resourceVersion: "1210332854"
-  uid: 67bb51eb-6c0a-4cc7-a3b8-88fd2e814954
 spec:
   accessModes:
     - ReadWriteOnce

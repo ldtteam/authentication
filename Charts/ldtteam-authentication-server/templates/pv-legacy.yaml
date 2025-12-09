@@ -6,13 +6,10 @@ metadata:
     pv.kubernetes.io/provisioned-by: driver.longhorn.io
     volume.kubernetes.io/provisioner-deletion-secret-name: ""
     volume.kubernetes.io/provisioner-deletion-secret-namespace: ""
-  creationTimestamp: "2024-11-11T18:51:04Z"
   finalizers:
     - kubernetes.io/pv-protection
     - external-attacher/driver-longhorn-io
   name: pvc-67bb51eb-6c0a-4cc7-a3b8-88fd2e814954
-  resourceVersion: "1945870493"
-  uid: 0e543b43-0b46-4c29-8f55-eb857f25bf64
 spec:
   accessModes:
     - ReadWriteOnce
