@@ -5,16 +5,5 @@ description: A helm chart that installs the LDTTeam auth service
 type: application
 version: 0.1.0
 
-dependencies:
-  - name: postgresql
-    version: "16.1.2"
-    repository: oci://registry-1.docker.io/bitnamicharts/postgresql
-    condition: postgresql.enabled
-  - name: postgresql-ha
-    version: "15.0.4"
-    repository: oci://registry-1.docker.io/bitnamicharts
-    condition: postgresha.enabled
-    alias: postgresha
-
     
 
