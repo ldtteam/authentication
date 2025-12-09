@@ -1,0 +1,28 @@
+﻿apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    pv.kubernetes.io/bind-completed: "yes"
+    pv.kubernetes.io/bound-by-controller: "yes"
+    volume.beta.kubernetes.io/storage-provisioner: driver.longhorn.io
+    volume.kubernetes.io/storage-provisioner: driver.longhorn.io
+  creationTimestamp: "2024-11-11T18:51:02Z"
+  finalizers:
+    - kubernetes.io/pvc-protection
+  labels:
+    app.kubernetes.io/component: primary
+    app.kubernetes.io/instance: donator-auth
+    app.kubernetes.io/name: postgresql
+  name: data-donator-auth-postgresql-0
+  namespace: donator-auth
+  resourceVersion: "1210332854"
+  uid: 67bb51eb-6c0a-4cc7-a3b8-88fd2e814954
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: longhorn
+  volumeMode: Filesystem
+  volumeName: pvc-67bb51eb-6c0a-4cc7-a3b8-88fd2e814954
