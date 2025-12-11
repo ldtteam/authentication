@@ -2,13 +2,6 @@
 kind: PersistentVolumeClaim
 metadata:
   annotations:
-    pv.kubernetes.io/bind-completed: "yes"
-    pv.kubernetes.io/bound-by-controller: "yes"
-    volume.beta.kubernetes.io/storage-provisioner: driver.longhorn.io
-    volume.kubernetes.io/storage-provisioner: driver.longhorn.io
-  creationTimestamp: "2024-11-11T18:51:02Z"
-  finalizers:
-    - kubernetes.io/pvc-protection
   labels:
     app.kubernetes.io/component: primary
     app.kubernetes.io/instance: donator-auth
