@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 0
 
 image:
   repository: ghcr.io/ldtteam/authentication
@@ -81,6 +81,10 @@ postgresql:
         username: "ldtteam-donator-auth"
         password: "DonatorAuth1!"
         database: "donator-auth"
+  image:
+    registry: ghcr.io
+    repository: cloudnative-pg/postgresql
+    tag: 17.7-202512080807-minimal-trixie
 
 postgresha:
   enabled: false
