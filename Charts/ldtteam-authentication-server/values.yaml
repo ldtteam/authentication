@@ -88,25 +88,4 @@ postgresql:
 
 postgresha:
   enabled: false
-  global:
-    postgresql:
-      password: "DonatorAuth1!"
-      database: "donator-auth" 
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-  persistence:
-    accessModes:
-    - ReadWriteOnce
-    size: 25Gi
-  postgresql:
-    readinessProbe:
-      initialDelaySeconds: 90
-      failureThreshold: 15
-      periodSeconds: 60
-    livenessProbe:
-      initialDelaySeconds: 90
-      failureThreshold: 15
-      periodSeconds: 60
       

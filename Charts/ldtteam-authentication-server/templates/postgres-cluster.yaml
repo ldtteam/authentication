@@ -1,9 +1,10 @@
-﻿apiVersion: postgresql.cnpg.io/v1
+﻿{{- if .postgresha.enabled }}
+apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: donator-auth
 spec:
-  instances: 1
+  instances: 3
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
@@ -18,4 +19,6 @@ spec:
           storage: 10Gi
       storageClassName: postgres-storage
       volumeMode: Filesystem
+{{- end}}
+
     
