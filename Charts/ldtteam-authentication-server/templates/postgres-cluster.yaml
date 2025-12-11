@@ -1,4 +1,4 @@
-﻿{{- if .postgresha.enabled }}
+﻿{{- if .Values.postgresha.enabled }}
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
