@@ -8,5 +8,5 @@ metadata:
 data:
   # Add your configuration data here
   appsettings.json: |-
-   {{ .Values.app.config | mustToPrettyJson | indent 4 }}
+{{ .Values.app.config | mustToPrettyJson | indent 4 }}
     
