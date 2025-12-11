@@ -88,4 +88,13 @@ postgresql:
 
 postgresha:
   enabled: false
-      
+    
+app:
+  config:
+    LoggingQueueCapacity: 1000
+    DetailedErrors: true
+    Logging:
+      LogLevel:
+        Default: Information
+        Microsoft: Warning
+        Microsoft.Hosting.Lifetime: Information

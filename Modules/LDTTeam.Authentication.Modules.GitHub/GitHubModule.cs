@@ -43,7 +43,7 @@ namespace LDTTeam.Authentication.Modules.GitHub
         {
             return services
                 .AddDbContext<GitHubDatabaseContext>(x =>
-                    x.UseNpgsql(configuration.GetConnectionString("postgres_github"),
+                    x.UseNpgsql(configuration.CreateConnectionString("github"),
                         b => b.MigrationsAssembly("LDTTeam.Authentication.Modules.GitHub")))
                 .AddScoped<GithubRefreshEventHandler>()
                 .AddTransient<GitHubService>()

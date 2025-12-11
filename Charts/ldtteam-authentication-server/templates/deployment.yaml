@@ -67,6 +67,13 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingApiRefreshToken") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ApiClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
+            {{- if .Values.postgresha.enabled }}
+            - name: LDTTEAM_AUTH_Database__Uri
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ldtteam-authentication-server.fullname" . | printf "%s-app" }}
+                  key: uri
+            {{- end }}
       volumes:        
         - name: appsettings
           configMap:

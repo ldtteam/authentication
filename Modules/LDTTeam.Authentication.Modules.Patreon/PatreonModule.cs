@@ -42,7 +42,7 @@ namespace LDTTeam.Authentication.Modules.Patreon
         public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services)
         {
             return services.AddDbContext<PatreonDatabaseContext>(x =>
-                    x.UseNpgsql(configuration.GetConnectionString("postgres_patreon"),
+                    x.UseNpgsql(configuration.CreateConnectionString("patreon"),
                         b => b.MigrationsAssembly("LDTTeam.Authentication.Modules.Patreon")))
                 .AddScoped<PatreonRefreshEventHandler>()
                 .AddTransient<PatreonService>()

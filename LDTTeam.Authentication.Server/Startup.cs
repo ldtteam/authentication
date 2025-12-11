@@ -1,13 +1,8 @@
-using System;
-using System.Net;
-using FluffySpoon.AspNet.LetsEncrypt;
-using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
 using LDTTeam.Authentication.Modules.Api.Logging;
 using LDTTeam.Authentication.Modules.Api.Rewards;
-using LDTTeam.Authentication.Server.Config;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Services;
 using LDTTeam.Authentication.Server.Tasks;
@@ -42,7 +37,7 @@ namespace LDTTeam.Authentication.Server
             services.AddHttpClient();
 
             services.AddDbContext<DatabaseContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("postgres"),
+                options.UseNpgsql(Configuration.CreateConnectionString("authentication"),
                     b => b.MigrationsAssembly("LDTTeam.Authentication.Server")));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -89,24 +84,6 @@ namespace LDTTeam.Authentication.Server
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownNetworks.Add(IPNetwork.Parse("10.0.0.0/8"));
             });
-            
-            LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
-
-            if (config?.Enabled == true)
-            {
-                //the following line adds the automatic renewal service.
-                services.AddFluffySpoonLetsEncrypt(new LetsEncryptOptions()
-                {
-                    Email = config.Email,
-                    UseStaging = config.Staging,
-                    Domains = new[] {config.Domain},
-                    TimeUntilExpiryBeforeRenewal = TimeSpan.FromDays(30), //renew automatically 30 days before expiry
-                    CertificateSigningRequest = config.Csr
-                });
-
-                services.AddFluffySpoonLetsEncryptFileCertificatePersistence();
-                services.AddFluffySpoonLetsEncryptMemoryChallengePersistence();
-            }
 
             services.AddStartupTask<StartupAnnouncementTask>();
         }
@@ -133,13 +110,6 @@ namespace LDTTeam.Authentication.Server
             else
             {
                 app.UseExceptionHandler("/Error");
-            }
-
-            LetsEncryptConfig? config = Configuration.GetSection("LetsEncrypt").Get<LetsEncryptConfig>();
-
-            if (config?.Enabled == true)
-            {
-                app.UseFluffySpoonLetsEncrypt();
             }
 
             app.UseStaticFiles();
