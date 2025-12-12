@@ -13,7 +13,7 @@ spec:
   bootstrap:
     initdb:
       import:
-        type: microservice
+        type: monolith
         databases:
           - authentication
           - github
