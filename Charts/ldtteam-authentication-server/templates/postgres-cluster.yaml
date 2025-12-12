@@ -36,7 +36,7 @@ spec:
       connectionParameters:
         # Use the correct IP or host name for the source database
         host: donator-auth-postgresql.donator-auth.svc.cluster.local
-        user: ldtteam-donator-auth
+        user: postgres
         dbname: postgres
       password:
         name: legacy-instance-password
@@ -48,7 +48,7 @@ metadata:
   name: legacy-instance-password
 type: Opaque
 stringData:
-  password: DonatorAuth1!
+  password: ClZZNF6uzD
 {{- end}}
 
     
