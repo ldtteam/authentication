@@ -13,7 +13,6 @@ spec:
   bootstrap:
     initdb:
       localeCollate: en_US.UTF-8
-      localeCtype: en_US.UTF-8
       encoding: UTF8
       import:
         type: monolith
