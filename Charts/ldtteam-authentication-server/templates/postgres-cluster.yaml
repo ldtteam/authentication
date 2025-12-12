@@ -13,7 +13,7 @@ spec:
   bootstrap:
     initdb:
       import:
-        type: monolith
+        type: microservice
         databases:
           - authentication
           - github
@@ -36,7 +36,7 @@ spec:
       connectionParameters:
         # Use the correct IP or host name for the source database
         host: donator-auth-postgresql.donator-auth.svc.cluster.local
-        user: postgres
+        user: ldtteam-donator-auth
         dbname: postgres
       password:
         name: legacy-instance-password
@@ -48,7 +48,7 @@ metadata:
   name: legacy-instance-password
 type: Opaque
 stringData:
-  password: VD3gIN1GRe
+  password: DonatorAuth1!
 {{- end}}
 
     
