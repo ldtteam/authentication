@@ -27,6 +27,9 @@ metadata:
 spec:
   name: authentication
   owner: app
+  schemas:
+    - name: public
+      owner: app
   cluster:
     name: {{ include "ldtteam-authentication-server.fullname" . }}
 ---
@@ -37,6 +40,9 @@ metadata:
 spec:
   name: github
   owner: app
+  schemas:
+    - name: public
+      owner: app
   cluster:
     name: {{ include "ldtteam-authentication-server.fullname" . }}
 ---
@@ -47,6 +53,9 @@ metadata:
 spec:
   name: patreon
   owner: app
+  schemas:
+    - name: public
+      owner: app
   cluster:
     name: {{ include "ldtteam-authentication-server.fullname" . }}
 {{- end}}
