@@ -19,6 +19,36 @@ spec:
           storage: 10Gi
       storageClassName: postgres-storage
       volumeMode: Filesystem
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-auth
+spec:
+  name: authentication
+  owner: app
+  cluster:
+    name: {{ include "ldtteam-authentication-server.fullname" . }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-github
+spec:
+  name: github
+  owner: app
+  cluster:
+    name: {{ include "ldtteam-authentication-server.fullname" . }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-patreon
+spec:
+  name: patreon
+  owner: app
+  cluster:
+    name: {{ include "ldtteam-authentication-server.fullname" . }}
 {{- end}}
 
     
