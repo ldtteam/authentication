@@ -10,6 +10,18 @@ spec:
     kind: ClusterImageCatalog
     name: postgresql-minimal-trixie
     major: 17
+  bootstrap:
+    initdb:
+      import:
+        type: microservice
+        databases:
+          - authentication
+          - github
+          - patreon
+        roles:
+          - ldtteam-donator-auth
+        source:
+          externalCluster: legacy-instance
   storage:
     pvcTemplate:
       accessModes:
@@ -19,6 +31,24 @@ spec:
           storage: 10Gi
       storageClassName: postgres-storage
       volumeMode: Filesystem
+  externalClusters:
+    - name: legacy-instance
+      connectionParameters:
+        # Use the correct IP or host name for the source database
+        host: donator-auth-postgresql.donator-auth.svc.cluster.local
+        user: postgres
+        dbname: postgres
+      password:
+        name: legacy-instance-password
+        key: password
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: legacy-instance-password
+type: Opaque
+stringData:
+  password: Minecolonies1!
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
