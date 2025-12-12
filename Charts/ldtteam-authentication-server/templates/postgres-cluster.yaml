@@ -48,7 +48,7 @@ metadata:
   name: legacy-instance-password
 type: Opaque
 stringData:
-  password: ClZZNF6uzD
+  password: VD3gIN1GRe
 {{- end}}
 
     
