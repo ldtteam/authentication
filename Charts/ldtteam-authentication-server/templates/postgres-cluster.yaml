@@ -12,6 +12,7 @@ spec:
     major: 17
   bootstrap:
     initdb:
+      owner: app
       localeCollate: en_US.UTF-8
       encoding: UTF8
       import:
