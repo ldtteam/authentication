@@ -15,8 +15,6 @@ spec:
     major: 17
   bootstrap:
     initdb:
-      database: {{ $db }}
-      owner: app
       localeCollate: en_US.UTF-8
       encoding: UTF8
       import:
