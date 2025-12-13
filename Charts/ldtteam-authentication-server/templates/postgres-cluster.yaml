@@ -1,8 +1,11 @@
-﻿{{- if .Values.postgresha.enabled }}
+﻿{{- $databases := list "authentication" "github" "patreon" }}
+{{- if .Values.postgresha.enabled }}
+{{- range $db := $databases }}
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}
+  name: {{ include "ldtteam-authentication-server.fullname" $ }}-{{ $db }}
 spec:
   instances: 3
   imageCatalogRef:
@@ -12,17 +15,14 @@ spec:
     major: 17
   bootstrap:
     initdb:
+      database: {{ $db }}
       owner: app
       localeCollate: en_US.UTF-8
       encoding: UTF8
       import:
-        type: monolith
+        type: microservice
         databases:
-          - authentication
-          - github
-          - patreon
-        roles:
-          - ldtteam-donator-auth
+          - {{ $db }}
         source:
           externalCluster: legacy-instance
   storage:
@@ -37,13 +37,13 @@ spec:
   externalClusters:
     - name: legacy-instance
       connectionParameters:
-        # Use the correct IP or host name for the source database
         host: donator-auth-postgresql.donator-auth.svc.cluster.local
         user: postgres
         dbname: postgres
       password:
         name: legacy-instance-password
         key: password
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -52,45 +52,4 @@ metadata:
 type: Opaque
 stringData:
   password: Minecolonies1!
----
-apiVersion: postgresql.cnpg.io/v1
-kind: Database
-metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-auth
-spec:
-  name: authentication
-  owner: app
-  schemas:
-    - name: public
-      owner: app
-  cluster:
-    name: {{ include "ldtteam-authentication-server.fullname" . }}
----
-apiVersion: postgresql.cnpg.io/v1
-kind: Database
-metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-github
-spec:
-  name: github
-  owner: app
-  schemas:
-    - name: public
-      owner: app
-  cluster:
-    name: {{ include "ldtteam-authentication-server.fullname" . }}
----
-apiVersion: postgresql.cnpg.io/v1
-kind: Database
-metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}-db-patreon
-spec:
-  name: patreon
-  owner: app
-  schemas:
-    - name: public
-      owner: app
-  cluster:
-    name: {{ include "ldtteam-authentication-server.fullname" . }}
-{{- end}}
-
-    
+{{- end }}

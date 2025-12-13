@@ -14,7 +14,7 @@ public static class IConfigurationExtensions
     /// <returns>The connection string.</returns>
     public static string CreateConnectionString(this IConfiguration configuration, string databaseName)
     {
-        var databaseSection = configuration.GetSection("Database");
+        var databaseSection = configuration.GetRequiredSection("Database");
         
         var server = databaseSection["Server"];
         var port = databaseSection["Port"];
@@ -22,7 +22,8 @@ public static class IConfigurationExtensions
         var password = databaseSection["Password"];
         var timeout = databaseSection["Timeout"] ?? "600";
         
-        var uri = databaseSection["Uri"];
+        var uris = databaseSection.GetRequiredSection("Uris");
+        var uri = uris[databaseName];
         if (!string.IsNullOrEmpty(uri))
         {
             var parsedUri = new Uri(uri);
@@ -30,6 +31,11 @@ public static class IConfigurationExtensions
             port = parsedUri.Port.ToString();
             username = parsedUri.UserInfo.Split(':')[0];
             password = parsedUri.UserInfo.Split(':')[1];
+            databaseName = parsedUri.LocalPath;
+            
+            if (databaseName.StartsWith("/"))
+                // Remove leading slash
+                databaseName = databaseName[1..];
         }
 
         return $"Server={server};Port={port};User Id={username};Password={password};Database={databaseName};Timeout={timeout};";

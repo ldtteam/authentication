@@ -1,3 +1,4 @@
+{{- $databases := list "authentication" "github" "patreon" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,11 +69,13 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ApiClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
             {{- if .Values.postgresha.enabled }}
-            - name: LDTTEAM_AUTH_Database__Uri
+            {{- range $db := $databases }}
+            - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "ldtteam-authentication-server.fullname" . | printf "%s-app" }}
+                  name: {{ printf "%s-%s" (include "ldtteam-authentication-server.fullname" .) $db }}
                   key: uri
+            {{- end }}
             {{- end }}
       volumes:        
         - name: appsettings
