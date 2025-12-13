@@ -73,7 +73,7 @@ spec:
             - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-%s" (include "ldtteam-authentication-server.fullname" .) $db }}
+                  name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
                   key: uri
             {{- end }}
             {{- end }}
