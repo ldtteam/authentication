@@ -62,6 +62,28 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "ldtteam-authentication-server.opssecret" -}}
+{{- if .Values.app.opssecret }}
+{{- .Values.app.opssecret | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Creates an environment variable for a deployment that is compatible with the Servers Environment Lookup.
 Replaces all '.' in .Secret.Key with '__' to be compatible with ASP.Net Core and then Prefixes 'LDTTEAM_AUTH_' to
 the key. This is to ensure that the secret is compatible with the Environment Lookup.
@@ -70,6 +92,6 @@ the key. This is to ensure that the secret is compatible with the Environment Lo
 - name: LDTTEAM_AUTH_{{ .Secret | replace "." "__" }}
   valueFrom:
     secretKeyRef:
-      name: {{ include "ldtteam-authentication-server.fullname" . }}
+      name: {{ include "ldtteam-authentication-server.opssecret" . }}
       key: {{ .Secret }}
 {{- end }}

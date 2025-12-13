@@ -90,6 +90,7 @@ postgresha:
   enabled: false
     
 app:
+  opssecret: "donator-auth-ops-secret"
   config:
     LoggingQueueCapacity: 1000
     DetailedErrors: true
