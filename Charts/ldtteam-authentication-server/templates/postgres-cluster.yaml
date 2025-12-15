@@ -17,12 +17,14 @@ spec:
     initdb:
       localeCollate: en_US.UTF-8
       encoding: UTF8
+      {{- if or (eq $db "authentication") (eq $db "github") (eq $db "patreon") }}
       import:
         type: microservice
         databases:
           - {{ $db }}
         source:
           externalCluster: legacy-instance
+      {{- end }}
   storage:
     pvcTemplate:
       accessModes:
