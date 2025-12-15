@@ -3,6 +3,7 @@ using System.Drawing;
 using JetBrains.Annotations;
 using LDTTeam.Authentication.DiscordBot.Service;
 using Remora.Commands.Attributes;
+using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Contexts;
@@ -19,7 +20,7 @@ public class TierCommands(
     IMessageBus bus,
     IUserRepository userRepository,
     IFeedbackService feedbackService
-    ) {
+    ) : CommandGroup {
     
     [Command("Add")]
     [Description("List the rewards a user has")]

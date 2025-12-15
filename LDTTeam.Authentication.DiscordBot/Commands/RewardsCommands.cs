@@ -25,6 +25,7 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
         IMessageBus bus,
         IFeedbackService feedbackService) : CommandGroup
     {
+        [Group("user")]
         public class UserRewardsCommands(
             IInteractionContext interactionContext,
             IUserRepository userRepository,

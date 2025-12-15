@@ -4,14 +4,10 @@ using LDTTeam.Authentication.DiscordBot.Data;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using Remora.Commands.Extensions;
 using Remora.Discord.Caching.Extensions;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Gateway.Extensions;
-using Remora.Discord.Hosting.Extensions;
 using Remora.Discord.Hosting.Options;
 using Remora.Discord.Hosting.Services;
 using Remora.Discord.Rest;
@@ -81,6 +77,7 @@ public static class HostApplicationBuilderExtensions
                 .AddDiscordCommands(true)
                 .AddCommandTree()
                 .WithCommandGroup<RewardsCommands>()
+                .WithCommandGroup<TierCommands>()
                 .Finish()
                 .AddDiscordCaching();
             
