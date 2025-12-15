@@ -49,7 +49,6 @@ var serverProvider = scope.ServiceProvider.GetRequiredService<IServerProvider>()
 var server = await serverProvider.GetServerAsync();
 
 var slashService = scope.ServiceProvider.GetRequiredService<SlashService>();
-await slashService.UpdateSlashCommandsAsync();
 await slashService.UpdateSlashCommandsAsync(server.Id);
 
 var eventLogger = scope.ServiceProvider.GetRequiredService<DiscordEventLoggingService>();
