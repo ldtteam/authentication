@@ -42,47 +42,47 @@ jobs:
           DEFAULT_BUMP: patch
           GIT_API_TAGGING: false
 
-  publish:
+  publish-server:
     needs:
       - tag
-    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-          fetch-depth: '0'
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication
+      registry: ${{ env.REGISTRY }}
+      dockerfile: LDTTeam.Authentication.Server/Dockerfile
 
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  publish-discord-bot:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/discord
+      registry: ${{ env.REGISTRY }}
+      dockerfile: LDTTeam.Authentication.DiscordBot/Dockerfile
 
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: LDTTeam.Authentication.Server/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.tag.outputs.tag }}
-          labels: ${{ steps.meta.outputs.labels }}
+  publish-rewards-service:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/rewards
+      registry: ${{ env.REGISTRY }}
+      dockerfile: LDTTeam.Authentication.RewardsService/Dockerfile
   
   chart:
     needs:
@@ -94,6 +94,3 @@ jobs:
     uses: ./.github/workflows/chart-publish.yml
     with:
       tag: ${{ needs.tag.outputs.tag }}
-    
-      
-        

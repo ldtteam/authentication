@@ -3,7 +3,16 @@ replicaCount: 1
 image:
   repository: ghcr.io/ldtteam/authentication
   pullPolicy: IfNotPresent
-  #tag: ""
+
+discordBot:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/discord
+  pullPolicy: IfNotPresent
+  
+rewardsService:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/rewards
+  pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 nameOverride: ""

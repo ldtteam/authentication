@@ -6,6 +6,7 @@ using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Services;
 using LDTTeam.Authentication.Server.Tasks;
+using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

@@ -1,0 +1,89 @@
+{{- $databases := list "rewards" "wolverine" }}
+{{- if .Values.rewardsService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}
+  labels:
+    {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ldtteam-authentication-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ldtteam-authentication-server.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ldtteam-authentication-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.rewardsService.repository }}:{{ .Values.rewardsService.version | default .Chart.Version }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          volumeMounts:
+            - name: appsettings
+              mountPath: /app/appsettings.json
+              subPath: appsettings.json
+            - name: secrets
+              mountPath: /app/privateKey.pem
+              readOnly: true  
+              subPath: privateKey.pem
+          envFrom:
+            - configMapRef:
+                name: {{ include "ldtteam-authentication-server.fullname" . }}-environment
+          env:
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.BotToken") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.ClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "GitHub.ClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Minecraft.ClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ApiClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
+            {{- if .Values.postgresha.enabled }}
+            {{- range $db := $databases }}
+            - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
+                  key: uri
+            {{- end }}
+            {{- end }}
+      volumes:        
+        - name: appsettings
+          configMap:
+            name: {{ include "ldtteam-authentication-server.fullname" . }}-appsettings
+        - name: secrets
+          secret:
+            secretName: {{ include "ldtteam-authentication-server.opssecret" . }}
+            items:
+              - key: Github.PrivateKey
+                path: privateKey.pem
+  {{- end }}

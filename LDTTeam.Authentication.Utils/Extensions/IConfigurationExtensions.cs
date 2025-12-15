@@ -1,7 +1,6 @@
-﻿using System;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
-namespace LDTTeam.Authentication.Modules.Api.Extensions;
+namespace LDTTeam.Authentication.Utils.Extensions;
 
 // ReSharper disable once InconsistentNaming
 public static class IConfigurationExtensions

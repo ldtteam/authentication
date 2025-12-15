@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LDTTeam.Authentication.Modules.Api.Extensions;
+﻿namespace LDTTeam.Authentication.Utils.Extensions;
 
 public static class StringExtensions
 {

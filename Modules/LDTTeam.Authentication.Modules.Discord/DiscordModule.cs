@@ -1,25 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using LDTTeam.Authentication.Modules.Api;
-using LDTTeam.Authentication.Modules.Api.Events;
-using LDTTeam.Authentication.Modules.Api.Extensions;
-using LDTTeam.Authentication.Modules.Api.Rewards;
-using LDTTeam.Authentication.Modules.Discord.Commands;
 using LDTTeam.Authentication.Modules.Discord.Config;
-using LDTTeam.Authentication.Modules.Discord.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Remora.Commands.Extensions;
-using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Abstractions.Rest;
-using Remora.Discord.Caching.Extensions;
-using Remora.Discord.Commands.Extensions;
-using Remora.Discord.Gateway.Extensions;
-using Remora.Rest.Core;
-using Remora.Results;
 
 namespace LDTTeam.Authentication.Modules.Discord
 {
@@ -44,37 +28,6 @@ namespace LDTTeam.Authentication.Modules.Discord
 
                 o.SaveTokens = true;
             });
-        }
-
-        public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services)
-        {
-            DiscordConfig? discordConfig = configuration.GetSection("discord").Get<DiscordConfig>();
-
-            if (discordConfig == null)
-                throw new Exception("discord not set in configuration!");
-
-            return services.AddHostedService<WebhookLoggingQueueService>()
-                .AddHostedService<DiscordBackgroundService>()
-                .AddHostedService<DiscordSyncRolesBackgroundService>()
-                .AddScoped<DiscordRoleSyncService>()
-                .AddTransient<DiscordRoleAssignmentService>()
-                .AddTransient<DiscordRoleRewardService>()
-                .AddStartupTask<DiscordStartupTask>()
-                .AddDiscordGateway(_ => discordConfig.BotToken)
-                .AddDiscordCommands(true)
-                .AddCommandTree()
-                .WithCommandGroup<MyRewardsCommands>()
-                .WithCommandGroup<RewardsCommands>()
-                .WithCommandGroup<RefreshCommand>()
-                .Finish()
-                .AddDiscordCaching();
-        }
-
-        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
-        {
-            events.PostRefreshContentEvent += async sp =>
-                await sp.ServiceProvider.GetRequiredService<DiscordRoleSyncService>()
-                    .RunSync(token);
         }
     }
 }

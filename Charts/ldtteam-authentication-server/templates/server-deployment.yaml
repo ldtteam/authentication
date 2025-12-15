@@ -23,7 +23,6 @@ spec:
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-    # noinspection KubernetesUnknownValues
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
