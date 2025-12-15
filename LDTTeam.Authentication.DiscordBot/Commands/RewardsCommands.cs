@@ -133,7 +133,7 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             [Description("The name of the reward. Has to be unique within the rewards of the same type.")]
             string reward,
             [Description(
-                "The evaluated lambda. Is prefixed with \"(tiers, lifetime) => \" before compilation. When evaluation returns true, then the user has the given reward.")]
+                "The evaluated lambda. Prefixed with \"(tiers, lifetime) => \". Returns true for awarding the reward.")]
             string lambda)
         {
             return await bus.ExecuteProtectedAsync(
