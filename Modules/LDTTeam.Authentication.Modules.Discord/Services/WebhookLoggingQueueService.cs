@@ -27,23 +27,7 @@ namespace LDTTeam.Authentication.Modules.Discord.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            DiscordConfig? discordConfig = _configuration.GetSection("discord").Get<DiscordConfig>();
-
-            if (discordConfig == null)
-                throw new Exception("discord not set in configuration!");
-
-            Snowflake channelSnowflake = new(discordConfig.LoggingChannel);
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                Embed embed = await _loggingQueue.DequeueAsync(stoppingToken);
-
-                await _channelApi.CreateMessageAsync(
-                    channelSnowflake,
-                    embeds: new[] {embed},
-                    ct: stoppingToken
-                );
-            }
+            return;
         }
     }
 }
