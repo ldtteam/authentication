@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-rewards-service
   labels:
     {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
 spec:
