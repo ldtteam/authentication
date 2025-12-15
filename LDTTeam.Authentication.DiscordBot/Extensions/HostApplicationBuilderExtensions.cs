@@ -23,18 +23,19 @@ public static class HostApplicationBuilderExtensions
         public IHostApplicationBuilder AddDatabase()
         {
             builder.Services.AddDbContext<DatabaseContext>(x =>
-            {
-                x.UseNpgsql(builder.Configuration.CreateConnectionString("discord"),
-                    b => b.MigrationsAssembly("LDTTeam.Authentication.DiscordBot"));
-            });
+                {
+                    x.UseNpgsql(builder.Configuration.CreateConnectionString("discord"),
+                        b => b.MigrationsAssembly("LDTTeam.Authentication.DiscordBot"));
+                });
             return builder;
         }
 
         public IHostApplicationBuilder AddRepositories()
         {
-            builder.Services.AddSingleton<IAssignedRewardRepository, AssignedRewardRepository>();
-            builder.Services.AddSingleton<IRoleRewardRepository, RoleRewardRepository>();
-            builder.Services.AddSingleton<IUserRepository, UserRepository>();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddScoped<IAssignedRewardRepository, AssignedRewardRepository>();
+            builder.Services.AddScoped<IRoleRewardRepository, RoleRewardRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             return builder;
         }
 
@@ -42,33 +43,34 @@ public static class HostApplicationBuilderExtensions
         {
             builder.Services.AddOptions<DiscordConfig>()
                 .BindConfiguration("Discord");
-            return builder;;
+            return builder;
         }
-        
+
         public IHostApplicationBuilder AddServer()
         {
-            builder.Services.AddSingleton<IServerProvider, ConfigBasedServerProvider>();
+            builder.Services.AddScoped<IServerProvider, ConfigBasedServerProvider>();
             return builder;
         }
 
         public IHostApplicationBuilder AddDiscordEventLogging()
         {
-            builder.Services.AddSingleton<ILoggingChannelProvider, ConfigBasedLoggingChannelProvider>();
+            builder.Services.AddScoped<ILoggingChannelProvider, ConfigBasedLoggingChannelProvider>();
+            builder.Services.AddScoped<DiscordEventLoggingService>();
             return builder;
         }
-        
+
         public IHostApplicationBuilder AddDiscordRoleRewardManagement()
         {
-            builder.Services.AddSingleton<DiscordRoleRewardService>();
-            builder.Services.AddSingleton<DiscordRoleAssignmentService>();
+            builder.Services.AddScoped<DiscordRoleRewardService>();
+            builder.Services.AddScoped<DiscordRoleAssignmentService>();
             return builder;
         }
 
         public IHostApplicationBuilder AddDiscord()
         {
             builder.Services
-                .TryAddSingleton<IAsyncTokenStore, ConfigBasedDiscordTokenService>();
-                
+                .AddSingleton<IAsyncTokenStore, ConfigBasedDiscordTokenService>();
+
             builder.Services
                 .AddDiscordGateway()
                 .AddDiscordCommands(true)

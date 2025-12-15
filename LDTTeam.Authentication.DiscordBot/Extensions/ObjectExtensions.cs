@@ -3,6 +3,7 @@ using System.Text;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
+using IResult = Remora.Results.IResult;
 
 namespace LDTTeam.Authentication.DiscordBot.Extensions;
 

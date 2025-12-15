@@ -28,17 +28,17 @@ public static class HostApplicationBuilderExtensions
         public IHostApplicationBuilder AddRepositories()
         {
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<IUserTiersRepository, UserTiersRepository>();
-            builder.Services.AddSingleton<IRewardCalculationsRepository, RewardCalculationsRepository>();
-            builder.Services.AddSingleton<IUserLifetimeContributionsRepository, UserLifetimeContributionsRepository>();
-            builder.Services.AddSingleton<IUserRewardAssignmentsRepository, UserRewardAssignmentsRepository>();
+            builder.Services.AddScoped<IUserTiersRepository, UserTiersRepository>();
+            builder.Services.AddScoped<IRewardCalculationsRepository, RewardCalculationsRepository>();
+            builder.Services.AddScoped<IUserLifetimeContributionsRepository, UserLifetimeContributionsRepository>();
+            builder.Services.AddScoped<IUserRewardAssignmentsRepository, UserRewardAssignmentsRepository>();
             return builder;
         }
         
         public IHostApplicationBuilder AddCalculationService()
         {
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<IRewardsCalculationService, RewardsCalculationService>();
+            builder.Services.AddScoped<IRewardsCalculationService, RewardsCalculationService>();
             return builder;
         }
     }

@@ -6,3 +6,5 @@ riderModule.iml
 
 /*.DotSettings
 /.idea
+
+**/appsettings.secrets.json

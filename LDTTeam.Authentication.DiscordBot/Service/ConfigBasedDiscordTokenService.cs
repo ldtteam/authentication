@@ -4,7 +4,7 @@ using Remora.Discord.Rest;
 
 namespace LDTTeam.Authentication.DiscordBot.Service;
 
-public class ConfigBasedDiscordTokenService(IOptionsSnapshot<DiscordConfig> config) : IAsyncTokenStore
+public class ConfigBasedDiscordTokenService(IOptions<DiscordConfig> config) : IAsyncTokenStore
 {
     public ValueTask<string> GetTokenAsync(CancellationToken cancellationToken)
     {

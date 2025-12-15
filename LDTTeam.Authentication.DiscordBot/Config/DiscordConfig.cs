@@ -13,10 +13,6 @@ public class DiscordConfig
 [UsedImplicitly]
 public class ServerConfig
 {
-    public ServerConfig()
-    {
-    }
-
     public Snowflake Snowflake => new(Id);
     public required string DisplayName { get; set; }
     public required ulong Id { get; set; }

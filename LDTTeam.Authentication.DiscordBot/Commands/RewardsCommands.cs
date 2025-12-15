@@ -14,6 +14,7 @@ using Remora.Discord.Commands.Feedback.Services;
 using Remora.Rest.Core;
 using Remora.Results;
 using Wolverine;
+using IResult = Remora.Results.IResult;
 
 namespace LDTTeam.Authentication.DiscordBot.Commands
 {
@@ -30,30 +31,17 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             IFeedbackService feedbackService) : CommandGroup
         {
             [Command("list")]
-            [Description("List the rewards of the current user")]
-            [UsedImplicitly]
-            public async Task<IResult> ListRewardsForCurrentUser()
-            {
-                var member = interactionContext.Interaction.Member.FlatMap(m => m.User);
-                if (!member.HasValue)
-                {
-                    return await feedbackService.SendContextualErrorAsync(
-                        "Command needs a user to run"
-                    );
-                }
-
-                return await ListRewardsFor(member.Value.ID, member.Value.Username);
-            }
-
-            [Command("list")]
             [Description("List the rewards a user has")]
             [UsedImplicitly]
-            public async Task<IResult> ListRewardsForSpecificUser([Description("User to get rewards for")] IUser user)
+            public async Task<IResult> ListRewardsForSpecificUser(
+                [Description("User to get rewards for")] IUser? user)
             {
                 var executor = interactionContext.Interaction.Member;
                 var executingUser = executor.FlatMap(m => m.User);
                 var permissions = executor.FlatMap(m => m.Permissions);
-                if (!permissions.HasValue && !(executingUser.HasValue && executingUser.Value.ID.Equals(user.ID)))
+                if (!permissions.HasValue && 
+                    user != null &&
+                    !(executingUser.HasValue && executingUser.Value.ID.Equals(user.ID)))
                 {
                     return await feedbackService.SendContextualErrorAsync(
                         "You are not authorized to run this command for other users"
@@ -61,6 +49,7 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
                 }
 
                 if (permissions.HasValue && executingUser.HasValue
+                                         && user != null
                                          && !executingUser.Value.ID.Equals(user.ID)
                                          && !permissions.Value.HasPermission(DiscordPermission.Administrator))
                 {
@@ -74,7 +63,24 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
                         }));
                 }
 
-                return await ListRewardsFor(user.ID, user.Username);
+                if (user == null && !executingUser.HasValue)
+                {
+                    return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = "No user provided",
+                            Description =
+                                "You need to supply a user to get rewards for",
+                            Colour = Color.Red
+                        }));
+                }
+                
+                if (user == null && executingUser.HasValue)
+                {
+                    user = executingUser.Value;
+                }
+
+                return await ListRewardsFor(user!.ID, user.Username);
             }
 
             private async Task<IResult> ListRewardsFor(Snowflake discordUserId, string userName)

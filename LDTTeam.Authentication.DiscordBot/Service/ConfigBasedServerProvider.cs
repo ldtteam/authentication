@@ -1,4 +1,5 @@
 using LDTTeam.Authentication.DiscordBot.Config;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
 using Remora.Rest.Core;
 
@@ -10,7 +11,7 @@ namespace LDTTeam.Authentication.DiscordBot.Service;
 /// <remarks>
 /// This implementation retrieves the server's display name and Snowflake ID from the application's configuration using <see cref="DiscordConfig"/>.
 /// </remarks>
-public class ConfigBasedServerProvider(IOptionsSnapshot<DiscordConfig> configSnapshot) : IServerProvider
+public class ConfigBasedServerProvider(IOptions<DiscordConfig> configSnapshot) : IServerProvider
 {
     /// <summary>
     /// Asynchronously retrieves the server name and its unique Snowflake identifier from configuration.
