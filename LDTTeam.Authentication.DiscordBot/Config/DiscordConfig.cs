@@ -3,14 +3,21 @@ using Remora.Rest.Core;
 
 namespace LDTTeam.Authentication.DiscordBot.Config;
 
-public record DiscordConfig(
-    ServerConfig Server,
-    string LoggingChannel,
-    string BotToken
-    );
+public class DiscordConfig
+{
+    public required ServerConfig Server { get; set; }
+    public required string LoggingChannel { get; set; }
+    public required string BotToken { get; set; }
+}
 
 [UsedImplicitly]
-public record ServerConfig(string DisplayName, ulong Id)
+public class ServerConfig
 {
+    public ServerConfig()
+    {
+    }
+
     public Snowflake Snowflake => new(Id);
+    public required string DisplayName { get; set; }
+    public required ulong Id { get; set; }
 }
