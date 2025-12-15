@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Drawing;
 using JasperFx;
 using LDTTeam.Authentication.DiscordBot.Extensions;
 using LDTTeam.Authentication.DiscordBot.Service;
@@ -9,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,10 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables("LDTTEAM_AUTH_");
 
 builder.AddDatabase()
-    .AddWolverine(opts =>
-    {
-        opts.Discovery.IncludeAssembly(typeof(Marker).Assembly);
-    })
+    .AddWolverine(opts => { opts.Discovery.IncludeAssembly(typeof(Marker).Assembly); })
     .AddRepositories()
     .AddDiscordOptions()
     .AddDiscord()
@@ -36,9 +35,6 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogWarning("Starting Rewards Service...");
 
 app.MigrateDatabase();
-var result = await app.RunJasperFxCommands(args);
-
-logger.LogWarning("Application has stopped.");
 
 logger.LogWarning("Registering Discord Slash Commands...");
 using var scope = app.Services.CreateScope();
@@ -48,7 +44,24 @@ var server = await serverProvider.GetServerAsync();
 var slashService = scope.ServiceProvider.GetRequiredService<SlashService>();
 await slashService.UpdateSlashCommandsAsync();
 await slashService.UpdateSlashCommandsAsync(server.Id);
-logger.LogWarning("Discord Slash Commands registered.");
+
+var eventLogger = scope.ServiceProvider.GetRequiredService<DiscordEventLoggingService>();
+await eventLogger.LogEvent(new Embed()
+{
+    Title = "Bot Started",
+    Description = "The Discord Bot has started and slash commands have been registered.",
+    Colour = Color.DarkTurquoise,
+    Fields = new List<EmbedField>
+    {
+        new("Server", $"{server.Server} ({server.Id})", false),
+        new("Timestamp", DateTime.UtcNow.ToString("u"), false),
+        new("Version", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown", false)
+    }
+});
+
+var result = await app.RunJasperFxCommands(args);
+
+logger.LogWarning("Application has stopped.");
 
 return result;
 

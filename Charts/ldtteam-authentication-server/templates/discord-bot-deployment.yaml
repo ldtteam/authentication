@@ -76,6 +76,8 @@ spec:
                   key: uri
             {{- end }}
             {{- end }}
+            - name: "VERSION"
+              value: "{{ .Values.discordBot.version | default .Chart.Version }}"
       volumes:        
         - name: appsettings
           configMap:
