@@ -11,6 +11,7 @@ using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Modules.GitHub.Config;
 using LDTTeam.Authentication.Modules.GitHub.Data;
 using LDTTeam.Authentication.Modules.GitHub.EventHandlers;
+using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

@@ -7,6 +7,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\LDTTeam.Authentication.Modules.Api\LDTTeam.Authentication.Modules.Api.csproj" />
+      <ProjectReference Include="..\..\LDTTeam.Authentication.Utils\LDTTeam.Authentication.Utils.csproj" />
     </ItemGroup>
 
     <ItemGroup>
