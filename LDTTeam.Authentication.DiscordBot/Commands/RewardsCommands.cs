@@ -21,6 +21,7 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
     [Group("rewards")]
     [UsedImplicitly]
     public class RewardsCommands(
+        IInteractionContext interactionContext,
         IMessageBus bus,
         IFeedbackService feedbackService) : CommandGroup
     {
@@ -142,6 +143,27 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
                 "The evaluated lambda. Prefixed with \"(tiers, lifetime) => \". Returns true for awarding the reward.")]
             string lambda)
         {
+            var executor = interactionContext.Interaction.Member;
+            var permissions = executor.FlatMap(m => m.Permissions);
+            if (!permissions.HasValue)
+            {
+                return await feedbackService.SendContextualErrorAsync(
+                    "You are not authorized to run this command for other users"
+                );
+            }
+            
+            if (permissions.HasValue && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+            {
+                return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No permission",
+                        Description =
+                            "You require Administrator permissions to run this command for other users",
+                        Colour = Color.Red
+                    }));
+            }
+            
             return await bus.ExecuteProtectedAsync(
                 feedbackService,
                 "Failed to upsert reward",
@@ -171,6 +193,27 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             [Description("The name of the reward. Has to be unique within the rewards of the same type.")]
             string reward)
         {
+            var executor = interactionContext.Interaction.Member;
+            var permissions = executor.FlatMap(m => m.Permissions);
+            if (!permissions.HasValue)
+            {
+                return await feedbackService.SendContextualErrorAsync(
+                    "You are not authorized to run this command for other users"
+                );
+            }
+            
+            if (permissions.HasValue && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+            {
+                return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No permission",
+                        Description =
+                            "You require Administrator permissions to run this command for other users",
+                        Colour = Color.Red
+                    }));
+            }
+            
             return await bus.ExecuteProtectedAsync(
                 feedbackService,
                 "Failed to remove reward",
