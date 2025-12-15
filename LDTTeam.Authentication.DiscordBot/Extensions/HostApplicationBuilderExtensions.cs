@@ -11,6 +11,8 @@ using Remora.Commands.Extensions;
 using Remora.Discord.Caching.Extensions;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Gateway.Extensions;
+using Remora.Discord.Hosting.Extensions;
+using Remora.Discord.Hosting.Services;
 using Remora.Discord.Rest;
 
 namespace LDTTeam.Authentication.DiscordBot.Extensions;
@@ -73,11 +75,17 @@ public static class HostApplicationBuilderExtensions
 
             builder.Services
                 .AddDiscordGateway()
+                .AddSingleton<DiscordService>()
                 .AddDiscordCommands(true)
                 .AddCommandTree()
                 .WithCommandGroup<RewardsCommands>()
                 .Finish()
                 .AddDiscordCaching();
+            
+            builder.Services
+                .AddSingleton<IHostedService, DiscordService>(serviceProvider =>
+                    serviceProvider.GetRequiredService<DiscordService>());
+            
             return builder;
         }
     }
