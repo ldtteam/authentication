@@ -13,15 +13,15 @@ public static class IConfigurationExtensions
     /// <returns>The connection string.</returns>
     public static string CreateConnectionString(this IConfiguration configuration, string databaseName)
     {
-        var databaseSection = configuration.GetRequiredSection("Database");
+        var databaseSection = configuration.GetSection("Database");
         
-        var server = databaseSection["Server"];
-        var port = databaseSection["Port"];
-        var username = databaseSection["Username"];
-        var password = databaseSection["Password"];
+        var server = databaseSection["Server"] ?? "localhost";
+        var port = databaseSection["Port"] ?? "5432";
+        var username = databaseSection["Username"] ?? "postgres";
+        var password = databaseSection["Password"] ?? "postgres";
         var timeout = databaseSection["Timeout"] ?? "600";
         
-        var uris = databaseSection.GetRequiredSection("Uris");
+        var uris = databaseSection.GetSection("Uris");
         var uri = uris[databaseName];
         if (!string.IsNullOrEmpty(uri))
         {

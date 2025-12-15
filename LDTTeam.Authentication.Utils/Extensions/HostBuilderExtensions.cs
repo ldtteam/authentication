@@ -14,7 +14,7 @@ public static class HostBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)
     {
-        public IHostApplicationBuilder AddWolverine()
+        public IHostApplicationBuilder AddWolverine(Action<WolverineOptions>? configure = null)
         {
             builder.UseWolverine(options =>
             {
@@ -26,6 +26,8 @@ public static class HostBuilderExtensions
                     .CircuitBreaker()
                     .MaximumMessagesToReceive(50);
                 options.Discovery.IncludeAssembly(typeof(LDTTeamAuthenticationAssemblyMarker).Assembly);
+                
+                configure?.Invoke(options);
             });
             builder.Services.AddResourceSetupOnStartup();
             return builder;

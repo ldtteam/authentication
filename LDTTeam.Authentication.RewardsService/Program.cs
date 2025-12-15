@@ -14,7 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables("LDTTEAM_AUTH_");
 
 builder.AddDatabase()
-    .AddWolverine()
+    .AddWolverine(opts =>
+    {
+        opts.Discovery.IncludeAssembly(typeof(Marker).Assembly);
+    })
     .AddRepositories()
     .AddCalculationService();
 
@@ -32,3 +35,5 @@ var result = await app.RunJasperFxCommands(args);
 logger.LogWarning("Application has stopped.");
 
 return result;
+
+record Marker();
