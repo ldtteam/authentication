@@ -148,7 +148,6 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             [Description("List the roles associated with a reward")]
             [UsedImplicitly]
             public async Task<IResult> ListRolesForReward(
-                [Autocomplete]
                 [AutocompleteProvider(DiscordRoleRewardsAutoCompleteProvider.ProviderIdentity)]
                 [Description("The name of the reward.")]
                 string reward)
@@ -246,7 +245,6 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             [Description("Associate a Discord role with a reward")]
             [UsedImplicitly]
             public async Task<IResult> AddRoleToReward(
-                [Autocomplete]
                 [AutocompleteProvider(DiscordRoleRewardsAutoCompleteProvider.ProviderIdentity)]
                 [Description("The name of the reward.")]
                 string reward,
@@ -324,7 +322,6 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
             [Description("Remove association of a Discord role with a reward")]
             [UsedImplicitly]
             public async Task<IResult> RemoveRoleFromReward(
-                [Autocomplete]
                 [AutocompleteProvider(DiscordRoleRewardsAutoCompleteProvider.ProviderIdentity)]
                 [Description("The name of the reward.")]
                 string reward,
@@ -402,7 +399,6 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
         public async Task<IResult> UpsertReward(
             [Description("The type of the reward that is updated or added")]
             RewardType type,
-            [Autocomplete]
             [AutocompleteProvider(RewardsAutoCompleteProvider.ProviderIdentity)]
             [Description("The name of the reward. Has to be unique within the rewards of the same type.")]
             string reward,
@@ -457,7 +453,6 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
         public async Task<IResult> RemoveReward(
             [Description("The type of the reward that is removed")]
             RewardType type,
-            [Autocomplete]
             [AutocompleteProvider(RewardsAutoCompleteProvider.ProviderIdentity)]
             [Description("The name of the reward. Has to be unique within the rewards of the same type.")]
             string reward)
