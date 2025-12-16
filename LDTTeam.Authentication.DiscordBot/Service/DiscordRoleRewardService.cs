@@ -9,16 +9,16 @@ public record DiscordRoleRewardService(
     IAssignedRewardRepository AssignedRewardRepository
     ) {
 
-    public async IAsyncEnumerable<Snowflake> AllRoles([EnumeratorCancellation] CancellationToken token)
+    public async IAsyncEnumerable<(Snowflake Role, Snowflake Server)> AllRoles([EnumeratorCancellation] CancellationToken token)
     {
         var allMappings = await RoleRewardRepository.GetAllAsync(token);
         foreach (var mapping in allMappings)
         {
-            yield return mapping.Role;
+            yield return (mapping.Role, mapping.Server);
         }
     }
     
-    public async IAsyncEnumerable<Snowflake> ActiveRoles(Snowflake member, [EnumeratorCancellation] CancellationToken token)
+    public async IAsyncEnumerable<(Snowflake Role, Snowflake Server)> ActiveRoles(Snowflake member, [EnumeratorCancellation] CancellationToken token)
     {
         var user = await UserRepository.GetBySnowflakeAsync(member, token);
         if (user is null)

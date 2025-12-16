@@ -23,17 +23,18 @@ public class ConfigBasedLoggingChannelProvider(IOptionsSnapshot<DiscordConfig> c
 
         // Read current config snapshot
         var config = configSnapshot.Value;
-        var channelName = config.LoggingChannel;
+        var loggingChannel = config.LoggingChannel;
         
         // Look up channel by name
-        var server = await serverProvider.GetServerAsync();
-        var channels = await guildApi.GetGuildChannelsAsync(server.Id);
+        var servers = await serverProvider.GetServersAsync();
+        var server = servers[config.LoggingChannel.Server];
+        var channels = await guildApi.GetGuildChannelsAsync(server);
         if (!channels.IsSuccess)
         {
             return null;
         }
         
-        var channel = channels.Entity.FirstOrDefault(c => c.Name == channelName);
+        var channel = channels.Entity.FirstOrDefault(c => c.Name == loggingChannel.Channel);
         if (channel == null)
         {
             return null;

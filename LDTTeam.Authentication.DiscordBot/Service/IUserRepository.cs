@@ -42,5 +42,10 @@ public interface IUserRepository
     /// <param name="token">Cancellation token.</param>
     /// <returns>A task representing the operation.</returns>
     Task DeleteAsync(Guid userId, CancellationToken token = default);
+    
+    /// <summary>
+    /// Gets all Discord snowflakes for all users in the database.
+    /// </summary>
+    Task<IEnumerable<Snowflake>> GetAllUserSnowflakesAsync(CancellationToken token = default);
 }
 

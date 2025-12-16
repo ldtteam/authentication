@@ -5,12 +5,6 @@ using JasperFx;
 using LDTTeam.Authentication.DiscordBot.Extensions;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Utils.Extensions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Services;
 
@@ -46,10 +40,13 @@ app.MigrateDatabase();
 logger.LogWarning("Registering Discord Slash Commands...");
 using var scope = app.Services.CreateScope();
 var serverProvider = scope.ServiceProvider.GetRequiredService<IServerProvider>();
-var server = await serverProvider.GetServerAsync();
+var servers = await serverProvider.GetServersAsync();
 
 var slashService = scope.ServiceProvider.GetRequiredService<SlashService>();
-await slashService.UpdateSlashCommandsAsync(server.Id);
+foreach (var (_, id) in servers)
+{
+    await slashService.UpdateSlashCommandsAsync(id);
+}
 
 var eventLogger = scope.ServiceProvider.GetRequiredService<DiscordEventLoggingService>();
 await eventLogger.LogEvent(new Embed()
@@ -59,10 +56,13 @@ await eventLogger.LogEvent(new Embed()
     Colour = Color.DarkTurquoise,
     Fields = new List<EmbedField>
     {
-        new("Server", $"{server.Server} ({server.Id})", false),
         new("Timestamp", DateTime.UtcNow.ToString("u"), false),
         new("Version", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown", false)
-    }
+    }.Union(servers.Select(server => new EmbedField(
+        "Connected to: ",
+        $"{server.Key} ({server.Value})",
+        false
+    ))).ToList()
 });
 
 var result = await app.RunJasperFxCommands(args);
@@ -71,4 +71,4 @@ logger.LogWarning("Application has stopped.");
 
 return result;
 
-record Marker();
+internal record Marker;

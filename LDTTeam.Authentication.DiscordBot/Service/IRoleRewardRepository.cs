@@ -11,7 +11,7 @@ public interface IRoleRewardRepository
     /// <summary>
     /// Gets the role associated with the reward name or <c>null</c> if not mapped.
     /// </summary>
-    Task<IEnumerable<Snowflake>> GetRoleForRewardAsync(string reward, CancellationToken token = default);
+    Task<IEnumerable<(Snowflake Role, Snowflake Server)>> GetRoleForRewardAsync(string reward, CancellationToken token = default);
 
     /// <summary>
     /// Returns all configured reward->role mappings.
@@ -26,7 +26,7 @@ public interface IRoleRewardRepository
     /// <summary>
     /// Removes the mapping for the specified reward if present.
     /// </summary>
-    Task RemoveAsync(string reward, string role, CancellationToken token = default);
+    Task RemoveAsync(string reward, Snowflake role, Snowflake server, CancellationToken token = default);
 
     /// <summary>
     /// Removes all mappings for the specified reward.

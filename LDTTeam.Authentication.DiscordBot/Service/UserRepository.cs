@@ -43,9 +43,24 @@ public class UserRepository : IUserRepository
         return user;
     }
 
+    public async Task<IEnumerable<Snowflake>> GetAllUserSnowflakesAsync(CancellationToken token = default)
+    {
+        var key = "User:AllSnowflakes";
+        if (_cache.TryGetValue<List<Snowflake>>(key, out var cached))
+            return cached ?? Enumerable.Empty<Snowflake>();
+
+        var snowflakes = await _db.Users.AsNoTracking()
+            .Select(u => u.Snowflake)
+            .Where(u => u.HasValue)
+            .Select(u => u.Value)
+            .ToListAsync(token);
+        _cache.Set(key, snowflakes, _defaultOptions);
+        return snowflakes;
+    }
+
     public async Task<User> CreateOrUpdateAsync(User user, CancellationToken token = default)
     {
-        var existing = await _db.Users.FindAsync(new object[] { user.UserId }, token);
+        var existing = await _db.Users.FindAsync([user.UserId], token);
         if (existing is null)
         {
             await _db.Users.AddAsync(user, token);
@@ -62,6 +77,18 @@ public class UserRepository : IUserRepository
         _cache.Set($"User:Id:{user.UserId}", user, _defaultOptions);
         _cache.Set($"User:Snowflake:{user.Snowflake}", user, _defaultOptions);
 
+        // update cached snowflake list
+        var snowflakeListKey = "User:AllSnowflakes";
+        if (_cache.TryGetValue<List<Snowflake>>(snowflakeListKey, out var snowflakeList) && user.Snowflake != null)
+        {
+            var snowflakeValue = user.Snowflake.Value;
+            if (snowflakeList != null && !snowflakeList.Contains(snowflakeValue))
+            {
+                snowflakeList.Add(snowflakeValue);
+                _cache.Set(snowflakeListKey, snowflakeList, _defaultOptions);
+            }
+        }
+
         return user;
     }
 
@@ -75,6 +102,18 @@ public class UserRepository : IUserRepository
 
         _cache.Remove($"User:Id:{userId}");
         _cache.Remove($"User:Snowflake:{existing.Snowflake}");
-    }
-}
 
+        // update cached snowflake list
+        var snowflakeListKey = "User:AllSnowflakes";
+        if (_cache.TryGetValue<List<Snowflake>>(snowflakeListKey, out var snowflakeList) && existing.Snowflake != null)
+        {
+            var snowflakeValue = existing.Snowflake.Value;
+            if (snowflakeList != null && snowflakeList.Remove(snowflakeValue))
+            {
+                _cache.Set(snowflakeListKey, snowflakeList, _defaultOptions);
+            }
+        }
+    }
+
+    
+}

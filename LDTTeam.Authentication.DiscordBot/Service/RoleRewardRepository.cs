@@ -21,18 +21,18 @@ public class RoleRewardRepository : IRoleRewardRepository
         _cache = cache;
     }
 
-    public async Task<IEnumerable<Snowflake>> GetRoleForRewardAsync(string reward, CancellationToken token = default)
+    public async Task<IEnumerable<(Snowflake Role, Snowflake Server)>> GetRoleForRewardAsync(string reward, CancellationToken token = default)
     {
         var key = $"RoleReward:Reward:{reward}";
-        if (_cache.TryGetValue<IEnumerable<Snowflake>>(key, out var cached)) return cached ?? [];
+        if (_cache.TryGetValue<IEnumerable<(Snowflake Role, Snowflake Server)>>(key, out var cached)) return cached ?? [];
 
         var mapping = await _db.RoleRewards
             .Where(r => r.Reward == reward)
-            .Select(r => r.Role)
             .ToListAsync(cancellationToken: token);
-        
-        _cache.Set(key, mapping, _defaultOptions);
-        return mapping;
+
+        cached = mapping.Select(role => (role.Role, role.Server)).ToList();
+        _cache.Set(key, cached, _defaultOptions);
+        return cached;
     }
 
     public async Task<IEnumerable<RoleRewards>> GetAllAsync(CancellationToken token = default)
@@ -47,7 +47,7 @@ public class RoleRewardRepository : IRoleRewardRepository
 
     public async Task UpsertAsync(RoleRewards mapping, CancellationToken token = default)
     {
-        var existing = await _db.RoleRewards.FindAsync([mapping.Reward, mapping.Role], token);
+        var existing = await _db.RoleRewards.FindAsync([mapping.Reward, mapping.Role, mapping.Server], token);
         if (existing is null)
         {
             await _db.RoleRewards.AddAsync(mapping, token);
@@ -64,7 +64,7 @@ public class RoleRewardRepository : IRoleRewardRepository
         _cache.Remove("RoleReward:All");
     }
 
-    public async Task RemoveAsync(string reward, string role, CancellationToken token = default)
+    public async Task RemoveAsync(string reward, Snowflake role, Snowflake server, CancellationToken token = default)
     {
         var existing = await _db.RoleRewards.FindAsync([reward, role], token);
         if (existing is null)

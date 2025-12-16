@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using LDTTeam.Authentication.DiscordBot.Config;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
@@ -17,14 +18,11 @@ public class ConfigBasedServerProvider(IOptions<DiscordConfig> configSnapshot) :
     /// Asynchronously retrieves the server name and its unique Snowflake identifier from configuration.
     /// </summary>
     /// <returns>A tuple containing the server name as a string and the server's Snowflake ID.</returns>
-    public ValueTask<(string Server, Snowflake Id)> GetServerAsync()
+    public ValueTask<Dictionary<string, Snowflake>> GetServersAsync()
     {
         var config = configSnapshot.Value;
         return ValueTask.FromResult(
-            (
-                config.Server.DisplayName,
-                config.Server.Snowflake
-            )
+            config.Server.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Snowflake)
         );
     }
 }

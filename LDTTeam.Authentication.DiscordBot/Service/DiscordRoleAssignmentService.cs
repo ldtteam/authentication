@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Rest.Core;
 using Remora.Results;
@@ -11,6 +10,7 @@ namespace LDTTeam.Authentication.DiscordBot.Service;
 public partial class DiscordRoleAssignmentService (
     IDiscordRestGuildAPI guildApi,
     IServerProvider serverProvider,
+    IUserRepository userRepository,
     DiscordRoleRewardService roleRewardService,
     ILoggerFactory loggerFactory,
     ILogger<DiscordRoleAssignmentService> logger
@@ -19,13 +19,13 @@ public partial class DiscordRoleAssignmentService (
     /// <summary>
     /// Role assigner for a specific server
     /// </summary>
-    private async Task<ServerRoleAssigner> ForServer()
+    private async Task<ServerRoleAssigner> ForServer(Snowflake id)
     {
-        var server = await serverProvider.GetServerAsync();
-        LogCreatingRoleAssignerForServerServer(logger, server.Server);
+        var servers = await serverProvider.GetServersByIdAsync();
+        LogCreatingRoleAssignerForServerServer(logger, servers[id]);
         
         var assignerLogger = loggerFactory.CreateLogger<ServerRoleAssigner>();
-        return new ServerRoleAssigner(guildApi, server.Id, assignerLogger);
+        return new ServerRoleAssigner(guildApi, id, assignerLogger);
     }
     
     /// <summary>
@@ -33,13 +33,21 @@ public partial class DiscordRoleAssignmentService (
     /// </summary>
     /// <param name="member">The member to assign roles to.</param>
     /// <returns>The member role assigner which can manipulate roles and rewards for that member</returns>
-    public async Task<MemberRoleAssigner> ForMember(Snowflake member)
+    public Task<MemberRoleAssigner> ForMember(Snowflake member)
     {
         LogCreatingRoleAssignerForMemberMember(logger, member);
 
-        var serverAssigner = await ForServer();
         var assignerLogger = loggerFactory.CreateLogger<MemberRoleAssigner>();
-        return new MemberRoleAssigner(roleRewardService, member, serverAssigner, assignerLogger);
+        return Task.FromResult(new MemberRoleAssigner(roleRewardService, member, this, assignerLogger));
+    }
+    
+    /// <summary>
+    /// Role assigner for all members
+    /// </summary>
+    public Task<AllMembersRoleAssigner> ForAllMembers()
+    {
+        var assignerLogger = loggerFactory.CreateLogger<AllMembersRoleAssigner>();
+        return Task.FromResult(new AllMembersRoleAssigner(this, userRepository, assignerLogger));
     }
     
     /// <summary>
@@ -130,7 +138,7 @@ public partial class DiscordRoleAssignmentService (
     public partial class MemberRoleAssigner(
         DiscordRoleRewardService roleRewardService,
         Snowflake member,
-        ServerRoleAssigner assigner,
+        DiscordRoleAssignmentService roleAssignmentService,
         ILogger<MemberRoleAssigner> logger)
     {
         public async Task EnsureRewardsAssigned(CancellationToken token = default)
@@ -138,7 +146,8 @@ public partial class DiscordRoleAssignmentService (
             LogEnsuringRewardRolesAreAssignedForMemberMember(logger, member);
             await foreach (var role in roleRewardService.ActiveRoles(member, token))
             {
-                await assigner.AssignTo(role, member, "Ensuring reward role is assigned", token);
+                var assigner = await roleAssignmentService.ForServer(role.Server);
+                await assigner.AssignTo(role.Role, member, "Ensuring reward role is assigned", token);
             }
         }
         
@@ -147,7 +156,8 @@ public partial class DiscordRoleAssignmentService (
             LogRemovingAllRewardRolesFromMemberMember(logger, member);
             await foreach (var role in roleRewardService.AllRoles(token))
             {
-                await assigner.RemoveFrom(role, member, "Removing all reward roles", token);
+                var assigner = await roleAssignmentService.ForServer(role.Server);
+                await assigner.RemoveFrom(role.Role, member, "Removing all reward roles", token);
             }
         }
 
@@ -158,13 +168,15 @@ public partial class DiscordRoleAssignmentService (
                 .ToHashSet();
             await foreach (var role in roleRewardService.ActiveRoles(member, token))
             {
-                await assigner.AssignTo(role, member, "Ensuring reward role is assigned", token);
+                var assigner = await roleAssignmentService.ForServer(role.Server);
+                await assigner.AssignTo(role.Role, member, "Ensuring reward role is assigned", token);
                 roles.Remove(role);
             }
             
             foreach (var role in roles)
             {
-                await assigner.RemoveFrom(role, member, "Removing unearned reward role", token);
+                var assigner = await roleAssignmentService.ForServer(role.Server);
+                await assigner.RemoveFrom(role.Role, member, "Removing unearned reward role", token);
             }
         }
 
@@ -176,6 +188,43 @@ public partial class DiscordRoleAssignmentService (
 
         [LoggerMessage(LogLevel.Debug, "Updating all reward roles for member {member}")]
         static partial void LogUpdatingAllRewardRolesForMemberMember(ILogger<MemberRoleAssigner> logger, Snowflake member);
+    }
+
+    public partial class AllMembersRoleAssigner(
+        DiscordRoleAssignmentService roleAssignmentService,
+        IUserRepository userRepository,
+        ILogger<AllMembersRoleAssigner> logger
+    )
+    {
+        public async Task EnsureRewardsAssigned(CancellationToken token = default)
+        {
+            var allUsers = await userRepository.GetAllUserSnowflakesAsync(token);
+            foreach (var user in allUsers)
+            {
+                var memberAssigner = await roleAssignmentService.ForMember(user);
+                await memberAssigner.EnsureRewardsAssigned(token);
+            }
+        }
+        
+        public async Task RemoveAllRewards(CancellationToken token = default)
+        {
+            var allUsers = await userRepository.GetAllUserSnowflakesAsync(token);
+            foreach (var user in allUsers)
+            {
+                var memberAssigner = await roleAssignmentService.ForMember(user);
+                await memberAssigner.RemoveAllRewards(token);
+            }
+        }
+
+        public async Task UpdateAllRewards(CancellationToken token = default)
+        {
+            var allUsers = await userRepository.GetAllUserSnowflakesAsync(token);
+            foreach (var user in allUsers)
+            {
+                var memberAssigner = await roleAssignmentService.ForMember(user);
+                await memberAssigner.UpdateAllRewards(token);
+            }
+        }
     }
 
     [LoggerMessage(LogLevel.Debug, "Creating role assigner for server {server}")]
