@@ -6,6 +6,7 @@ metadata:
   name: {{ include "ldtteam-authentication-server.fullname" . }}-rewards-service
   labels:
     {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rewards-service
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,17 +14,19 @@ spec:
   selector:
     matchLabels:
       {{- include "ldtteam-authentication-server.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: rewards-service
   template:
     metadata:
+      labels:
+        {{- include "ldtteam-authentication-server.labels" . | nindent 8 }}
+        app.kubernetes.io/component: rewards-service
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      labels:
-        {{- include "ldtteam-authentication-server.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -33,11 +36,11 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: rewards-service
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.rewardsService.repository }}:{{ .Values.rewardsService.version | default .Chart.Version }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.rewardsService.pullPolicy | default .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -54,7 +57,7 @@ spec:
               subPath: appsettings.json
             - name: secrets
               mountPath: /app/privateKey.pem
-              readOnly: true  
+              readOnly: true
               subPath: privateKey.pem
           envFrom:
             - configMapRef:
@@ -67,16 +70,9 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ApiClientSecret") .) | nindent 12}}
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
-            {{- if .Values.postgresha.enabled }}
-            {{- range $db := $databases }}
-            - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
-                  key: uri
-            {{- end }}
-            {{- end }}
-      volumes:        
+            - name: "VERSION"
+              value: "{{ .Values.rewardsService.version | default .Chart.Version }}"
+      volumes:
         - name: appsettings
           configMap:
             name: {{ include "ldtteam-authentication-server.fullname" . }}-appsettings
@@ -86,4 +82,4 @@ spec:
             items:
               - key: Github.PrivateKey
                 path: privateKey.pem
-  {{- end }}
+{{- end }}
