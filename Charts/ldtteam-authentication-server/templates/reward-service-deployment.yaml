@@ -72,6 +72,15 @@ spec:
             {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "WebHook") .) | nindent 12}}
             - name: "VERSION"
               value: "{{ .Values.rewardsService.version | default .Chart.Version }}"
+            {{- if .Values.postgresha.enabled }}
+            {{- range $db := $databases }}
+            - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
+                  key: uri
+            {{- end }}
+            {{- end }}
       volumes:
         - name: appsettings
           configMap:
