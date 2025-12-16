@@ -11,6 +11,7 @@ namespace LDTTeam.Authentication.DiscordBot.Data
         public DbSet<AssignedReward> AssignedRewards { get; set; } = null!;
         public DbSet<RoleRewards> RoleRewards { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Reward> Rewards { get; set; } = null!;
         
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {    

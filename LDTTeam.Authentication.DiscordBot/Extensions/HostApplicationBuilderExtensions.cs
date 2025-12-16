@@ -1,3 +1,4 @@
+using LDTTeam.Authentication.DiscordBot.AutoCompletion;
 using LDTTeam.Authentication.DiscordBot.Commands;
 using LDTTeam.Authentication.DiscordBot.Config;
 using LDTTeam.Authentication.DiscordBot.Data;
@@ -36,6 +37,7 @@ public static class HostApplicationBuilderExtensions
             builder.Services.AddScoped<IAssignedRewardRepository, AssignedRewardRepository>();
             builder.Services.AddScoped<IRoleRewardRepository, RoleRewardRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IRewardRepository, RewardRepository>();
             return builder;
         }
 
@@ -79,7 +81,9 @@ public static class HostApplicationBuilderExtensions
                 .WithCommandGroup<RewardsCommands>()
                 .WithCommandGroup<TierCommands>()
                 .Finish()
-                .AddDiscordCaching();
+                .AddDiscordCaching()
+                .AddAutocompleteProvider<RewardsAutoCompleteProvider>()
+                .AddAutocompleteProvider<DiscordRoleRewardsAutoCompleteProvider>();
             
             builder.Services.Configure(() => new DiscordServiceOptions());
             
