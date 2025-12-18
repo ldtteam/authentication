@@ -6,6 +6,8 @@ using LDTTeam.Authentication.Utils.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddLogging().AddConfiguration();
+
 builder
     .AddWolverine(opts =>
     {
