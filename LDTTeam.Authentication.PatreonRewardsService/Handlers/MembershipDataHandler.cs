@@ -1,10 +1,8 @@
-using ImTools;
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Data;
 using LDTTeam.Authentication.PatreonApiUtils.Service;
-using LDTTeam.Authentication.PatreonRewardsService.Service;
 using Wolverine;
 
 namespace LDTTeam.Authentication.PatreonRewardsService.Handlers;
