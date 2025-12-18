@@ -22,7 +22,7 @@ spec:
   tls:
     - hosts:
        - {{ .Values.ingressPatreonWebhook.hostname }}
-      secretName: auth-minecolonies-tls
+      secretName: auth-patreon-webhooks-minecolonies-tls
   rules:
     - host: {{ .Values.ingressPatreonWebhook.hostname | quote }}
       http:
