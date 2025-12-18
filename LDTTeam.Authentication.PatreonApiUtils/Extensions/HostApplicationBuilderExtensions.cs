@@ -17,7 +17,7 @@ public static class HostApplicationBuilderExtensions
         {
             builder.Services.AddDbContext<DatabaseContext>(x =>
             {
-                x.UseNpgsql(builder.Configuration.CreateConnectionString("patreon-rewards"),
+                x.UseNpgsql(builder.Configuration.CreateConnectionString("PatreonRewards"),
                     b => b.MigrationsAssembly("LDTTeam.Authentication.PatreonApiUtils"));
             });
             return builder;
