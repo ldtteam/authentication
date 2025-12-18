@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LDTTeam.Authentication.RewardsService.Model.Data;
 
-[PrimaryKey(nameof(UserId), nameof(AccountProvider), nameof(Tier))]
+[PrimaryKey(nameof(UserId), nameof(Provider), nameof(Tier))]
 public class UserTierAssignment
 {
     public required Guid UserId { get; set; }
