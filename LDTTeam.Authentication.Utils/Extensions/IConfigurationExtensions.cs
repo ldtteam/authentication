@@ -30,6 +30,8 @@ public static class IConfigurationExtensions
         }
         
         var uri = uris[databaseName];
+        Console.WriteLine("Using URI for database '{0}': {1}", databaseName, uri);
+        
         if (!string.IsNullOrEmpty(uri))
         {
             var parsedUri = new Uri(uri);
