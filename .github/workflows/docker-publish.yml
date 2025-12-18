@@ -88,7 +88,7 @@ jobs:
     uses: ./.github/workflows/image-publish.yml
     with:
       tag: ${{ needs.tag.outputs.tag }}
-      image: ldtteam/authentication/pateron/rewards
+      image: ldtteam/authentication/patreon/rewards
       registry: ghcr.io
       dockerfile: LDTTeam.Authentication.PatreonRewardsService/Dockerfile
 
