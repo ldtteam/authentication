@@ -22,6 +22,13 @@ public static class IConfigurationExtensions
         var timeout = databaseSection["Timeout"] ?? "600";
         
         var uris = databaseSection.GetSection("Uris");
+        
+        Console.WriteLine("Using database connection settings:");
+        foreach (var (key, value) in uris.AsEnumerable())
+        {
+            Console.WriteLine("  - {0}: {1}", key, value);
+        }
+        
         var uri = uris[databaseName];
         if (!string.IsNullOrEmpty(uri))
         {
