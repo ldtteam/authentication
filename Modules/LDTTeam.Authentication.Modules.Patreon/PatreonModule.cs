@@ -39,33 +39,5 @@ namespace LDTTeam.Authentication.Modules.Patreon
                 o.SaveTokens = true;
             });
         }
-
-        public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services)
-        {
-            return services.AddDbContext<PatreonDatabaseContext>(x =>
-                    x.UseNpgsql(configuration.CreateConnectionString("patreon"),
-                        b => b.MigrationsAssembly("LDTTeam.Authentication.Modules.Patreon")))
-                .AddScoped<PatreonRefreshEventHandler>()
-                .AddTransient<PatreonService>()
-                .AddStartupTask<PatreonDatabaseMigrationTask>();
-        }
-
-        public void EventsSubscription(IServiceProvider services, EventsService events, CancellationToken token)
-        {
-            events.RefreshContentEvent += async (scope, modules) =>
-            {
-                if (modules != null &&
-                    modules.All(x => !x.Equals("patreon", StringComparison.InvariantCultureIgnoreCase)))
-                    return;
-
-                await scope.ServiceProvider.GetRequiredService<PatreonRefreshEventHandler>().ExecuteAsync();
-            };
-
-            events.ConditionRegistration += () =>
-            {
-                Conditions.Registry.Add(new PatreonCondition());
-                return Task.CompletedTask;
-            };
-        }
     }
 }

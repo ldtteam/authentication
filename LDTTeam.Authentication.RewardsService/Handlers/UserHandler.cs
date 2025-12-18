@@ -12,10 +12,10 @@ public partial class UserHandler(
 {
     public async Task Handle(UserTiersAdded message)
     {
-        var userId = Guid.Parse(message.UserId);
+        var userId = message.UserId;
         var tiers = message.Tiers.ToList();
         LogHandlingUserTiersAddedForUseridUseridWithTiersTiers(logger, message.UserId, string.Join(", ", tiers));
-        await userTiersRepository.AddUserTiersAsync(userId, tiers);
+        await userTiersRepository.AddUserTiersAsync(userId, message.Provider, tiers);
         await rewardsCalculationService.RecalculateRewardsAsync(userId);
     }
 
@@ -24,7 +24,7 @@ public partial class UserHandler(
         var userId = message.UserId;
         var tiers = message.Tiers.ToList();
         LogHandlingUserTiersRemovedForUseridUseridWithTiersTiers(logger, userId, string.Join(", ", tiers));
-        await userTiersRepository.RemoveUserTiersAsync(userId, tiers);
+        await userTiersRepository.RemoveUserTiersAsync(userId, message.Provider, tiers);
         await rewardsCalculationService.RecalculateRewardsAsync(userId);
     }
     
@@ -47,7 +47,7 @@ public partial class UserHandler(
     #region Logging
 
     [LoggerMessage(LogLevel.Information, "Handling UserTiersAdded for UserId: {userId} with Tiers: {tiers}")]
-    static partial void LogHandlingUserTiersAddedForUseridUseridWithTiersTiers(ILogger<UserHandler> logger, string userId, string tiers);
+    static partial void LogHandlingUserTiersAddedForUseridUseridWithTiersTiers(ILogger<UserHandler> logger, Guid userId, string tiers);
 
     [LoggerMessage(LogLevel.Information, "Handling UserTiersRemoved for UserId: {userId} with Tiers: {tiers}")]
     static partial void LogHandlingUserTiersRemovedForUseridUseridWithTiersTiers(ILogger<UserHandler> logger, Guid userId, string tiers);

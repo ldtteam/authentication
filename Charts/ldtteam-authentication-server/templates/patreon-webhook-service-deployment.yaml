@@ -1,0 +1,90 @@
+{{- $databases := list "patreon-rewards" "wolverine" }}
+{{- if .Values.patreonWebhookService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-patreon-webhook-service
+  labels:
+    {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
+    app.kubernetes.io/component: patreon-webhook-service
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ldtteam-authentication-server.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: patreon-webhook-service
+  template:
+    metadata:
+      labels:
+        {{- include "ldtteam-authentication-server.labels" . | nindent 8 }}
+        app.kubernetes.io/component: patreon-webhook-service
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ldtteam-authentication-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: patreon-rewards-service
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.patreonWebhookService.repository }}:{{ .Values.patreonWebhookService.version | default .Chart.Version }}"
+          imagePullPolicy: {{ .Values.patreonWebhookService.pullPolicy | default .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          volumeMounts:
+            - name: appsettings
+              mountPath: /app/appsettings.json
+              subPath: appsettings.json
+            - name: secrets
+              mountPath: /app/privateKey.pem
+              readOnly: true
+              subPath: privateKey.pem
+          envFrom:
+            - configMapRef:
+                name: {{ include "ldtteam-authentication-server.fullname" . }}-environment
+          env:
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingApiRefreshToken") .) | nindent 12}}
+            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Webhook.Secret") .) | nindent 12}}
+            - name: "VERSION"
+              value: "{{ .Values.patreonWebhookService.version | default .Chart.Version }}"
+            {{- if .Values.postgresha.enabled }}
+            {{- range $db := $databases }}
+            - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
+                  key: uri
+            {{- end }}
+            {{- end }}
+      volumes:
+        - name: appsettings
+          configMap:
+            name: {{ include "ldtteam-authentication-server.fullname" . }}-appsettings
+        - name: secrets
+          secret:
+            secretName: {{ include "ldtteam-authentication-server.opssecret" . }}
+            items:
+              - key: Github.PrivateKey
+                path: privateKey.pem
+{{- end }}

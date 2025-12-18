@@ -18,18 +18,27 @@ public partial class UserHandler(
     DiscordEventLoggingService eventLoggingService,
     ILogger<UserHandler> logger) {
 
-    public async Task Handle(NewUserAdded message)
+    public async Task Handle(NewUserCreatedOrUpdated message)
     {
-        var user = new User
+        var user = await userRepository.GetByIdAsync(message.Id);
+        if (user == null)
         {
-            UserId = message.Id,
-            Snowflake = null,
-            Username = message.UserName
-        };
+            user = new User()
+            {
+                UserId = message.Id,
+                Username = message.UserName,
+                Snowflake = null
+            };
+        }
+        else
+        {
+            user.Username = message.UserName;
+        }
+        
         await userRepository.CreateOrUpdateAsync(user);
         await eventLoggingService.LogEvent(new Embed()
         {
-            Title = "User Added",
+            Title = "User Added or Updated",
             Description = $"A new user has been added: {message.UserName}",
             Colour = Color.DarkBlue,
             Fields = new[]
@@ -103,7 +112,7 @@ public partial class UserHandler(
             await eventLoggingService.LogEvent(new Embed()
             {
                 Title = "Login Added - Invalid user ID",
-                Description = $"An external login was added for a user that has an ID incompatible with Snowflakes.",
+                Description = $"An external login was added for a user which already has a different snowflake without disconnecting first.",
                 Colour = Color.Red,
                 Fields = new[]
                 {
@@ -127,6 +136,103 @@ public partial class UserHandler(
             Title = "User Linked Discord",
             Description = $"A new user has linked their account: {user.Username}",
             Colour = Color.Green,
+            Fields = new[]
+            {
+                new EmbedField("User ID", message.UserId.ToString(), true),
+                new EmbedField("Username", user.Username, true),
+                new EmbedField("Discord ID", message.ProviderKey, true)
+            }
+        });
+    }
+    
+    public async Task Handle(ExternalLoginDisconnectedFromUser message)
+    {
+        var user = await userRepository.GetByIdAsync(message.UserId);
+        if (user == null)
+        {
+            LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(logger, message.UserId);
+            await eventLoggingService.LogEvent(new Embed()
+            {
+                Title = "Login Removed - User Not Found",
+                Description = $"An external login was added for a user that does not exist in the database.",
+                Colour = Color.Red,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", message.UserId.ToString(), true),
+                    new EmbedField("Provider", message.Provider.ToString(), true),
+                    new EmbedField("Provider Key", message.ProviderKey, true)
+                }
+            });
+            return;
+        }
+
+        if (message.Provider != AccountProvider.Discord)
+        {
+            //No further processing just logging.
+            await eventLoggingService.LogEvent(new Embed()
+            {
+                Title = "User Unlinked an External Account: " + message.Provider,
+                Description = $"A user has unlinked their account: {user.Username}",
+                Colour = Color.GreenYellow,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", message.UserId.ToString(), true),
+                    new EmbedField("Username", user.Username, true),
+                    new EmbedField($"{message.Provider} ID", message.ProviderKey, true)
+                }
+            });
+            return;
+        }
+        
+        if (!Snowflake.TryParse(message.ProviderKey, out var snowflake))
+        {
+            LogReceivedExternallogindisconnectedfromuserWithInvalidSnowflakeFormatKeyForUser(logger, message.ProviderKey, user.UserId, user.Username);
+            await eventLoggingService.LogEvent(new Embed()
+            {
+                Title = "Login Removed - Invalid user ID",
+                Description = $"An external login was removed for a user that has an ID incompatible with Snowflakes.",
+                Colour = Color.Red,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", user.Username, true),
+                    new EmbedField("Username", user.Username, true),
+                    new EmbedField("Provider Key", message.ProviderKey, true)
+                }
+            });
+            return;
+        }
+
+        if (!user.Snowflake.HasValue || user.Snowflake.Value != snowflake)
+        {
+            LogReceivedExternallogindisconnectedfromuserForUserUseridUsernameWhichDoesNotMatchThe(logger, user.UserId, user.Username, user.Snowflake?.ToString() ?? "null");
+            await eventLoggingService.LogEvent(new Embed()
+            {
+                Title = "Login Removed - Invalid user ID",
+                Description = $"An external login was removed for a user with a different or none existent connection.",
+                Colour = Color.Red,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", user.Username, true),
+                    new EmbedField("Username", user.Username, true),
+                    new EmbedField("New Key", message.ProviderKey, true),
+                    new EmbedField("Existing Key", user.Snowflake?.Value.ToString() ?? "Not set", true)
+                }
+            });
+            return;
+        }
+
+        var userId = user.Snowflake.Value;
+        user.Snowflake = null;
+        await userRepository.CreateOrUpdateAsync(user);
+        
+        var assigner = await roleAssignmentService.ForMember(userId);
+        await assigner.RemoveAllRewards();
+            
+        await eventLoggingService.LogEvent(new Embed()
+        {
+            Title = "User Unlinked Discord",
+            Description = $"A user has unlinked their account: {user.Username}",
+            Colour = Color.DarkOrange,
             Fields = new[]
             {
                 new EmbedField("User ID", message.UserId.ToString(), true),
@@ -293,4 +399,13 @@ public partial class UserHandler(
 
     [LoggerMessage(LogLevel.Information, "Unassigned reward {reward} of type {type} to user ID {userId}")]
     static partial void LogUnassignedRewardRewardOfTypeTypeToUserIdUserid(ILogger<UserHandler> logger, string reward, RewardType type, Guid userId);
+
+    [LoggerMessage(LogLevel.Error, "Received ExternalLoginDisconnectedFromUser for non-existent user ID {userId}")]
+    static partial void LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(ILogger<UserHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Error, "Received ExternalLoginDisconnectedFromUser with invalid snowflake format: {key}, for user: {userId}/{userName}")]
+    static partial void LogReceivedExternallogindisconnectedfromuserWithInvalidSnowflakeFormatKeyForUser(ILogger<UserHandler> logger, string key, Guid userId, string userName);
+
+    [LoggerMessage(LogLevel.Error, "Received ExternalLoginDisconnectedFromUser for user: {userId}/{userName}, which does not match the stored Snowflake: {storedId}")]
+    static partial void LogReceivedExternallogindisconnectedfromuserForUserUseridUsernameWhichDoesNotMatchThe(ILogger<UserHandler> logger, Guid userId, string userName, string storedId);
 }

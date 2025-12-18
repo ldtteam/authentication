@@ -2,7 +2,9 @@ using System.Runtime.InteropServices.ComTypes;
 using JasperFx;
 using JasperFx.Resources;
 using LDTTeam.Authentication.Messages;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Wolverine;
 using Wolverine.Postgresql;
 using WolverineHostBuilder = Wolverine.HostBuilderExtensions;
@@ -30,6 +32,24 @@ public static class HostBuilderExtensions
                 configure?.Invoke(options);
             });
             builder.Services.AddResourceSetupOnStartup();
+            return builder;
+        }
+
+        public IHostApplicationBuilder AddLogging()
+        {
+            if (!builder.Environment.IsDevelopment())
+                builder.Logging.AddJsonConsole();
+
+            return builder;
+        }
+
+        public IHostApplicationBuilder AddConfiguration()
+        {
+            builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+            builder.Configuration.AddEnvironmentVariables("LDTTEAM_AUTH_");
+            builder.Configuration.AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true);
+
             return builder;
         }
     }

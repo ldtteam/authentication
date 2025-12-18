@@ -10,15 +10,10 @@ using Remora.Discord.Commands.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (!builder.Environment.IsDevelopment())
-    builder.Logging.AddJsonConsole();
-
-builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-builder.Configuration.AddEnvironmentVariables("LDTTEAM_AUTH_");
-builder.Configuration.AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true);
-
-builder.AddDatabase()
+builder
+    .AddLogging()
+    .AddConfiguration()
+    .AddDatabase()
     .AddWolverine(opts => { opts.Discovery.IncludeAssembly(typeof(Marker).Assembly); })
     .AddRepositories()
     .AddDiscordOptions()

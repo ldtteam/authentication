@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Drawing;
 using JetBrains.Annotations;
 using LDTTeam.Authentication.DiscordBot.Service;
+using LDTTeam.Authentication.Models.App.User;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
@@ -64,7 +65,8 @@ public class TierCommands(
         }
         
         await bus.PublishAsync(new Messages.User.UserTiersAdded(
-            user.UserId.ToString(),
+            user.UserId,
+            AccountProvider.Discord,
             [tier]
         ));
         
@@ -119,7 +121,8 @@ public class TierCommands(
         }
         
         await bus.PublishAsync(new Messages.User.UserTiersAdded(
-            user.UserId.ToString(),
+            user.UserId,
+            AccountProvider.Discord,
             [tier]
         ));
         

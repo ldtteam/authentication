@@ -13,6 +13,22 @@ rewardsService:
   enabled: false
   repository: ghcr.io/ldtteam/authentication/rewards
   pullPolicy: IfNotPresent
+  
+patreonWebhookService:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/patreon/webhook
+  pullPolicy: IfNotPresent
+  
+patreonSyncService:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/patreon/sync
+  pullPolicy: IfNotPresent
+  
+patreonRewardsService:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/patreon/rewards
+  pullPolicy: IfNotPresent
+
 
 imagePullSecrets: []
 nameOverride: ""
@@ -46,10 +62,18 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 8080
+  
+servicePatreonWebhook:
+  type: ClusterIP
+  port: 8080
 
 ingress:
   enabled: true
   hostname: auth.minecolonies.com
+  
+ingressPatreonWebhook:
+  enabled: true
+  hostname: auth-patreon-webhooks.minecolonies.com
 
 livenessProbe:
   httpGet:

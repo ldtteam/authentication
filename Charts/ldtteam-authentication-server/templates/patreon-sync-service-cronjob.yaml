@@ -1,0 +1,80 @@
+{{- $databases := list "patreon-rewards" "wolverine" }}
+{{- if .Values.patreonSyncService.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-patreon-sync-service
+  labels:
+    {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
+    app.kubernetes.io/component: patreon-sync-service
+spec:
+  schedule: "0 1 6 * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "ldtteam-authentication-server.labels" . | nindent 12 }}
+            app.kubernetes.io/component: patreon-sync-service
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 16 }}
+          {{- end }}
+          serviceAccountName: {{ include "ldtteam-authentication-server.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 16 }}
+          restartPolicy: OnFailure
+          containers:
+            - name: sync-service
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 20 }}
+              image: "{{ .Values.patreonSyncService.repository }}:{{ .Values.patreonSyncService.version | default .Chart.Version }}"
+              imagePullPolicy: {{ .Values.patreonSyncService.pullPolicy | default .Values.image.pullPolicy }}
+              ports:
+                - name: http
+                  containerPort: {{ .Values.service.port }}
+                  protocol: TCP
+              volumeMounts:
+                - name: appsettings
+                  mountPath: /app/appsettings.json
+                  subPath: appsettings.json
+                - name: secrets
+                  mountPath: /app/privateKey.pem
+                  readOnly: true
+                  subPath: privateKey.pem
+              envFrom:
+                - configMapRef:
+                    name: {{ include "ldtteam-authentication-server.fullname" . }}-environment
+              env:
+                {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 16}}
+                {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.InitializingApiRefreshToken") .) | nindent 16}}
+                - name: "VERSION"
+                  value: "{{ .Values.patreonSyncService.version | default .Chart.Version }}"
+                {{- if .Values.postgresha.enabled }}
+                {{- range $db := $databases }}
+                - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ printf "%s-%s-app" ( include "ldtteam-authentication-server.fullname" $ ) $db }}
+                      key: uri
+                {{- end }}
+                {{- end }}
+          volumes:
+            - name: appsettings
+              configMap:
+                name: {{ include "ldtteam-authentication-server.fullname" . }}-appsettings
+            - name: secrets
+              secret:
+                secretName: {{ include "ldtteam-authentication-server.opssecret" . }}
+                items:
+                  - key: Github.PrivateKey
+                    path: privateKey.pem
+{{- end }}

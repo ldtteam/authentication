@@ -30,6 +30,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Mode
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Utils", "LDTTeam.Authentication.Utils\LDTTeam.Authentication.Utils.csproj", "{052D224A-7DE1-48A4-B4CD-352DAF1B1032}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.PatreonRewardsService", "LDTTeam.Authentication.PatreonRewardsService\LDTTeam.Authentication.PatreonRewardsService.csproj", "{79CB7B89-A656-4B2D-841C-01280BD1A383}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.PatreonApiUtils", "LDTTeam.Authentication.PatreonApiUtils\LDTTeam.Authentication.PatreonApiUtils.csproj", "{2D895D1F-AD7A-4E02-87E3-BA3388883134}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.PatreonWebhookService", "LDTTeam.Authentication.PatreonWebhookService\LDTTeam.Authentication.PatreonWebhookService.csproj", "{66A9886F-A43E-446F-BF0C-7C98EC3F8472}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.PatreonSyncService", "LDTTeam.Authentication.PatreonSyncService\LDTTeam.Authentication.PatreonSyncService.csproj", "{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +96,22 @@ Global
 		{052D224A-7DE1-48A4-B4CD-352DAF1B1032}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{052D224A-7DE1-48A4-B4CD-352DAF1B1032}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{052D224A-7DE1-48A4-B4CD-352DAF1B1032}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79CB7B89-A656-4B2D-841C-01280BD1A383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79CB7B89-A656-4B2D-841C-01280BD1A383}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79CB7B89-A656-4B2D-841C-01280BD1A383}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79CB7B89-A656-4B2D-841C-01280BD1A383}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D895D1F-AD7A-4E02-87E3-BA3388883134}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D895D1F-AD7A-4E02-87E3-BA3388883134}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D895D1F-AD7A-4E02-87E3-BA3388883134}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D895D1F-AD7A-4E02-87E3-BA3388883134}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66A9886F-A43E-446F-BF0C-7C98EC3F8472}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66A9886F-A43E-446F-BF0C-7C98EC3F8472}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66A9886F-A43E-446F-BF0C-7C98EC3F8472}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66A9886F-A43E-446F-BF0C-7C98EC3F8472}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE} = {E6E1D69D-B439-461D-8986-3B469D7E84BC}

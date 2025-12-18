@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-patreon-webhook
+  labels:
+    {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.servicePatreonWebhook.type }}
+  ports:
+    - port: {{ .Values.servicePatreonWebhook.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ldtteam-authentication-server.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: patreon-webhook-service

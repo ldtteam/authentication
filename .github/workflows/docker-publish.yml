@@ -77,6 +77,48 @@ jobs:
       image: ldtteam/authentication/rewards
       registry: ghcr.io
       dockerfile: LDTTeam.Authentication.RewardsService/Dockerfile
+
+  publish-patreon-rewards-service:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/pateron/rewards
+      registry: ghcr.io
+      dockerfile: LDTTeam.Authentication.PatreonRewardsService/Dockerfile
+
+  publish-patreon-sync-service:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/patreon/sync
+      registry: ghcr.io
+      dockerfile: LDTTeam.Authentication.PatreonSyncService/Dockerfile
+
+  publish-patreon-webhook-service:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/patreon/webhook
+      registry: ghcr.io
+      dockerfile: LDTTeam.Authentication.PatreonWenhookService/Dockerfile
   
   chart:
     needs:
