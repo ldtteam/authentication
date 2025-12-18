@@ -118,7 +118,7 @@ jobs:
       tag: ${{ needs.tag.outputs.tag }}
       image: ldtteam/authentication/patreon/webhook
       registry: ghcr.io
-      dockerfile: LDTTeam.Authentication.PatreonWenhookService/Dockerfile
+      dockerfile: LDTTeam.Authentication.PatreonWebhookService/Dockerfile
   
   chart:
     needs:
