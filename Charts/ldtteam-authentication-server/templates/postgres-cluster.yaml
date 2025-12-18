@@ -1,4 +1,4 @@
-﻿{{- $databases := list "authentication" "github" "patreon" "discord" "wolverine" "rewards" "patreon-rewards" }}
+﻿{{- $databases := list "authentication" "github" "patreon" "discord" "wolverine" "rewards" }}
 {{- if .Values.postgresha.enabled }}
 {{- range $db := $databases }}
 ---

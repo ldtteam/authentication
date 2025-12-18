@@ -1,4 +1,4 @@
-{{- $databases := list "patreon-rewards" "wolverine" }}
+{{- $databases := list "patreon" "wolverine" }}
 {{- if .Values.patreonRewardsService.enabled }}
 apiVersion: apps/v1
 kind: Deployment
