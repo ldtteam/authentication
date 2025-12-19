@@ -21,6 +21,8 @@ builder
 
 var app = builder.Build();
 
+app.MapGet("/", () => "LDTTeam Authentication Reward API Service is running.");
+
 app.MapGet("/api/{accountProvider}/{providerKey}/{reward}", async (HttpContext context, string providerKey, AccountProvider accountProvider, string reward, [FromServices] IProviderLoginRepository loginRepository, ILogger<Marker> logger) =>
 {
     logger.LogDebug("Received request for {AccountProvider} user {MinecraftUser} and reward {Reward}", accountProvider, providerKey, reward);
