@@ -21,6 +21,7 @@ public partial class UserHandler(
     public async Task Handle(NewUserCreatedOrUpdated message)
     {
         var user = await userRepository.GetByIdAsync(message.Id);
+        bool updated = false;
         if (user == null)
         {
             user = new User()
@@ -29,24 +30,29 @@ public partial class UserHandler(
                 Username = message.UserName,
                 Snowflake = null
             };
+            updated = true;
         }
         else
         {
+            updated = user.Username != message.UserName;
             user.Username = message.UserName;
         }
-        
-        await userRepository.CreateOrUpdateAsync(user);
-        await eventLoggingService.LogEvent(new Embed()
+
+        if (updated)
         {
-            Title = "User Added or Updated",
-            Description = $"A new user has been added: {message.UserName}",
-            Colour = Color.DarkBlue,
-            Fields = new[]
+            await userRepository.CreateOrUpdateAsync(user);
+            await eventLoggingService.LogEvent(new Embed()
             {
-                new EmbedField("User ID", message.Id.ToString(), true),
-                new EmbedField("Username", message.UserName, true)
-            }
-        });
+                Title = "User Added or Updated",
+                Description = $"A new user has been added: {message.UserName}",
+                Colour = Color.DarkBlue,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", message.Id.ToString(), true),
+                    new EmbedField("Username", message.UserName, true)
+                }
+            });
+        }
     }
     
     public async Task Handle(ExternalLoginConnectedToUser message)
@@ -124,25 +130,30 @@ public partial class UserHandler(
             });
             return;
         }
-        
-        user.Snowflake = snowflake;
-        await userRepository.CreateOrUpdateAsync(user);
 
-        var assigner = await roleAssignmentService.ForMember(user.Snowflake.Value);
-        await assigner.UpdateAllRewards();
-            
-        await eventLoggingService.LogEvent(new Embed()
+        bool updated = user.Snowflake != snowflake;
+        user.Snowflake = snowflake;
+
+        if (updated)
         {
-            Title = "User Linked Discord",
-            Description = $"A new user has linked their account: {user.Username}",
-            Colour = Color.Green,
-            Fields = new[]
+            await userRepository.CreateOrUpdateAsync(user);
+
+            var assigner = await roleAssignmentService.ForMember(user.Snowflake.Value);
+            await assigner.UpdateAllRewards();
+            
+            await eventLoggingService.LogEvent(new Embed()
             {
-                new EmbedField("User ID", message.UserId.ToString(), true),
-                new EmbedField("Username", user.Username, true),
-                new EmbedField("Discord ID", message.ProviderKey, true)
-            }
-        });
+                Title = "User Linked Discord",
+                Description = $"A new user has linked their account: {user.Username}",
+                Colour = Color.Green,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", message.UserId.ToString(), true),
+                    new EmbedField("Username", user.Username, true),
+                    new EmbedField("Discord ID", message.ProviderKey, true)
+                }
+            });
+        }
     }
     
     public async Task Handle(ExternalLoginDisconnectedFromUser message)
