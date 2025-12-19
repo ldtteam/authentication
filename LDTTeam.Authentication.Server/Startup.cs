@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Api.Events;
 using LDTTeam.Authentication.Modules.Api.Extensions;
@@ -10,6 +11,8 @@ using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +43,7 @@ namespace LDTTeam.Authentication.Server
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseNpgsql(Configuration.CreateConnectionString("authentication"),
                     b => b.MigrationsAssembly("LDTTeam.Authentication.Server")));
-
+            
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
                     options.SignIn.RequireConfirmedAccount = false;
@@ -78,6 +81,7 @@ namespace LDTTeam.Authentication.Server
 
             services.AddHostedService<MetricsHistoryService>();
             services.AddHostedService<EventsQueueService>();
+            services.AddHostedService<MigrationService>();
 
             services.Configure<ForwardedHeadersOptions>(options =>
             {
@@ -90,7 +94,7 @@ namespace LDTTeam.Authentication.Server
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public async Task Configure(WebApplication app, IWebHostEnvironment env)
         {
             app.UseForwardedHeaders(
                 new ForwardedHeadersOptions
@@ -120,6 +124,10 @@ namespace LDTTeam.Authentication.Server
             app.UseAuthentication();
             app.UseAuthorization();
 
+            
+            app.MapGet("/", () => Results.Ok("API Server is running."));
+            
+            /*
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -128,6 +136,7 @@ namespace LDTTeam.Authentication.Server
                     "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+            */
         }
     }
 }
