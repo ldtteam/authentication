@@ -1,4 +1,4 @@
-{{- $databases := list "discord" }}
+{{- $databases := list "discord" "wolverine" }}
 {{- if .Values.discordBot.enabled }}
 apiVersion: apps/v1
 kind: Deployment

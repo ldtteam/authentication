@@ -1,4 +1,4 @@
-{{- $databases := list "authentication" "github" "patreon" }}
+{{- $databases := list "authentication" "github" "patreon" "wolverine" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
