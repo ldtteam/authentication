@@ -1,4 +1,4 @@
-{{- $databases := list "patreon" "wolverine" }}
+{{- $databases := list "patreon" }}
 {{- if .Values.patreonSyncService.enabled }}
 apiVersion: batch/v1
 kind: CronJob

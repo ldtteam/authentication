@@ -1,4 +1,4 @@
-{{- $databases := list "patreon" "wolverine" }}
+{{- $databases := list "patreon" }}
 {{- if .Values.patreonWebhookService.enabled }}
 apiVersion: apps/v1
 kind: Deployment

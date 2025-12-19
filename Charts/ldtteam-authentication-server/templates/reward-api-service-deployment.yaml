@@ -1,4 +1,4 @@
-{{- $databases := list "reward-api" "wolverine" }}
+{{- $databases := list "reward-api" }}
 {{- if .Values.rewardApiService.enabled }}
 apiVersion: apps/v1
 kind: Deployment
