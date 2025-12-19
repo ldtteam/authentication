@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Wolverine;
+using Wolverine.Kafka;
 using Wolverine.Postgresql;
 using WolverineHostBuilder = Wolverine.HostBuilderExtensions;
 
@@ -22,14 +23,21 @@ public static class HostBuilderExtensions
             {
                 options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine")).EnableMessageTransport();
                 options.AutoBuildMessageStorageOnStartup = AutoCreate.All;
-                options.Durability.EnableInboxPartitioning = true;
+
+                if (builder.Environment.IsDevelopment())
+                {
+                    options.UseKafka("localhost:9092")
+                        .AutoProvision();
+                }
+                else
+                {
+                    options.UseKafka("auth-comms-kafka-brokers:9092")
+                        .AutoProvision();
+                }
+                
                 options.PublishAllMessages()
-                    .ToPostgresqlQueue("messages");
-                options.ListenToPostgresqlQueue("messages")
-                    .MaximumParallelMessages(1)
-                    .BufferedInMemory()
-                    .Sequential()
-                    .UseDurableInbox();
+                    .ToKafkaTopic("messages");
+                options.ListenToKafkaTopic("messages");
                 
                 options.Discovery.IncludeAssembly(typeof(LDTTeamAuthenticationAssemblyMarker).Assembly);
                 

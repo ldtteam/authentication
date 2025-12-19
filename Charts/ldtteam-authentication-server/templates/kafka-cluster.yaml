@@ -1,0 +1,50 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: {{ .Values.kafka.name }}
+  labels:
+    app.kubernetes.io/name: {{ include "ldtteam-authentication-server.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  kafka:
+    replicas: {{ .Values.kafka.replicas }}
+    listeners:
+      {{- range .Values.kafka.listeners }}
+      - name: {{ .name }}
+        port: {{ .port }}
+        type: {{ .type }}
+        tls: {{ .tls }}
+      {{- end }}
+    storage:
+      type: {{ .Values.kafka.storage.type }}
+      size: {{ .Values.kafka.storage.size }}
+      {{- if .Values.kafka.storage.class }}
+      class: {{ .Values.kafka.storage.class }}
+      {{- end }}
+    config:
+      {{- toYaml .Values.kafka.config | nindent 6 }}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: {{ .Values.kafka.name }}-pool
+  labels:
+    strimzi.io/cluster: {{ .Values.kafka.name }}
+spec:
+  clusterRef:
+    name: {{ .Values.kafka.name }}
+  replicas: {{ .Values.kafka.replicas }}
+  roles:
+    - broker
+    - controller
+  storage:
+    type: {{ .Values.kafka.storage.type }}
+    size: {{ .Values.kafka.storage.size }}
+    {{- if .Values.kafka.storage.class }}
+    class: {{ .Values.kafka.storage.class }}
+    {{- end }}
+{{- end }}
