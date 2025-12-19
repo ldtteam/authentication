@@ -23,10 +23,14 @@ public static class HostBuilderExtensions
                 options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine")).EnableMessageTransport();
                 options.AutoBuildMessageStorageOnStartup = AutoCreate.All;
                 options.Durability.EnableInboxPartitioning = true;
-                options.PublishAllMessages().ToPostgresqlQueue("messages");
+                options.PublishAllMessages()
+                    .ToPostgresqlQueue("messages");
                 options.ListenToPostgresqlQueue("messages")
-                    .CircuitBreaker()
-                    .MaximumMessagesToReceive(50);
+                    .MaximumParallelMessages(1)
+                    .BufferedInMemory()
+                    .Sequential()
+                    .UseDurableInbox();
+                
                 options.Discovery.IncludeAssembly(typeof(LDTTeamAuthenticationAssemblyMarker).Assembly);
                 
                 configure?.Invoke(options);
