@@ -1,5 +1,5 @@
 replicaCount: 1
-uiServerReplicaCount: 0
+uiServerReplicaCount: 1
 
 image:
   repository: ghcr.io/ldtteam/authentication
