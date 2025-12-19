@@ -1,4 +1,5 @@
 replicaCount: 1
+uiServerReplicaCount: 0
 
 image:
   repository: ghcr.io/ldtteam/authentication
@@ -28,7 +29,11 @@ patreonRewardsService:
   enabled: false
   repository: ghcr.io/ldtteam/authentication/patreon/rewards
   pullPolicy: IfNotPresent
-
+  
+rewardApiService:
+  enabled: false
+  repository: ghcr.io/ldtteam/authentication/reward-api
+  pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 nameOverride: ""
@@ -70,10 +75,14 @@ servicePatreonWebhook:
 ingress:
   enabled: true
   hostname: auth.minecolonies.com
-  
+
 ingressPatreonWebhook:
   enabled: true
   hostname: auth-patreon-webhooks.minecolonies.com
+
+ingressRewardApi:
+  enabled: true
+  hostname: auth-api.minecolonies.com
 
 livenessProbe:
   httpGet:

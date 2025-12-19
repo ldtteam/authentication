@@ -1,24 +1,25 @@
-{{- $databases := list "authentication" "github" "patreon" }}
+{{- $databases := list "reward-api" "wolverine" }}
+{{- if .Values.rewardApiService.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ldtteam-authentication-server.fullname" . }}
+  name: {{ include "ldtteam-authentication-server.fullname" . }}-reward-api-service
   labels:
     {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
-    app.kubernetes.io/component: authentication-server
+    app.kubernetes.io/component: reward-api-service
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.uiServerReplicaCount }}
+  replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
       {{- include "ldtteam-authentication-server.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: authentication-server
+      app.kubernetes.io/component: reward-api-service
   template:
     metadata:
       labels:
         {{- include "ldtteam-authentication-server.labels" . | nindent 8 }}
-        app.kubernetes.io/component: authentication-server
+        app.kubernetes.io/component: reward-api-service
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -35,11 +36,11 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: authentication-server
+        - name: rewards-service
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.version | default .Chart.Version }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.rewardApiService.repository }}:{{ .Values.rewardApiService.version | default .Chart.Version }}"
+          imagePullPolicy: {{ .Values.rewardApiService.pullPolicy | default .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -62,13 +63,8 @@ spec:
             - configMapRef:
                 name: {{ include "ldtteam-authentication-server.fullname" . }}-environment
           env:
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.BotToken") .) | nindent 12}}
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Discord.ClientSecret") .) | nindent 12}}
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "GitHub.ClientSecret") .) | nindent 12}}
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Minecraft.ClientSecret") .) | nindent 12}}
-            {{- include "ldtteam-authentication-server.envFromSecret" (merge (dict "Secret" "Patreon.ClientSecret") .) | nindent 12}}
             - name: "VERSION"
-              value: "{{ .Values.image.version | default .Chart.Version }}"
+              value: "{{ .Values.rewardApiService.version | default .Chart.Version }}"
             {{- if .Values.postgresha.enabled }}
             {{- range $db := $databases }}
             - name: LDTTEAM_AUTH_Database__Uris__{{ camelcase $db }}
@@ -88,3 +84,4 @@ spec:
             items:
               - key: Github.PrivateKey
                 path: privateKey.pem
+{{- end }}

@@ -1,4 +1,5 @@
 using LDTTeam.Authentication.Models.App.Rewards;
+using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.RewardsService.Model.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,7 @@ namespace LDTTeam.Authentication.RewardsService.Data
         {
             base.ConfigureConventions(configurationBuilder);
             configurationBuilder.Properties<RewardType>().HaveConversion<string>();
+            configurationBuilder.Properties<AccountProvider>().HaveConversion<string>();
         }
     }
 }

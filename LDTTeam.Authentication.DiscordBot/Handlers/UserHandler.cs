@@ -260,9 +260,10 @@ public partial class UserHandler(
                     new EmbedField("Type", message.RewardType.ToString(), true)
                 }
             });
+            return;
         }
         
-        if (user?.Snowflake.HasValue ?? false)
+        if (!user?.Snowflake.HasValue ?? false)
         {
             LogReceivedUserrewardaddedForUserIdUseridWhichHasNoDiscordLinkedAccount(logger, message.UserId);
             await eventLoggingService.LogEvent(new Embed()
@@ -278,6 +279,7 @@ public partial class UserHandler(
                     new EmbedField("Type", message.RewardType.ToString(), true)
                 }
             });
+            return;
         }
 
         await assignedRewardRepository.AssignAsync(new AssignedReward()
@@ -328,9 +330,10 @@ public partial class UserHandler(
                     new EmbedField("Type", message.RewardType.ToString(), true)
                 }
             });
+            return;
         }
         
-        if (user?.Snowflake.HasValue ?? false)
+        if (!user?.Snowflake.HasValue ?? false)
         {
             LogReceivedUserrewardremovedForUserIdUseridWhichHasNoDiscordLinkedAccount(logger, message.UserId);
             await eventLoggingService.LogEvent(new Embed()
@@ -346,6 +349,7 @@ public partial class UserHandler(
                     new EmbedField("Type", message.RewardType.ToString(), true)
                 }
             });
+            return;
         }
 
         await assignedRewardRepository.RemoveAsync(message.UserId, message.Reward, message.RewardType);

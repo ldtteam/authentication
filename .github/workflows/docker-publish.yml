@@ -120,6 +120,20 @@ jobs:
       registry: ghcr.io
       dockerfile: LDTTeam.Authentication.PatreonWebhookService/Dockerfile
   
+  publish-reward-api-service:
+    needs:
+      - tag
+    permissions:
+      contents: write
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/image-publish.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+      image: ldtteam/authentication/reward-api
+      registry: ghcr.io
+      dockerfile: LDTTeam.Authentication.RewardAPI/Dockerfile
+  
   chart:
     needs:
       - tag

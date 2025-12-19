@@ -1,3 +1,5 @@
+using LDTTeam.Authentication.Models.App.Rewards;
+using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,13 @@ public class DatabaseContext : DbContext
         
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
     {
+    }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Properties<RewardType>().HaveConversion<string>();
+        configurationBuilder.Properties<AccountProvider>().HaveConversion<string>();
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

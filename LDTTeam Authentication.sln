@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.Patr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.PatreonSyncService", "LDTTeam.Authentication.PatreonSyncService\LDTTeam.Authentication.PatreonSyncService.csproj", "{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LDTTeam.Authentication.RewardAPI", "LDTTeam.Authentication.RewardAPI\LDTTeam.Authentication.RewardAPI.csproj", "{5AD4CD77-39FC-4F8E-9A7B-6EE311D82B02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -112,6 +114,10 @@ Global
 		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77E027D1-7D20-44D0-9F4C-3E50B0D4CD7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AD4CD77-39FC-4F8E-9A7B-6EE311D82B02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AD4CD77-39FC-4F8E-9A7B-6EE311D82B02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AD4CD77-39FC-4F8E-9A7B-6EE311D82B02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AD4CD77-39FC-4F8E-9A7B-6EE311D82B02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EF4396D9-E05B-4EA3-9F9F-3A16304B7ACE} = {E6E1D69D-B439-461D-8986-3B469D7E84BC}
