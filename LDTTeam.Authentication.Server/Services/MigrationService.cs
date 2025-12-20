@@ -1,10 +1,8 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using JasperFx.Core;
 using LDTTeam.Authentication.Messages.User;
+using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,35 +16,31 @@ public class MigrationService(IServiceScopeFactory scopeFactory) : BackgroundSer
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (true)
-            return;
-        
         var scope = scopeFactory.CreateScope();
         var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<MigrationService>>();
         
-        logger.LogWarning("Starting user synchronization...");
-        var users = await database.Users.OrderBy(u => u.UserName).ToListAsync(cancellationToken: stoppingToken);
+        logger.LogWarning("Starting external account synchronization...");
+        var logins = await database.UserLogins.ToListAsync();
         int index = 0;
-        foreach (var applicationUser in users)
+        foreach (var login in logins)
         {
-            if (applicationUser.UserName!.EqualsIgnoreCase("AnnetteTodd"))
+            if (!Enum.TryParse(login.LoginProvider, out AccountProvider provider))
             {
-                logger.LogWarning("Found AnnetteTodd user, processing...");
+                logger.LogError("Skipping user with invalid LoginProvider: {LoginProvider}", login.LoginProvider);
+                continue;
             }
-            
             await messageBus.SendAsync(
-                new NewUserCreatedOrUpdated(Guid.Parse(applicationUser.Id), applicationUser.UserName ?? throw new InvalidDataException("No username set"))
+                new ExternalLoginConnectedToUser(Guid.Parse(login.UserId), provider, login.ProviderKey)
             );
 
             index++;
             if (index % 50 == 0)
             {
-                logger.LogWarning("Synchronized {Index} / {Total} users...", index, users.Count);
-                await Task.Delay(1000, stoppingToken); // Small delay to avoid overwhelming the message bus
+                logger.LogWarning("Synchronized {Index} / {Total} users...", index, logins.Count);
             }
         }
-        logger.LogWarning("User synchronization complete.");
+        logger.LogWarning("External account synchronization complete.");
     }
 }
