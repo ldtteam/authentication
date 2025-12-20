@@ -21,9 +21,7 @@ public static class HostBuilderExtensions
         {
             builder.UseWolverine(options =>
             {
-                options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine")).EnableMessageTransport();
-                options.AutoBuildMessageStorageOnStartup = AutoCreate.All;
-
+                options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine"));
                 if (builder.Environment.IsDevelopment())
                 {
                     options.UseKafka("localhost:9092")
