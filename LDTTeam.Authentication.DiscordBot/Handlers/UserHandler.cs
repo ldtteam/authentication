@@ -58,6 +58,8 @@ public partial class UserHandler(
     
     public async Task Handle(ExternalLoginConnectedToUser message)
     {
+        logger.LogWarning("Handling ExternalLoginConnectedToUser for User ID: {UserId}, Provider: {Provider}, Key: {ProviderKey}", message.UserId, message.Provider, message.ProviderKey);
+        
         var user = await userRepository.GetByIdAsync(message.UserId);
         if (user == null)
         {
