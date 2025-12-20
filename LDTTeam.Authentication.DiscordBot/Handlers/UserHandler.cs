@@ -56,7 +56,7 @@ public partial class UserHandler(
         }
     }
     
-    public async Task Handle(ExternalLoginConnectedToUser message)
+    public async Task HandleAsync(ExternalLoginConnectedToUser message)
     {
         logger.LogWarning("Handling ExternalLoginConnectedToUser for User ID: {UserId}, Provider: {Provider}, Key: {ProviderKey}", message.UserId, message.Provider, message.ProviderKey);
         

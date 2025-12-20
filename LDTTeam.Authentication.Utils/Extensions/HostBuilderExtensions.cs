@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices.ComTypes;
 using JasperFx;
 using JasperFx.Resources;
@@ -21,10 +22,9 @@ public static class HostBuilderExtensions
         {
             builder.UseWolverine(options =>
             {
-                options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine"));
-                
-                options.Policies.UseDurableInboxOnAllListeners();
-                options.Policies.UseDurableOutboxOnAllSendingEndpoints();
+                options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine")).EnableMessageTransport();
+                options.AutoBuildMessageStorageOnStartup = AutoCreate.All;
+                options.Durability.EnableInboxPartitioning = true;
                 
                 if (builder.Environment.IsDevelopment())
                 {
@@ -39,9 +39,13 @@ public static class HostBuilderExtensions
                 
                 options.PublishAllMessages()
                     .ToKafkaTopic("messages");
-                options.ListenToKafkaTopic("messages");
+                options.ListenToKafkaTopic("messages")
+                    .BufferedInMemory()
+                    .Sequential();
                 
                 options.Discovery.IncludeAssembly(typeof(LDTTeamAuthenticationAssemblyMarker).Assembly);
+
+                options.ServiceName = Assembly.GetEntryAssembly()!.GetName().Name!.Replace("LDTTeam.Authentication.", "").Replace(".", "-").ToLowerInvariant();
                 
                 configure?.Invoke(options);
             });
