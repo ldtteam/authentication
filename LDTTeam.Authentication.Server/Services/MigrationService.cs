@@ -18,6 +18,9 @@ public class MigrationService(IServiceScopeFactory scopeFactory) : BackgroundSer
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (true)
+            return;
+        
         var scope = scopeFactory.CreateScope();
         var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();

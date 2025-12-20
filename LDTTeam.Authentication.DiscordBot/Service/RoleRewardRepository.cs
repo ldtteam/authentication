@@ -66,7 +66,7 @@ public class RoleRewardRepository : IRoleRewardRepository
 
     public async Task RemoveAsync(string reward, Snowflake role, Snowflake server, CancellationToken token = default)
     {
-        var existing = await _db.RoleRewards.FindAsync([reward, role], token);
+        var existing = await _db.RoleRewards.FindAsync([reward, role, server], token);
         if (existing is null)
             return;
         
