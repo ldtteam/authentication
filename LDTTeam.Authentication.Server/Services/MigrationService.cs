@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using JasperFx.Core;
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Server.Data;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +24,15 @@ public class MigrationService(IServiceScopeFactory scopeFactory) : BackgroundSer
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<MigrationService>>();
         
         logger.LogWarning("Starting user synchronization...");
-        var users = await database.Users.ToListAsync();
+        var users = await database.Users.OrderBy(u => u.UserName).ToListAsync(cancellationToken: stoppingToken);
         int index = 0;
         foreach (var applicationUser in users)
         {
+            if (applicationUser.UserName!.EqualsIgnoreCase("AnnetteTodd"))
+            {
+                logger.LogWarning("Found AnnetteTodd user, processing...");
+            }
+            
             await messageBus.SendAsync(
                 new NewUserCreatedOrUpdated(Guid.Parse(applicationUser.Id), applicationUser.UserName ?? throw new InvalidDataException("No username set"))
             );

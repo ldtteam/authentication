@@ -1,4 +1,5 @@
 using System.Drawing;
+using JasperFx.Core;
 using LDTTeam.Authentication.DiscordBot.Model.Data;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Messages.User;
@@ -20,6 +21,11 @@ public partial class UserHandler(
 
     public async Task Handle(NewUserCreatedOrUpdated message)
     {
+        if (message.UserName.EqualsIgnoreCase("AnnetteTodd"))
+        {
+            logger.LogWarning("User tried to register with banned username AnnetteTodd, processing...");
+        }
+        
         var user = await userRepository.GetByIdAsync(message.Id);
         bool updated = false;
         if (user == null)
