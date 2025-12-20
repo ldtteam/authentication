@@ -22,6 +22,10 @@ public static class HostBuilderExtensions
             builder.UseWolverine(options =>
             {
                 options.PersistMessagesWithPostgresql(builder.Configuration.CreateConnectionString("wolverine"));
+                
+                options.Policies.UseDurableInboxOnAllListeners();
+                options.Policies.UseDurableOutboxOnAllSendingEndpoints();
+                
                 if (builder.Environment.IsDevelopment())
                 {
                     options.UseKafka("localhost:9092")

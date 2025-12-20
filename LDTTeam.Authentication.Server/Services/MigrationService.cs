@@ -39,6 +39,7 @@ public class MigrationService(IServiceScopeFactory scopeFactory) : BackgroundSer
             if (index % 50 == 0)
             {
                 logger.LogWarning("Synchronized {Index} / {Total} users...", index, logins.Count);
+                await Task.Delay(1000, stoppingToken);
             }
         }
         logger.LogWarning("External account synchronization complete.");
