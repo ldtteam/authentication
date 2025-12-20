@@ -21,6 +21,7 @@ public partial class UserHandler(
 
     public async Task Handle(NewUserCreatedOrUpdated message)
     {
+        logger.LogInformation("Processing NewUserCreatedOrUpdated for user ID {UserId} with username {Username}", message.Id, message.UserName);
         if (message.UserName.EqualsIgnoreCase("AnnetteTodd"))
         {
             logger.LogWarning("User tried to register with banned username AnnetteTodd, processing...");
