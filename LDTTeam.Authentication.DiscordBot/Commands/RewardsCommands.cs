@@ -26,7 +26,8 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
     public class RewardsCommands(
         IInteractionContext interactionContext,
         IMessageBus bus,
-        IFeedbackService feedbackService) : CommandGroup
+        IFeedbackService feedbackService,
+        IRewardRepository repository) : CommandGroup
     {
         [Group("user")]
         public class UserRewardsCommands(
@@ -496,6 +497,63 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
 
                     return Result.FromSuccess();
                 });
+        }
+
+        [Command("list")]
+        [Description("List all defined rewards")]
+        [UsedImplicitly]
+        public async Task<IResult> ListRewards()
+        {
+            var executor = interactionContext.Interaction.Member;
+            var permissions = executor.FlatMap(m => m.Permissions);
+            if (!permissions.HasValue)
+            {
+                return await feedbackService.SendContextualErrorAsync(
+                    "You are not authorized to run this command for other users"
+                );
+            }
+
+            if (permissions.HasValue && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+            {
+                return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No permission",
+                        Description =
+                            "You require Administrator permissions to run this command for other users",
+                        Colour = Color.Red
+                    }));
+            }
+            
+            var rewards = await repository.GetAllAsync();
+            var rewardsList = rewards.ToList();
+            
+            if (rewardsList.Count == 0)
+            {
+                await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "No Rewards",
+                        Description =
+                            $"There are no rewards defined in the system.",
+                        Colour = Color.OrangeRed
+                    });
+                return Result.FromSuccess();
+            }
+            
+            await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "Defined Rewards",
+                    Description =
+                        $"The following rewards are defined in the system:",
+                    Colour = Color.Green,
+                    Fields = rewardsList.Select(reward => new EmbedField(
+                        $"{reward.Type} - {reward.Name}",
+                        $"Lambda: `{reward.Lambda}`"
+                    )).ToList()
+                });
+            return Result.FromSuccess();
         }
     }
 }

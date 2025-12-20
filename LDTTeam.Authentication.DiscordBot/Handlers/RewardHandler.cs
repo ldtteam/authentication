@@ -14,7 +14,8 @@ public class RewardHandler(IRewardRepository repository, DiscordEventLoggingServ
             new Model.Data.Reward
             {
                 Name = message.Reward,
-                Type = message.Type
+                Type = message.Type,
+                Lambda = message.Lambda
             });
 
         await eventLoggingService.LogEvent(new Embed()

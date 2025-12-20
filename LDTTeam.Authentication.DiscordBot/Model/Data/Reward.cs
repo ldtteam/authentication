@@ -8,4 +8,5 @@ public class Reward
 {
     public required RewardType Type { get; set; }
     public required string Name { get; set; }
+    public required string Lambda { get; set; }
 }
