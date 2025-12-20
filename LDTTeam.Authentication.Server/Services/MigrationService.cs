@@ -31,7 +31,7 @@ public class MigrationService(IServiceScopeFactory scopeFactory) : BackgroundSer
                 logger.LogError("Skipping user with invalid LoginProvider: {LoginProvider}", login.LoginProvider);
                 continue;
             }
-            await messageBus.SendAsync(
+            await messageBus.PublishAsync(
                 new ExternalLoginConnectedToUser(Guid.Parse(login.UserId), provider, login.ProviderKey)
             );
 
