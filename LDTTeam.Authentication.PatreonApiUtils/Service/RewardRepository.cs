@@ -58,7 +58,6 @@ public class RewardRepository : IRewardRepository
         reward = await _db.Rewards
             .Include(m => m.User)
             .Include(m => m.Tiers)
-            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (reward != null)
             _cache.Set(cacheKey, reward, CacheDuration);
@@ -74,7 +73,6 @@ public class RewardRepository : IRewardRepository
         rewards = await _db.Rewards
             .Include(m => m.User)
             .Include(m => m.Tiers)
-            .AsNoTracking()
             .Where(m => m.User.PatreonId == patreonId)
             .ToListAsync(token);
         _cache.Set(cacheKey, rewards, CacheDuration);
@@ -90,10 +88,9 @@ public class RewardRepository : IRewardRepository
         }
         else
         {
-            existing.LifetimeCents = reward.LifetimeCents;
-            existing.IsGifted = reward.IsGifted;
-            existing.LastSyncDate = reward.LastSyncDate;
+            _db.Rewards.Update(reward);
         }
+        
         await _db.SaveChangesAsync(token);
         
         // Update cache

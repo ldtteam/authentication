@@ -55,9 +55,9 @@ public partial class MembershipDataHandler(
                 }).ToList()
             };
             
-            await rewardRepository.CreateOrUpdateAsync(reward);
-
             reward.User = membership.User;
+            
+            await rewardRepository.CreateOrUpdateAsync(reward);
         }
         else
         {

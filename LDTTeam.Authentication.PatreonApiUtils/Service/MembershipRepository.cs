@@ -58,7 +58,6 @@ public class MembershipRepository : IMembershipRepository
         membership = await _db.Memberships
             .Include(m => m.User)
             .Include(m => m.Tiers)
-            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (membership != null)
             _cache.Set(cacheKey, membership, CacheDuration);
@@ -73,7 +72,6 @@ public class MembershipRepository : IMembershipRepository
         memberships = await _db.Memberships
             .Include(m => m.User)
             .Include(m => m.Tiers)
-            .AsNoTracking()
             .Where(m => m.User.PatreonId == patreonId)
             .ToListAsync(token);
         _cache.Set(cacheKey, memberships, CacheDuration);
@@ -117,6 +115,6 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task<IEnumerable<Guid>> GetAllMembershipIdsAsync(CancellationToken token = default)
     {
-        return await _db.Memberships.AsNoTracking().Select(m => m.MembershipId).ToListAsync(token);
+        return await _db.Memberships.Select(m => m.MembershipId).ToListAsync(token);
     }
 }

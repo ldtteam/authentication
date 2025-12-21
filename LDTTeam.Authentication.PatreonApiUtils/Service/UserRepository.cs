@@ -81,7 +81,7 @@ public class UserRepository : IUserRepository
         var cacheKey = $"user:id:{userId}";
         if (_cache.TryGetValue<User>(cacheKey, out var user))
             return user;
-        user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId, token);
+        user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, token);
         if (user != null)
             _cache.Set(cacheKey, user, CacheDuration);
         return user;
@@ -92,7 +92,7 @@ public class UserRepository : IUserRepository
         var cacheKey = $"user:patreon:{patreonId}";
         if (_cache.TryGetValue<User>(cacheKey, out var user))
             return user;
-        user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.PatreonId == patreonId, token);
+        user = await _db.Users.FirstOrDefaultAsync(u => u.PatreonId == patreonId, token);
         if (user != null)
             _cache.Set(cacheKey, user, CacheDuration);
         return user;
@@ -103,7 +103,7 @@ public class UserRepository : IUserRepository
         var cacheKey = $"user:patreon:{membershipId}";
         if (_cache.TryGetValue<User>(cacheKey, out var user))
             return user;
-        user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.MembershipId == membershipId, token);
+        user = await _db.Users.FirstOrDefaultAsync(u => u.MembershipId == membershipId, token);
         if (user != null)
             _cache.Set(cacheKey, user, CacheDuration);
         return user;   
@@ -149,11 +149,11 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<string>> GetAllPatreonIdsAsync(CancellationToken token = default)
     {
-        return await _db.Users.AsNoTracking().Where(u => u.PatreonId != null).Select(u => u.PatreonId!).ToListAsync(token);
+        return await _db.Users.Where(u => u.PatreonId != null).Select(u => u.PatreonId!).ToListAsync(token);
     }
 
     public async Task<IEnumerable<Guid>> GetAllMembershipIdsAsync(CancellationToken token = default)
     {
-        return await _db.Users.AsNoTracking().Where(u => u.MembershipId.HasValue).Select(u => u.MembershipId!.Value).ToListAsync(token);
+        return await _db.Users.Where(u => u.MembershipId.HasValue).Select(u => u.MembershipId!.Value).ToListAsync(token);
     }
 }
