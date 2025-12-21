@@ -110,7 +110,7 @@ public class PatreonMembershipService(
                 Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
                 {
                     Tier = tier
-                })
+                }).ToList()
             };
         }
         else
@@ -122,7 +122,7 @@ public class PatreonMembershipService(
             membership.Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
             {
                 Tier = tier
-            });
+            }).ToList();
         }
 
         return (membership, user);
