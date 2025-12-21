@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using JasperFx.Core;
 using LDTTeam.Authentication.PatreonApiUtils.Config;
 using LDTTeam.Authentication.PatreonApiUtils.Model.App;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Requests;
@@ -158,7 +159,7 @@ public class PatreonDataService(
     private PatreonContribution MapMemberInformation(Member member, Dictionary<IncludedDataReference, string> tiers)
     {
         var isActive = member.Attributes.PatronStatus == "active_patron";
-        var hasPaid = member.Attributes.LastChargeStatus == "paid";
+        var hasPaid = member.Attributes.LastChargeStatus.EqualsIgnoreCase("paid");
         
         var shouldHaveTiers = isActive && hasPaid;
 
