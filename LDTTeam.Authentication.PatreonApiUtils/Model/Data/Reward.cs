@@ -16,6 +16,5 @@ public class Reward
     
     public required IEnumerable<RewardMembership> Tiers { get; set; }
  
-    [ForeignKey(nameof(MembershipId))]
     public User User { get; set; }
 }
