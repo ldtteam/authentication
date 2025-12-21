@@ -39,7 +39,7 @@ public static class HostApplicationBuilderExtensions
             {
                 client.BaseAddress = new Uri("https://www.patreon.com/");
                 client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(
-                    new ProductHeaderValue("LDTTeam Authentication Patreon Service Token Handler", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown"))
+                    new ProductHeaderValue("LDTTeam-Patreon-Token-Handler", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown"))
                 );
             });
 
@@ -52,7 +52,7 @@ public static class HostApplicationBuilderExtensions
             {
                 client.BaseAddress = new Uri("https://www.patreon.com/");
                 client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(
-                    new ProductHeaderValue("LDTTeam Authentication Patreon API Handler", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown"))
+                    new ProductHeaderValue("LDTTeam-Patreon-API-Handler", Environment.GetEnvironmentVariable("VERSION") ?? "Unknown"))
                 );
             });
             builder.Services.AddScoped<IPatreonDataService, PatreonDataService>();
