@@ -57,6 +57,7 @@ public class RewardRepository : IRewardRepository
             return reward;
         reward = await _db.Rewards
             .Include(m => m.User)
+            .Include(m => m.Tiers)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (reward != null)
@@ -72,6 +73,7 @@ public class RewardRepository : IRewardRepository
         
         rewards = await _db.Rewards
             .Include(m => m.User)
+            .Include(m => m.Tiers)
             .AsNoTracking()
             .Where(m => m.User.PatreonId == patreonId)
             .ToListAsync(token);
@@ -89,7 +91,7 @@ public class RewardRepository : IRewardRepository
                 Reward = reward,
                 MembershipId = reward.MembershipId,
                 Tier = tier.Tier
-            });
+            }).ToList();
             _db.Rewards.Add(reward);
         }
         else
@@ -102,7 +104,7 @@ public class RewardRepository : IRewardRepository
                 Reward = existing,
                 MembershipId = existing.MembershipId,
                 Tier = tier.Tier
-            });
+            }).ToList();
             existing.User = reward.User;
         }
         await _db.SaveChangesAsync(token);

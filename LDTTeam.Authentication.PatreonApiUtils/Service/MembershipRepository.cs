@@ -57,6 +57,7 @@ public class MembershipRepository : IMembershipRepository
             return membership;
         membership = await _db.Memberships
             .Include(m => m.User)
+            .Include(m => m.Tiers)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (membership != null)
@@ -71,6 +72,7 @@ public class MembershipRepository : IMembershipRepository
             return memberships;
         memberships = await _db.Memberships
             .Include(m => m.User)
+            .Include(m => m.Tiers)
             .AsNoTracking()
             .Where(m => m.User.PatreonId == patreonId)
             .ToListAsync(token);
@@ -88,7 +90,7 @@ public class MembershipRepository : IMembershipRepository
                 Membership = membership,
                 MembershipId = membership.MembershipId,
                 Tier = tier.Tier
-            });
+            }).ToList();
             _db.Memberships.Add(membership);
         }
         else
@@ -102,7 +104,7 @@ public class MembershipRepository : IMembershipRepository
                 Membership = existing,
                 MembershipId = existing.MembershipId,
                 Tier = tier.Tier
-            });
+            }).ToList();
             existing.User = membership.User;
         }
         await _db.SaveChangesAsync(token);
