@@ -13,7 +13,8 @@ public class RewardsCalculationService(
     IUserTiersRepository userTiersRepository,
     IUserLifetimeContributionsRepository userLifetimeContributionsRepository,
     IMessageBus messageBus,
-    IMemoryCache memoryCache)
+    IMemoryCache memoryCache, 
+    ILogger<RewardsCalculationService> logger)
     : IRewardsCalculationService
 {
     private const string LambdaCacheKey = "RewardCalculationLambdas";
@@ -79,6 +80,8 @@ public class RewardsCalculationService(
         if (toRemove.Count > 0)
             await userRewardAssignmentsRepository.RemoveUserRewardsAsync(userId, toRemove);
         
+        logger.LogInformation("Processed reward changes for user {userId}. Added: {addedCount}, Removed: {removedCount}", userId, toAdd.Count, toRemove.Count);
+        
         foreach (var (type, reward) in toAdd)
         {
             await messageBus.PublishAsync(new UserRewardAdded(userId, type, reward));
@@ -93,7 +96,7 @@ public class RewardsCalculationService(
     {
         var tierUsers = await userTiersRepository.GetAllUsers();
         var contributionUsers = await userLifetimeContributionsRepository.GetAllUsers();
-        var allUsers = tierUsers.Union(contributionUsers).Distinct();
+        var allUsers = tierUsers.Union(contributionUsers).Distinct().ToList();
         
         await EnsureCacheInitializedAsync();
         
@@ -102,6 +105,8 @@ public class RewardsCalculationService(
             throw new InvalidOperationException("Reward calculation lambda cache is not initialized.");
         var lambda = lambdaDict.GetValueOrDefault((type, reward));
 
+        logger.LogWarning("Recalculating reward {reward} of type {type} for all users. Found {userCount} users to process.", reward, type, allUsers.Count());
+        
         //We removed the reward entirely, so just remove it from all users
         if (lambda == null)
         {
