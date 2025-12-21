@@ -140,6 +140,8 @@ public partial class PatreonTokenService
             {
                 throw new Exception("Refresh, Access Token or Expiry time was null!" + response);
             }
+            
+            _logger.LogWarning("Successfully acquired new Patreon tokens. Expires in " + response.ExpiresIn + " seconds.");
 
             //Store new tokens in database
             tokenInfo.AccessToken = response.AccessToken;

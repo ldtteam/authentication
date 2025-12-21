@@ -11,7 +11,7 @@ public class Membership
     
     public required bool IsGifted { get; set; }
     
-    public required DateTime LastChargeDate { get; set; }
+    public required DateTime? LastChargeDate { get; set; }
     
     public required bool LastChargeSuccessful { get; set; }
 

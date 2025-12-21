@@ -173,7 +173,9 @@ public class PatreonDataService(
                     .Select(tierRef => tiers.GetValueOrDefault(tierRef, "Unknown Tier"))
                     .ToList()
                 : Array.Empty<string>(),
-            LastChargeDate = DateTime.Parse(member.Attributes.LastChargeDate, null, System.Globalization.DateTimeStyles.RoundtripKind),
+            LastChargeDate =
+                member.Attributes.LastChargeDate == null ? null :
+                DateTime.Parse(member.Attributes.LastChargeDate, null, System.Globalization.DateTimeStyles.RoundtripKind),
             LastChargeSuccessful = hasPaid
         };
     }

@@ -6,7 +6,9 @@ public struct PatreonContribution
     public required Guid MembershipId { get; init; }
     public required long LifetimeCents { get; init; }
     public required bool IsGifted { get; init; }
-    public required DateTime LastChargeDate { get; init; }
+    public required DateTime? LastChargeDate { get; init; }
     public required bool LastChargeSuccessful { get; init; }
     public required IEnumerable<string> Tiers { get; init; }
+    
+    public bool HasBeenCharged => LastChargeDate.HasValue;
 }

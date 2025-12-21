@@ -28,7 +28,7 @@ public class MemberAttributes
     public required string PatronStatus { get; set; }
     public int CampaignLifetimeSupportCents { get; set; }
     public int CurrentlyEntitledAmountCents { get; set; }
-    public required string LastChargeDate { get; set; }
+    public required string? LastChargeDate { get; set; }
     public required string LastChargeStatus { get; set; }
     public int WillPayAmountCents { get; set; }
     public bool IsGifted { get; set; }
