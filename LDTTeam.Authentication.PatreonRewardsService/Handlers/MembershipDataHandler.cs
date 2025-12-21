@@ -52,9 +52,12 @@ public partial class MembershipDataHandler(
                 Tiers = membership.Tiers.Select(t => new RewardMembership
                 {
                     Tier = t.Tier
-                }).ToList(),
-                User = membership.User
+                }).ToList()
             };
+            
+            await rewardRepository.CreateOrUpdateAsync(reward);
+
+            reward.User = membership.User;
         }
         else
         {
@@ -72,10 +75,11 @@ public partial class MembershipDataHandler(
             {
                 Tier = t.Tier
             }).ToList();
+            
+            await rewardRepository.CreateOrUpdateAsync(reward);
         }
 
         LogUpdatingRewardsForMembershipIdMembershipid(logger, message.MembershipId);
-        await rewardRepository.CreateOrUpdateAsync(reward);
 
         if (newTiers.Any() || removedTiers.Any() || addedLifetimeCents != 0)
         {
