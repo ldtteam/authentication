@@ -105,7 +105,7 @@ public class PatreonMembershipService(
                 MembershipId = membershipId,
                 LifetimeCents = patreonInformation.LifetimeCents,
                 IsGifted = patreonInformation.IsGifted,
-                LastChargeDate = patreonInformation.LastChargeDate,
+                LastChargeDate = patreonInformation.LastChargeDate?.ToUniversalTime(),
                 LastChargeSuccessful = patreonInformation.LastChargeSuccessful,
                 User = user,
                 Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
@@ -118,7 +118,7 @@ public class PatreonMembershipService(
         {
             membership.LifetimeCents = patreonInformation.LifetimeCents;
             membership.IsGifted = patreonInformation.IsGifted;
-            membership.LastChargeDate = patreonInformation.LastChargeDate;
+            membership.LastChargeDate = patreonInformation.LastChargeDate?.ToUniversalTime();
             membership.LastChargeSuccessful = patreonInformation.LastChargeSuccessful;
             membership.Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
             {
