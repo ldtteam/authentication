@@ -62,7 +62,7 @@ public class RewardsCalculationService(
             var (type, reward) = kvp.Key;
             var lambda = kvp.Value;
             
-            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, userTiers, userLifetime);
+            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, string.Join(", ", userTiers), userLifetime);
             
             bool shouldHave;
             try
