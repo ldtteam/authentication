@@ -61,8 +61,20 @@ public class RewardsCalculationService(
         {
             var (type, reward) = kvp.Key;
             var lambda = kvp.Value;
+            
+            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, userTiers, userLifetime);
+            
             bool shouldHave;
-            try { shouldHave = lambda(userTiers, userLifetime); } catch { continue; }
+            try
+            {
+                shouldHave = lambda(userTiers, userLifetime);
+            }
+            catch(Exception exception)
+            {
+                logger.LogError(exception, "Error evaluating reward calculation lambda for user {userId}, reward {reward}, type {type}", userId, reward, type);
+                continue;
+            }
+            
             if (shouldHave)
                 newRewardsSet.Add((type, reward));
         }
@@ -132,8 +144,19 @@ public class RewardsCalculationService(
             var currentRewardsSet = new HashSet<(RewardType, string)>(currentRewards);
             var newRewardsSet = new HashSet<(RewardType, string)>(currentRewards);
             
+            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, userTiers, userLifetime);
+            
             bool shouldHave;
-            try { shouldHave = lambda(userTiers, userLifetime); } catch { continue; }
+            try
+            {
+                shouldHave = lambda(userTiers, userLifetime);
+            }
+            catch(Exception exception)
+            {
+                logger.LogError(exception, "Error evaluating reward calculation lambda for user {userId}, reward {reward}, type {type}", userId, reward, type);
+                continue;
+            }
+            
             if (!shouldHave)
                 newRewardsSet.Remove((type, reward));
 
