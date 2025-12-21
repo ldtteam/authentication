@@ -159,13 +159,13 @@ public class PatreonDataService(
     private PatreonContribution MapMemberInformation(Member member, Dictionary<IncludedDataReference, string> tiers)
     {
         var isActive = member.Attributes.PatronStatus == "active_patron";
-        var hasPaid = member.Attributes.LastChargeStatus.EqualsIgnoreCase("paid");
+        var hasPaid = member.Attributes.LastChargeStatus?.EqualsIgnoreCase("paid") ?? false;
         
         var shouldHaveTiers = isActive && hasPaid;
 
         return new PatreonContribution
         {
-            PatreonId = member.Relationships.User.Data.Id,
+            PatreonId = member.Relationships.User?.Data?.Id,
             MembershipId = Guid.Parse(member.Id),
             LifetimeCents = member.Attributes.CampaignLifetimeSupportCents,
             IsGifted = member.Attributes.IsGifted,
