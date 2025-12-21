@@ -67,8 +67,25 @@ public class PatreonMembershipService(
         user ??= await userRepository.GetByMembershipIdAsync(membershipId);
         if (user == null)
         {
-            logger.LogWarning("No User found for Membership ID {MembershipId}", membershipId);
-            return null;
+            if (patreonInformation.PatreonId != null)
+                user ??= await userRepository.GetByPatreonIdAsync(patreonInformation.PatreonId);
+            
+            if (user == null)
+            {
+                logger.LogWarning(
+                    "No user found for Membership ID {MembershipId} when creating or updating membership",
+                    membershipId);
+                return null;
+            }
+
+            if (!user.MembershipId.HasValue)
+            {
+                logger.LogInformation("Assigning Membership ID {MembershipId} to User ID {UserId}",
+                    membershipId, user.UserId);
+                user.MembershipId = membershipId;
+                
+                await userRepository.CreateOrUpdateAsync(user);
+            }
         }
 
         if (user.MembershipId != membershipId)

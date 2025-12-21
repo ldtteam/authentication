@@ -37,7 +37,7 @@ public class MemberAttributes
 public class MemberRelationships
 {
     public required CurrentlyEntitledTiers CurrentlyEntitledTiers { get; set; }
-    public required UserRelationship User { get; set; }
+    public UserRelationship? User { get; set; }
 }
 
 public class CurrentlyEntitledTiers
@@ -83,12 +83,12 @@ public class IncludedDataReference : IEquatable<IncludedDataReference>
 
 public class UserRelationship
 {
-    public required UserData Data { get; set; }
+    public UserData? Data { get; set; }
 }
 
 public class UserData
 {
-    public required string Id { get; set; }
+    public string? Id { get; set; }
 }
 
 

@@ -2,7 +2,7 @@ namespace LDTTeam.Authentication.PatreonApiUtils.Model.App;
 
 public struct PatreonContribution
 {
-    public required string PatreonId { get; init; }
+    public required string? PatreonId { get; init; }
     public required Guid MembershipId { get; init; }
     public required long LifetimeCents { get; init; }
     public required bool IsGifted { get; init; }
