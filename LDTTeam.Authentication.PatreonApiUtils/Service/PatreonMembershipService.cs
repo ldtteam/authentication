@@ -50,18 +50,28 @@ public class PatreonMembershipService(
             return;
         }
 
-        var membership = await CreateOrUpdateMembership(membershipId, patreonInformation.Value, user);
-        if (membership == null)
+        var membershipUserData = await CreateOrUpdateMembership(membershipId, patreonInformation.Value, user);
+        if (!membershipUserData.HasValue)
         {
             logger.LogWarning("Could not create or update membership for Membership ID {MembershipId}", membershipId);
             return;
         }
+        
+        var membership = membershipUserData.Value.Membership;
+        user ??= membershipUserData.Value.User;
 
         await membershipRepository.CreateOrUpdateAsync(membership);
+
+        if (user.MembershipId == null)
+        {
+            user.MembershipId = membershipId;
+            await userRepository.CreateOrUpdateAsync(user);
+        }
+        
         await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
     }
 
-    private async Task<Membership?> CreateOrUpdateMembership(Guid membershipId, PatreonContribution patreonInformation,
+    private async Task<(Membership Membership, User User)?> CreateOrUpdateMembership(Guid membershipId, PatreonContribution patreonInformation,
         User? user = null)
     {
         user ??= await userRepository.GetByMembershipIdAsync(membershipId);
@@ -76,15 +86,6 @@ public class PatreonMembershipService(
                     "No user found for Membership ID {MembershipId} when creating or updating membership",
                     membershipId);
                 return null;
-            }
-
-            if (!user.MembershipId.HasValue)
-            {
-                logger.LogInformation("Assigning Membership ID {MembershipId} to User ID {UserId}",
-                    membershipId, user.UserId);
-                user.MembershipId = membershipId;
-                
-                await userRepository.CreateOrUpdateAsync(user);
             }
         }
 
@@ -125,20 +126,38 @@ public class PatreonMembershipService(
             });
         }
 
-        return membership;
+        return (membership, user);
     }
 
     public async Task UpdateAllStatuses()
     {
         await foreach (var patreonInformation in patreonDataService.All())
         {
-            var membership = await CreateOrUpdateMembership(
+            var membershipUserData = await CreateOrUpdateMembership(
                 patreonInformation.MembershipId, patreonInformation);
             
-            if (membership == null)
+            if (!membershipUserData.HasValue)
                 continue;
 
+            var membership = membershipUserData.Value.Membership;
+            var user = membershipUserData.Value.User;
+
             await membershipRepository.CreateOrUpdateAsync(membership);
+
+            if (user.MembershipId == null)
+            {
+                user.MembershipId = membership.MembershipId;
+                await userRepository.CreateOrUpdateAsync(user);
+            }
+            
+            await membershipRepository.CreateOrUpdateAsync(membership);
+
+            if (user.MembershipId == null)
+            {
+                user.MembershipId = membership.MembershipId;
+                await userRepository.CreateOrUpdateAsync(user);
+            }
+            
             await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
         }
     }
