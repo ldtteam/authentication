@@ -89,7 +89,7 @@ public class PatreonMembershipService(
             }
         }
 
-        if (user.MembershipId != membershipId)
+        if (user.MembershipId != null && user.MembershipId != membershipId)
         {
             logger.LogCritical(
                 "Data inconsistency: User ID {UserId} has Membership ID {UserMembershipId} but Patreon data returned for Membership ID {MembershipId}",
