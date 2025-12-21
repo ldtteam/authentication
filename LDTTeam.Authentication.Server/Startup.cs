@@ -81,7 +81,6 @@ namespace LDTTeam.Authentication.Server
 
             services.AddHostedService<MetricsHistoryService>();
             services.AddHostedService<EventsQueueService>();
-            services.AddHostedService<MigrationService>();
 
             services.Configure<ForwardedHeadersOptions>(options =>
             {
