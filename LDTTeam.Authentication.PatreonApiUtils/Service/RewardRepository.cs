@@ -86,12 +86,6 @@ public class RewardRepository : IRewardRepository
         var existing = await _db.Rewards.FirstOrDefaultAsync(m => m.MembershipId == reward.MembershipId, token);
         if (existing == null)
         {
-            reward.Tiers = reward.Tiers.Select(tier => new RewardMembership()
-            {
-                Reward = reward,
-                MembershipId = reward.MembershipId,
-                Tier = tier.Tier
-            }).ToList();
             _db.Rewards.Add(reward);
         }
         else
@@ -99,18 +93,12 @@ public class RewardRepository : IRewardRepository
             existing.LifetimeCents = reward.LifetimeCents;
             existing.IsGifted = reward.IsGifted;
             existing.LastSyncDate = reward.LastSyncDate;
-            existing.Tiers = reward.Tiers.Select(tier => new RewardMembership()
-            {
-                Reward = existing,
-                MembershipId = existing.MembershipId,
-                Tier = tier.Tier
-            }).ToList();
-            existing.User = reward.User;
         }
         await _db.SaveChangesAsync(token);
+        
         // Update cache
         _cache.Set($"reward:id:{reward.MembershipId}", reward, CacheDuration);
-        if (!string.IsNullOrEmpty(reward.User.PatreonId))
+        if (reward.User != null && !string.IsNullOrEmpty(reward.User.PatreonId))
             _cache.Remove($"reward:patreon:{reward.User.PatreonId}"); // Invalidate user cache
         return reward;
     }

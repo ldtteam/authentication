@@ -85,12 +85,6 @@ public class MembershipRepository : IMembershipRepository
         var existing = await _db.Memberships.FirstOrDefaultAsync(m => m.MembershipId == membership.MembershipId, token);
         if (existing == null)
         {
-            membership.Tiers = membership.Tiers.Select(tier => new TierMembership
-            {
-                Membership = membership,
-                MembershipId = membership.MembershipId,
-                Tier = tier.Tier
-            }).ToList();
             _db.Memberships.Add(membership);
         }
         else
@@ -99,13 +93,6 @@ public class MembershipRepository : IMembershipRepository
             existing.IsGifted = membership.IsGifted;
             existing.LastChargeDate = membership.LastChargeDate;
             existing.LastChargeSuccessful = membership.LastChargeSuccessful;
-            existing.Tiers = membership.Tiers.Select(tier => new TierMembership
-            {
-                Membership = existing,
-                MembershipId = existing.MembershipId,
-                Tier = tier.Tier
-            }).ToList();
-            existing.User = membership.User;
         }
         await _db.SaveChangesAsync(token);
         // Update cache
