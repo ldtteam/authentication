@@ -1,5 +1,6 @@
 using LDTTeam.Authentication.PatreonApiUtils.Config;
 using LDTTeam.Authentication.PatreonApiUtils.Extensions;
+using LDTTeam.Authentication.PatreonSyncService.Services;
 using LDTTeam.Authentication.Utils.Extensions;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -18,6 +19,8 @@ builder
     .AddPatreonApiService()
     .AddPatreonMembershipService()
     .AddRepositories();
+
+builder.Services.AddHostedService<HostedPatreonSyncer>();
 
 var app = builder.Build();
 
