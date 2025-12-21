@@ -17,5 +17,5 @@ public class Membership
 
     public required IEnumerable<TierMembership> Tiers { get; set; }
  
-    public required User User { get; set; }
+    public User User { get; set; }
 }

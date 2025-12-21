@@ -108,7 +108,7 @@ public class MembershipRepository : IMembershipRepository
         await _db.SaveChangesAsync(token);
         // Update cache
         _cache.Set($"membership:id:{membership.MembershipId}", membership, CacheDuration);
-        if (!string.IsNullOrEmpty(membership.User.PatreonId))
+        if (membership.User != null && !string.IsNullOrEmpty(membership.User.PatreonId))
             _cache.Remove($"membership:patreon:{membership.User.PatreonId}"); // Invalidate user cache
         return membership;
     }

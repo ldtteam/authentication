@@ -107,7 +107,6 @@ public class PatreonMembershipService(
                 IsGifted = patreonInformation.IsGifted,
                 LastChargeDate = patreonInformation.LastChargeDate?.ToUniversalTime(),
                 LastChargeSuccessful = patreonInformation.LastChargeSuccessful,
-                User = user,
                 Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
                 {
                     Tier = tier
@@ -142,14 +141,6 @@ public class PatreonMembershipService(
             var membership = membershipUserData.Value.Membership;
             var user = membershipUserData.Value.User;
 
-            await membershipRepository.CreateOrUpdateAsync(membership);
-
-            if (user.MembershipId == null)
-            {
-                user.MembershipId = membership.MembershipId;
-                await userRepository.CreateOrUpdateAsync(user);
-            }
-            
             await membershipRepository.CreateOrUpdateAsync(membership);
 
             if (user.MembershipId == null)
