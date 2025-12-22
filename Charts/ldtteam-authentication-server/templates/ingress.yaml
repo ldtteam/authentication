@@ -27,6 +27,14 @@ spec:
     - host: {{ .Values.ingress.hostname | quote }}
       http:
         paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}-reward-api
+                port:
+                  number: {{ .Values.service.port }}
+                  
           - path: /
             pathType: ImplementationSpecific
             backend:
