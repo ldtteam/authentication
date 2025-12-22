@@ -1,3 +1,4 @@
+using LDTTeam.Authentication.DiscordBot.Extensions;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Rest.Core;
 using Remora.Results;
@@ -46,8 +47,7 @@ public partial class DiscordRoleAssignmentService (
     /// </summary>
     public Task<AllMembersRoleAssigner> ForAllMembers()
     {
-        var assignerLogger = loggerFactory.CreateLogger<AllMembersRoleAssigner>();
-        return Task.FromResult(new AllMembersRoleAssigner(this, userRepository, assignerLogger));
+        return Task.FromResult(new AllMembersRoleAssigner(this, userRepository));
     }
     
     /// <summary>
@@ -69,7 +69,11 @@ public partial class DiscordRoleAssignmentService (
         /// <param name="token">The cancellation token to cancel the operation</param>
         public async Task AssignTo(Snowflake role, Snowflake user, string reason, CancellationToken token = default)
         {
-            var result = await guildApi.AddGuildMemberRoleAsync(server, user, role, reason, token);
+            var result = await guildApi.Retry(async (api, tkn) =>
+                    await api.AddGuildMemberRoleAsync(server, user, role, reason, tkn),
+                cancellationToken: token
+            );
+            
             if (!result.IsSuccess)
             {
                 LogFailedToAssignRoleRoleToUserUserInServerServerError(logger, role, user, server, result.Error);
@@ -89,7 +93,11 @@ public partial class DiscordRoleAssignmentService (
         /// <exception cref="Exception">Thrown when the user could not be found in the server.</exception>
         public async Task<IReadOnlyList<Snowflake>> GetAssignedRoles(Snowflake user, CancellationToken token = default)
         {
-            var result = await guildApi.GetGuildMemberAsync(server, user, token);
+            var result = await guildApi.Retry(async (api, tkn) =>
+                    await api.GetGuildMemberAsync(server, user, tkn),
+                cancellationToken: token
+            );
+            
             if (result.IsSuccess) return result.Entity.Roles;
             
             LogFailedToGetRolesForUserUserInServerServerError(logger, user, server, result.Error);
@@ -105,7 +113,11 @@ public partial class DiscordRoleAssignmentService (
         /// <param name="token">The cancellation token.</param>
         public async Task RemoveFrom(Snowflake role, Snowflake user, string reason, CancellationToken token = default)
         {
-            var result = await guildApi.RemoveGuildMemberRoleAsync(server, user, role, reason, token);
+            var result = await guildApi.Retry(async (api, tkn) =>
+                await api.RemoveGuildMemberRoleAsync(server, user, role, reason, tkn),
+                cancellationToken: token
+            );
+            
             if (!result.IsSuccess)
             {
                 LogFailedToRemoveRoleRoleFromUserUserInServerServerError(logger, role, user, server, result.Error);
@@ -190,10 +202,9 @@ public partial class DiscordRoleAssignmentService (
         static partial void LogUpdatingAllRewardRolesForMemberMember(ILogger<MemberRoleAssigner> logger, Snowflake member);
     }
 
-    public partial class AllMembersRoleAssigner(
+    public class AllMembersRoleAssigner(
         DiscordRoleAssignmentService roleAssignmentService,
-        IUserRepository userRepository,
-        ILogger<AllMembersRoleAssigner> logger
+        IUserRepository userRepository
     )
     {
         public async Task EnsureRewardsAssigned(CancellationToken token = default)
