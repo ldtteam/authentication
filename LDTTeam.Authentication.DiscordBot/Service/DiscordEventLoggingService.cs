@@ -28,7 +28,7 @@ public class DiscordEventLoggingService(
         {
             failedLogQueueService.EnqueueFailedLog(embed, resultError.Error, count);
         }
-        else
+        else if (result is { IsSuccess: false })
         {
             logger.LogWarning("Failed to log event: {Error}", result.Error?.Message);
         }
