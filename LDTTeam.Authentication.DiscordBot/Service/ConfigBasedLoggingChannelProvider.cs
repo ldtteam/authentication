@@ -12,7 +12,7 @@ namespace LDTTeam.Authentication.DiscordBot.Service;
 /// Uses <see cref="IMemoryCache"/> to cache the resolved Snowflake and reads configuration from an
 /// <see cref="IOptionsSnapshot{TOptions}"/> so changes in configuration are picked up between requests.
 /// </summary>
-public class ConfigBasedLoggingChannelProvider(IOptionsSnapshot<DiscordConfig> configSnapshot, IMemoryCache cache, IDiscordRestGuildAPI guildApi, IServerProvider serverProvider) : ILoggingChannelProvider
+public class ConfigBasedLoggingChannelProvider(IOptions<DiscordConfig> configSnapshot, IMemoryCache cache, IDiscordRestGuildAPI guildApi, IServerProvider serverProvider) : ILoggingChannelProvider
 {
     private const string CacheKey = "LoggingChannelSnowflake";
 

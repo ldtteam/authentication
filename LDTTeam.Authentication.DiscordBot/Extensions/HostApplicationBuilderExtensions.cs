@@ -50,14 +50,16 @@ public static class HostApplicationBuilderExtensions
 
         public IHostApplicationBuilder AddServer()
         {
-            builder.Services.AddScoped<IServerProvider, ConfigBasedServerProvider>();
+            builder.Services.AddSingleton<IServerProvider, ConfigBasedServerProvider>();
             return builder;
         }
 
         public IHostApplicationBuilder AddDiscordEventLogging()
         {
-            builder.Services.AddScoped<ILoggingChannelProvider, ConfigBasedLoggingChannelProvider>();
-            builder.Services.AddScoped<DiscordEventLoggingService>();
+            builder.Services.AddSingleton<ILoggingChannelProvider, ConfigBasedLoggingChannelProvider>();
+            builder.Services.AddSingleton<DiscordEventLoggingService>();
+            builder.Services.AddHostedService<DiscordRetryFailedLogService>();
+            builder.Services.AddSingleton<IDiscordFailedLogQueueService, DiscordFailedLogQueueService>();
             return builder;
         }
 

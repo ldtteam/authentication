@@ -58,7 +58,7 @@ public class UserTiersRepository(DatabaseContext dbContext, IMemoryCache cache) 
     {
         foreach (var tier in tiers)
         {
-            if (!await dbContext.TierAssignments.AnyAsync(x => x.UserId == userId && x.Tier == tier))
+            if (!await dbContext.TierAssignments.AnyAsync(x => x.UserId == userId && x.Tier == tier && x.Provider == provider))
             {
                 await dbContext.TierAssignments.AddAsync(new UserTierAssignment { UserId = userId, Provider = provider, Tier = tier });
             }

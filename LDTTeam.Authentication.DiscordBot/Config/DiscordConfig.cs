@@ -8,6 +8,7 @@ public class DiscordConfig
     public required Dictionary<string, ServerConfig> Server { get; set; }
     public required EventLoggingConfig LoggingChannel { get; set; }
     public required string BotToken { get; set; }
+    public int MaxLogRetryAttempts { get; set; } = 3;
 }
 
 [UsedImplicitly]
