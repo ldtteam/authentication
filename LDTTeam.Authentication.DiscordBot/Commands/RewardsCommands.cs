@@ -89,6 +89,57 @@ namespace LDTTeam.Authentication.DiscordBot.Commands
 
                 return await ListRewardsFor(user!.ID, user.Username);
             }
+            
+            [Command("List Rewards")]
+            [CommandType(ApplicationCommandType.User)]
+            [UsedImplicitly]
+            public async Task<IResult> ListRewardsForSpecificUserViaContext(
+                IUser user)
+            {
+                var executor = interactionContext.Interaction.Member;
+                var executingUser = executor.FlatMap(m => m.User);
+                var permissions = executor.FlatMap(m => m.Permissions);
+                if (!permissions.HasValue &&
+                    !(executingUser.HasValue && executingUser.Value.ID.Equals(user.ID)))
+                {
+                    return await feedbackService.SendContextualErrorAsync(
+                        "You are not authorized to run this command for other users"
+                    );
+                }
+
+                if (permissions.HasValue && executingUser.HasValue
+                                         && !executingUser.Value.ID.Equals(user.ID)
+                                         && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+                {
+                    return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = "No permission",
+                            Description =
+                                "You require Administrator permissions to run this command for other users",
+                            Colour = Color.Red
+                        }));
+                }
+
+                if (!executingUser.HasValue)
+                {
+                    return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                        new Embed
+                        {
+                            Title = "No user provided",
+                            Description =
+                                "You need to supply a user to get rewards for",
+                            Colour = Color.Red
+                        }));
+                }
+
+                if (executingUser.HasValue)
+                {
+                    user = executingUser.Value;
+                }
+
+                return await ListRewardsFor(user.ID, user.Username);
+            }
 
             private async Task<IResult> ListRewardsFor(Snowflake discordUserId, string userName)
             {
