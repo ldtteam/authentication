@@ -3,7 +3,7 @@ using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Data;
 using LDTTeam.Authentication.PatreonApiUtils.Service;
 
-namespace LDTTeam.Authentication.PatreonApiUtils.Messages;
+namespace LDTTeam.Authentication.PatreonApiUtils.Handlers;
 
 public partial class UserHandler(
     IUserRepository userRepository,

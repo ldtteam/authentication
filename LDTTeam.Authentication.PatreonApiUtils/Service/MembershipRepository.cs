@@ -80,17 +80,14 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task<Membership> CreateOrUpdateAsync(Membership membership, CancellationToken token = default)
     {
-        var existing = await _db.Memberships.FirstOrDefaultAsync(m => m.MembershipId == membership.MembershipId, token);
-        if (existing == null)
+        var existing = await _db.Memberships.AnyAsync(m => m.MembershipId == membership.MembershipId, token);
+        if (!existing)
         {
             _db.Memberships.Add(membership);
         }
         else
         {
-            existing.LifetimeCents = membership.LifetimeCents;
-            existing.IsGifted = membership.IsGifted;
-            existing.LastChargeDate = membership.LastChargeDate;
-            existing.LastChargeSuccessful = membership.LastChargeSuccessful;
+            _db.Memberships.Update(membership);
         }
         await _db.SaveChangesAsync(token);
         // Update cache

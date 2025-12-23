@@ -111,16 +111,14 @@ public class UserRepository : IUserRepository
 
     public async Task<User> CreateOrUpdateAsync(User user, CancellationToken token = default)
     {
-        var existing = await _db.Users.FirstOrDefaultAsync(u => u.UserId == user.UserId, token);
-        if (existing == null)
+        var existing = await _db.Users.AnyAsync(u => u.UserId == user.UserId, token);
+        if (!existing)
         {
             _db.Users.Add(user);
         }
         else
         {
-            existing.PatreonId = user.PatreonId;
-            existing.Username = user.Username;
-            existing.MembershipId = user.MembershipId;
+            _db.Users.Update(user);
         }
         await _db.SaveChangesAsync(token);
         // Update both cache keys
