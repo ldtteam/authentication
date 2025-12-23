@@ -28,7 +28,9 @@ namespace LDTTeam.Authentication.Modules.Patreon
                 o.ClientSecret = patreonConfig.ClientSecret;
                 
                 o.Scope.Add("identity.memberships");
+                o.Scope.Add("campaigns");
                 o.Includes.Add("memberships");
+                o.Includes.Add("campaign");
 
                 o.SaveTokens = true;
                 

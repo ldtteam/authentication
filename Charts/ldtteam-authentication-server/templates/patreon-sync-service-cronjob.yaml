@@ -8,7 +8,7 @@ metadata:
     {{- include "ldtteam-authentication-server.labels" . | nindent 4 }}
     app.kubernetes.io/component: patreon-sync-service
 spec:
-  schedule: "0 1 6 * *"
+  schedule: "0 1 * * *"
   jobTemplate:
     spec:
       template:
