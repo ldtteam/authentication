@@ -142,9 +142,13 @@ public partial class UserHandler(
         if (updated)
         {
             await userRepository.CreateOrUpdateAsync(user);
+            
+            logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Saved to database", user.UserId, snowflake);
 
             var assigner = await roleAssignmentService.ForMember(user.Snowflake.Value);
             await assigner.UpdateAllRewards();
+            
+            logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Updated rewards", user.UserId, snowflake);
             
             await eventLoggingService.LogEvent(new Embed()
             {
