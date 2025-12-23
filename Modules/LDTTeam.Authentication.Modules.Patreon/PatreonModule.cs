@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Wolverine;
@@ -106,7 +107,7 @@ namespace LDTTeam.Authentication.Modules.Patreon
         }
 
         public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services,
-            WebApplicationBuilder builder)
+            IHostApplicationBuilder builder)
         {
             builder.AddPatreonConfiguration();
             builder.AddPatreonDatabase();
