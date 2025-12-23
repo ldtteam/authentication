@@ -136,6 +136,8 @@ public partial class UserHandler(
 
         bool updated = user.Snowflake != snowflake;
         user.Snowflake = snowflake;
+        
+        logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Original {Original}, will update: {Update}", user.UserId, snowflake, user.Snowflake, updated);
 
         if (updated)
         {
