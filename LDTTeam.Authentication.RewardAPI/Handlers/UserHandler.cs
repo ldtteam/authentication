@@ -49,7 +49,6 @@ public partial class UserHandler(
                 UserId = user.UserId,
                 Provider = message.Provider,
                 ProviderUserId = message.ProviderKey,
-                User = user
             };
 
             await providerLoginRepository.UpsertAsync(providerLogin);
@@ -107,7 +106,6 @@ public partial class UserHandler(
             UserId = message.UserId,
             Reward = message.Reward,
             Type = message.RewardType,
-            User = user
         };
 
         await assignedRewardRepository.UpsertAsync(assignedReward);
