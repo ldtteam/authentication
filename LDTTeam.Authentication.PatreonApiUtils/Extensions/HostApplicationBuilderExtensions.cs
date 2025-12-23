@@ -13,7 +13,7 @@ public static class HostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)
     {
-        public IHostApplicationBuilder AddDatabase()
+        public IHostApplicationBuilder AddPatreonDatabase()
         {
             builder.Services.AddDbContext<DatabaseContext>(x =>
             {

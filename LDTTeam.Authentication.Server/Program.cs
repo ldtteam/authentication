@@ -8,7 +8,7 @@ builder.AddLogging().AddConfiguration();
 builder.AddWolverine();
 
 var startup = new Startup(builder.Configuration);
-startup.ConfigureServices(builder.Services);
+startup.ConfigureServices(builder.Services, builder);
 
 var app = builder.Build();
 

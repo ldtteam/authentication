@@ -13,7 +13,7 @@ builder
         opts.Discovery.IncludeAssembly(typeof(Marker).Assembly);
         opts.Discovery.IncludeAssembly(typeof(PatreonConfig).Assembly);
     })
-    .AddDatabase()
+    .AddPatreonDatabase()
     .AddPatreonConfiguration()
     .AddPatreonTokenManagement()
     .AddPatreonApiService()

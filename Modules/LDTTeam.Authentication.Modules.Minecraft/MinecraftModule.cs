@@ -4,6 +4,7 @@ using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Minecraft.Config;
 using LDTTeam.Authentication.Modules.Minecraft.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,7 +33,8 @@ namespace LDTTeam.Authentication.Modules.Minecraft
             });
         }
 
-        public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services)
+        public IServiceCollection ConfigureServices(IConfiguration configuration, IServiceCollection services,
+            WebApplicationBuilder builder)
         {
             return services.AddTransient<MinecraftService>();
         }

@@ -9,6 +9,7 @@ public struct PatreonContribution
     public required DateTime? LastChargeDate { get; init; }
     public required bool LastChargeSuccessful { get; init; }
     public required IEnumerable<string> Tiers { get; init; }
+    public required int CampaignId { get; init; }
     
     public bool HasBeenCharged => LastChargeDate.HasValue;
 }

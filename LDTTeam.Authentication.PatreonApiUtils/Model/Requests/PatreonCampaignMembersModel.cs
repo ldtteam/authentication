@@ -38,6 +38,7 @@ public class MemberRelationships
 {
     public required CurrentlyEntitledTiers CurrentlyEntitledTiers { get; set; }
     public UserRelationship? User { get; set; }
+    public Campaign? Campaign { get; set; }
 }
 
 public class CurrentlyEntitledTiers
@@ -84,6 +85,16 @@ public class IncludedDataReference : IEquatable<IncludedDataReference>
 public class UserRelationship
 {
     public UserData? Data { get; set; }
+}
+
+public class Campaign
+{
+    public CampaignData? Data { get; set; }
+}
+
+public class CampaignData
+{
+    public string? Id { get; set; }
 }
 
 public class UserData

@@ -19,6 +19,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account
 {
     [AllowAnonymous]
     public class ExternalLoginModel(
+        IServiceProvider serviceProvider,
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         ILogger<ExternalLoginModel> logger,
@@ -82,6 +83,12 @@ namespace LDTTeam.Authentication.Server.Pages.Account
 
                 logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name,
                     info.LoginProvider);
+                
+                foreach (IModule module in Modules.List)
+                {
+                    await module.OnUserSignIn(info.Principal, user, serviceProvider);
+                }
+                
                 return LocalRedirect(returnUrl);
             }
 
@@ -131,6 +138,11 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                     props.IsPersistent = true;
 
                     await signInManager.SignInAsync(user, props, info.LoginProvider);
+                
+                    foreach (IModule module in Modules.List)
+                    {
+                        await module.OnUserSignIn(info.Principal, user, serviceProvider);
+                    }
 
                     return LocalRedirect(returnUrl);
                 }
@@ -145,7 +157,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                 {
                     var userId = Guid.Parse(user.Id);
                     await bus.PublishAsync(
-                        new NewUserCreatedOrUpdated(userId, name!)
+                        new NewUserCreatedOrUpdated(userId, name)
                     );
                     
                     result = await userManager.AddLoginAsync(user, info);
@@ -162,6 +174,11 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                         props.IsPersistent = true;
 
                         await signInManager.SignInAsync(user, props, info.LoginProvider);
+                
+                        foreach (IModule module in Modules.List)
+                        {
+                            await module.OnUserSignIn(info.Principal, user, serviceProvider);
+                        }
 
                         return LocalRedirect(returnUrl);
                     }

@@ -3,7 +3,11 @@ using LDTTeam.Authentication.PatreonApiUtils.Service;
 
 namespace LDTTeam.Authentication.PatreonApiUtils.Handlers;
 
-public partial class PatreonMembershipHandler(IUserRepository userRepository, IMembershipRepository membershipRepository, ILogger<PatreonMembershipHandler> logger)
+public partial class PatreonMembershipHandler(
+    IUserRepository userRepository,
+    IMembershipRepository membershipRepository,
+    IPatreonMembershipService membershipService,
+    ILogger<PatreonMembershipHandler> logger)
 {
     public async Task Handle(PatreonMembershipCreatedOrUpdated message)
     {
@@ -14,6 +18,7 @@ public partial class PatreonMembershipHandler(IUserRepository userRepository, IM
 
         user.MembershipId = message.MembershipId;
         await userRepository.CreateOrUpdateAsync(user);
+        await membershipService.UpdateStatusFor(user.UserId);
     }
     
     public async Task Handle(PatreonMembershipRemoved message)
@@ -30,6 +35,7 @@ public partial class PatreonMembershipHandler(IUserRepository userRepository, IM
 
         user.MembershipId = null;
         await userRepository.CreateOrUpdateAsync(user);
+        await membershipService.UpdateStatusFor(user.UserId);
     }
 
     [LoggerMessage(LogLevel.Information, "Handling Patreon membership created or updated for User ID {userId} and Membership ID {membershipId}")]

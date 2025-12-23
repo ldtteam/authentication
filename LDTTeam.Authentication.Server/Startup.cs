@@ -27,7 +27,7 @@ namespace LDTTeam.Authentication.Server
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services, WebApplicationBuilder builder)
         {
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -54,8 +54,8 @@ namespace LDTTeam.Authentication.Server
 
             foreach (IModule module in Modules.List)
             {
+                services = module.ConfigureServices(Configuration, services, builder);
                 authBuilder = module.ConfigureAuthentication(Configuration, authBuilder);
-                services = module.ConfigureServices(Configuration, services);
             }
 
             services.AddMemoryCache();
