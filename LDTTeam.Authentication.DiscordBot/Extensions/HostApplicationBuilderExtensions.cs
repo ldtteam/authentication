@@ -82,6 +82,7 @@ public static class HostApplicationBuilderExtensions
                 .AddCommandTree()
                 .WithCommandGroup<RewardsCommands>()
                 .WithCommandGroup<TierCommands>()
+                .WithCommandGroup<ContextCommands>()
                 .Finish()
                 .AddDiscordCaching()
                 .AddAutocompleteProvider<RewardsAutoCompleteProvider>()
