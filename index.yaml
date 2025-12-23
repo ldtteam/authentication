@@ -2,6 +2,20 @@ apiVersion: v1
 entries:
   ldtteam-authentication-server:
   - apiVersion: v2
+    created: "2025-12-23T21:33:16.079918604Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.1.2
+    description: A helm chart that installs the LDTTeam auth service
+    digest: 43dd036569a23cd4e38e8065cea02852c8a6a475c09d28b05e42d50d67cad4fd
+    name: ldtteam-authentication-server
+    type: application
+    urls:
+    - https://github.com/ldtteam/authentication/releases/download/ldtteam-authentication-server-v0.5.251/ldtteam-authentication-server-v0.5.251.tgz
+    version: v0.5.251
+  - apiVersion: v2
     created: "2025-12-23T21:10:10.203756489Z"
     dependencies:
     - condition: postgresql.enabled
@@ -3289,4 +3303,4 @@ entries:
     urls:
     - https://github.com/ldtteam/authentication/releases/download/ldtteam-authentication-server-v0.5.35/ldtteam-authentication-server-v0.5.35.tgz
     version: v0.5.35
-generated: "2025-12-23T21:10:10.204262597Z"
+generated: "2025-12-23T21:33:16.080438277Z"
