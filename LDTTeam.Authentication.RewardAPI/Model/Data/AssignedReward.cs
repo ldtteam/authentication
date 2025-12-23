@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 namespace LDTTeam.Authentication.RewardAPI.Model.Data;
 
 [PrimaryKey(nameof(UserId), nameof(Reward), nameof(Type))]
-[Index(nameof(Reward), nameof(Type), IsUnique = true)]
 public class AssignedReward
 {
     public required Guid UserId { get; set; }
