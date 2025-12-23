@@ -1,6 +1,7 @@
+using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using LDTTeam.Authentication.PatreonApiUtils.Service;
 
-namespace LDTTeam.Authentication.PatreonApiUtils.Messages;
+namespace LDTTeam.Authentication.PatreonApiUtils.Handlers;
 
 public partial class PatreonMembershipHandler(IUserRepository userRepository, IMembershipRepository membershipRepository, ILogger<PatreonMembershipHandler> logger)
 {

@@ -1,9 +1,12 @@
 using System;
+using System.Text.Json.Nodes;
+using AspNet.Security.OAuth.Patreon;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Modules.Patreon.Config;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace LDTTeam.Authentication.Modules.Patreon
 {
@@ -25,6 +28,19 @@ namespace LDTTeam.Authentication.Modules.Patreon
                 o.ClientSecret = patreonConfig.ClientSecret;
 
                 o.SaveTokens = true;
+                
+                o.Events.OnCreatingTicket += async (context) =>
+                {
+                    if (context.Scheme.Name != PatreonAuthenticationDefaults.AuthenticationScheme)
+                        return;
+                    
+                    using var scope = builder.Services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>()
+                        .CreateScope();
+
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<PatreonModule>>();
+                    var payload = JsonObject.Create(context.User);
+                    logger.LogInformation("Patreon user payload: {Payload}", payload?.ToJsonString());
+                };
             });
         }
     }
