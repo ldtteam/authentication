@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LDTTeam.Authentication.Server.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20251223091353_Remove old legacy information and add new information")]
-    partial class Removeoldlegacyinformationandaddnewinformation
+    [Migration("20251223100550_Remove legacy infrastructure and replace it with new infrastructure")]
+    partial class Removelegacyinfrastructureandreplaceitwithnewinfrastructure
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -106,7 +106,7 @@ namespace LDTTeam.Authentication.Server.Data.Migrations
                     b.ToTable("AssignedRewards");
                 });
 
-            modelBuilder.Entity("LDTTeam.Authentication.Server.Models.Data.Reward", b =>
+            modelBuilder.Entity("LDTTeam.Authentication.Server.Models.Data.KnownReward", b =>
                 {
                     b.Property<string>("Type")
                         .HasColumnType("text");
@@ -120,7 +120,7 @@ namespace LDTTeam.Authentication.Server.Data.Migrations
 
                     b.HasKey("Type", "Name");
 
-                    b.ToTable("Rewards");
+                    b.ToTable("KnownRewards");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

@@ -10,7 +10,7 @@ namespace LDTTeam.Authentication.Server.Data
     public class DatabaseContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<AssignedReward> AssignedRewards { get; set; }
-        public DbSet<Reward> Rewards { get; set; }
+        public DbSet<KnownReward> KnownRewards { get; set; }
         
         public DatabaseContext(DbContextOptions<DatabaseContext> options)
             : base(options)

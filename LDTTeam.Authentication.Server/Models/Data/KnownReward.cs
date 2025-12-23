@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LDTTeam.Authentication.Server.Models.Data;
 
 [PrimaryKey(nameof(Type), nameof(Name))]
-public class Reward
+public class KnownReward
 {
     public required RewardType Type { get; set; }
     public required string Name { get; set; }

@@ -103,7 +103,7 @@ namespace LDTTeam.Authentication.Server.Data.Migrations
                     b.ToTable("AssignedRewards");
                 });
 
-            modelBuilder.Entity("LDTTeam.Authentication.Server.Models.Data.Reward", b =>
+            modelBuilder.Entity("LDTTeam.Authentication.Server.Models.Data.KnownReward", b =>
                 {
                     b.Property<string>("Type")
                         .HasColumnType("text");
@@ -117,7 +117,7 @@ namespace LDTTeam.Authentication.Server.Data.Migrations
 
                     b.HasKey("Type", "Name");
 
-                    b.ToTable("Rewards");
+                    b.ToTable("KnownRewards");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

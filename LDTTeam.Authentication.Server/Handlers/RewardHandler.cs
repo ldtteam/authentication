@@ -12,7 +12,7 @@ public class RewardHandler(IRewardRepository repository)
     public async Task Handle(RewardCreatedOrUpdated message)
     {
         await repository.UpsertAsync(
-            new Reward
+            new KnownReward
             {
                 Name = message.Reward,
                 Type = message.Type,

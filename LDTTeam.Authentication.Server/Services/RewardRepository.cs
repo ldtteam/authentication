@@ -25,17 +25,17 @@ public interface IRewardRepository
     /// <param name="type">The reward type.</param>
     /// <param name="name">The reward name.</param>
     /// <param name="token">Cancellation token.</param>
-    /// <returns>The <see cref="Reward"/> or <c>null</c> if not found.</returns>
-    Task<Reward?> GetAsync(RewardType type, string name, CancellationToken token = default);
+    /// <returns>The <see cref="KnownReward"/> or <c>null</c> if not found.</returns>
+    Task<KnownReward?> GetAsync(RewardType type, string name, CancellationToken token = default);
 
     /// <summary>
     /// Creates or updates a reward in the database.
-    /// On success the returned <see cref="Reward"/> will reflect any values stored.
+    /// On success the returned <see cref="KnownReward"/> will reflect any values stored.
     /// </summary>
-    /// <param name="reward">The reward to create or update.</param>
+    /// <param name="knownReward">The reward to create or update.</param>
     /// <param name="token">Cancellation token.</param>
-    /// <returns>The upserted <see cref="Reward"/>.</returns>
-    Task<Reward> UpsertAsync(Reward reward, CancellationToken token = default);
+    /// <returns>The upserted <see cref="KnownReward"/>.</returns>
+    Task<KnownReward> UpsertAsync(KnownReward knownReward, CancellationToken token = default);
 
     /// <summary>
     /// Deletes the reward with the specified type and name if it exists.
@@ -52,14 +52,14 @@ public interface IRewardRepository
     /// <param name="type">The reward type.</param>
     /// <param name="token">Cancellation token.</param>
     /// <returns>All rewards of the specified type.</returns>
-    Task<IEnumerable<Reward>> GetAllByTypeAsync(RewardType type, CancellationToken token = default);
+    Task<IEnumerable<KnownReward>> GetAllByTypeAsync(RewardType type, CancellationToken token = default);
 
     /// <summary>
     /// Gets all rewards in the database.
     /// </summary>
     /// <param name="token">Cancellation token.</param>
     /// <returns>All rewards.</returns>
-    Task<IEnumerable<Reward>> GetAllAsync(CancellationToken token = default);
+    Task<IEnumerable<KnownReward>> GetAllAsync(CancellationToken token = default);
 }
 
 public class RewardRepository : IRewardRepository
@@ -78,45 +78,45 @@ public class RewardRepository : IRewardRepository
     private static string GetTypeKey(RewardType type) => $"Reward:Type:{type}";
     private const string AllKey = "Reward:All";
 
-    public async Task<Reward?> GetAsync(RewardType type, string name, CancellationToken token = default)
+    public async Task<KnownReward?> GetAsync(RewardType type, string name, CancellationToken token = default)
     {
         var key = GetKey(type, name);
-        if (_cache.TryGetValue<Reward>(key, out var cached))
+        if (_cache.TryGetValue<KnownReward>(key, out var cached))
             return cached;
-        var reward = await _db.Rewards.AsNoTracking().FirstOrDefaultAsync(r => r.Type == type && r.Name == name, token);
+        var reward = await _db.KnownRewards.AsNoTracking().FirstOrDefaultAsync(r => r.Type == type && r.Name == name, token);
         if (reward != null)
             _cache.Set(key, reward, _defaultOptions);
         return reward;
     }
 
-    public async Task<Reward> UpsertAsync(Reward reward, CancellationToken token = default)
+    public async Task<KnownReward> UpsertAsync(KnownReward knownReward, CancellationToken token = default)
     {
-        var existing = await _db.Rewards.FindAsync([reward.Type, reward.Name], token);
+        var existing = await _db.KnownRewards.FindAsync([knownReward.Type, knownReward.Name], token);
         if (existing is null)
         {
-            await _db.Rewards.AddAsync(reward, token);
+            await _db.KnownRewards.AddAsync(knownReward, token);
         }
         else
         {
-            existing.Type = reward.Type;
-            existing.Name = reward.Name;
-            _db.Rewards.Update(existing);
+            existing.Type = knownReward.Type;
+            existing.Name = knownReward.Name;
+            _db.KnownRewards.Update(existing);
         }
         await _db.SaveChangesAsync(token);
         // Update cache
-        var key = GetKey(reward.Type, reward.Name);
-        _cache.Set(key, reward, _defaultOptions);
+        var key = GetKey(knownReward.Type, knownReward.Name);
+        _cache.Set(key, knownReward, _defaultOptions);
         // Invalidate by-type and all caches
-        _cache.Remove(GetTypeKey(reward.Type));
+        _cache.Remove(GetTypeKey(knownReward.Type));
         _cache.Remove(AllKey);
-        return reward;
+        return knownReward;
     }
 
     public async Task DeleteAsync(RewardType type, string name, CancellationToken token = default)
     {
-        var existing = await _db.Rewards.FindAsync([type, name], token);
+        var existing = await _db.KnownRewards.FindAsync([type, name], token);
         if (existing is null) return;
-        _db.Rewards.Remove(existing);
+        _db.KnownRewards.Remove(existing);
         await _db.SaveChangesAsync(token);
         // Remove from cache
         var key = GetKey(type, name);
@@ -126,21 +126,21 @@ public class RewardRepository : IRewardRepository
         _cache.Remove(AllKey);
     }
 
-    public async Task<IEnumerable<Reward>> GetAllByTypeAsync(RewardType type, CancellationToken token = default)
+    public async Task<IEnumerable<KnownReward>> GetAllByTypeAsync(RewardType type, CancellationToken token = default)
     {
         var key = GetTypeKey(type);
-        if (_cache.TryGetValue<List<Reward>>(key, out var cached))
+        if (_cache.TryGetValue<List<KnownReward>>(key, out var cached))
             return cached;
-        var rewards = await _db.Rewards.AsNoTracking().Where(r => r.Type == type).ToListAsync(token);
+        var rewards = await _db.KnownRewards.AsNoTracking().Where(r => r.Type == type).ToListAsync(token);
         _cache.Set(key, rewards, _defaultOptions);
         return rewards;
     }
 
-    public async Task<IEnumerable<Reward>> GetAllAsync(CancellationToken token = default)
+    public async Task<IEnumerable<KnownReward>> GetAllAsync(CancellationToken token = default)
     {
-        if (_cache.TryGetValue<List<Reward>>(AllKey, out var cached))
+        if (_cache.TryGetValue<List<KnownReward>>(AllKey, out var cached))
             return cached;
-        var rewards = await _db.Rewards.AsNoTracking().ToListAsync(token);
+        var rewards = await _db.KnownRewards.AsNoTracking().ToListAsync(token);
         _cache.Set(AllKey, rewards, _defaultOptions);
         return rewards;
     }
