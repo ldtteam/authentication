@@ -4,8 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LDTTeam.Authentication.RewardAPI.Model.Data;
 
-[PrimaryKey(nameof(UserId))]
-[Index(nameof(Provider), nameof(ProviderUserId), IsUnique = true)]
+[PrimaryKey(nameof(UserId), nameof(Provider), nameof(ProviderUserId))]
 public class ProviderLogin
 {
     public required Guid UserId { get; set; }
