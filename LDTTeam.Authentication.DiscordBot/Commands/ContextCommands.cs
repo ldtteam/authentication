@@ -63,11 +63,6 @@ public class ContextCommands(
                 }));
         }
 
-        if (executingUser.HasValue)
-        {
-            user = executingUser.Value;
-        }
-
         return await ListRewardsFor(user.ID, user.Username);
     }
 
