@@ -1,21 +1,18 @@
 using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using LDTTeam.Authentication.Messages.User;
+using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.Modules.Api;
-using LDTTeam.Authentication.Modules.Api.Events;
-using LDTTeam.Authentication.Modules.Api.Logging;
-using LDTTeam.Authentication.Modules.Api.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Remora.Discord.API.Objects;
+using Wolverine;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace LDTTeam.Authentication.Server.Pages.Account
@@ -25,8 +22,7 @@ namespace LDTTeam.Authentication.Server.Pages.Account
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         ILogger<ExternalLoginModel> logger,
-        IBackgroundEventsQueue eventsQueue,
-        ILoggingQueue loggingQueue)
+        IMessageBus bus)
         : PageModel
     {
         public string? ProviderDisplayName { get; set; }
@@ -117,32 +113,18 @@ namespace LDTTeam.Authentication.Server.Pages.Account
             IdentityResult result = await userManager.CreateAsync(user);
             if (result.Succeeded)
             {
+                var userId = Guid.Parse(user.Id);
+                await bus.PublishAsync(
+                    new NewUserCreatedOrUpdated(userId, name!)
+                );
+                
                 result = await userManager.AddLoginAsync(user, info);
                 if (result.Succeeded)
                 {
-                    await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
-                    {
-                        await events._refreshContentEvent.InvokeAsync(scope, [info.LoginProvider]);
-                        await events._postRefreshContentEvent.InvokeAsync(scope);
-                    }, token);
-
                     logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-
-                    List<EmbedField> fields =
-                    [
-                        new("User Name", user.UserName!, true),
-                        new("Provider", info.LoginProvider, true),
-                        new("Provider Key", info.ProviderKey, true)
-                    ];
-
-                    await loggingQueue.QueueBackgroundWorkItemAsync(new Embed
-                    {
-                        Title = "New User Created",
-                        Description = "A new user has signed in on our service!",
-                        Colour = Color.Green,
-                        Fields = fields
-                    });
-
+                    await bus.PublishAsync(
+                        new ExternalLoginConnectedToUser(userId, Enum.Parse<AccountProvider>(info.LoginProvider),
+                            info.ProviderKey));
 
                     AuthenticationProperties props = new();
                     props.StoreTokens(info.AuthenticationTokens ?? []);
@@ -155,19 +137,23 @@ namespace LDTTeam.Authentication.Server.Pages.Account
             }
             else if (result.Errors.Any(x => x.Code == "DuplicateUserName"))
             {
-                user = new ApplicationUser {UserName = $"{info.Principal.Identity?.Name}{Guid.NewGuid():N}"};
+                name = $"{name}{Guid.NewGuid():N}";
+                user = new ApplicationUser {UserName = name};
                 result = await userManager.CreateAsync(user);
 
                 if (result.Succeeded)
                 {
+                    var userId = Guid.Parse(user.Id);
+                    await bus.PublishAsync(
+                        new NewUserCreatedOrUpdated(userId, name!)
+                    );
+                    
                     result = await userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
-                        await eventsQueue.QueueBackgroundWorkItemAsync(async (events, scope, _) =>
-                        {
-                            await events._refreshContentEvent.InvokeAsync(scope, [info.LoginProvider]);
-                            await events._postRefreshContentEvent.InvokeAsync(scope);
-                        }, token);
+                        await bus.PublishAsync(
+                            new ExternalLoginConnectedToUser(userId, Enum.Parse<AccountProvider>(info.LoginProvider),
+                                info.ProviderKey));
 
                         logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 

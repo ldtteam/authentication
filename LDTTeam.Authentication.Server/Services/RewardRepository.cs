@@ -1,16 +1,21 @@
-using LDTTeam.Authentication.DiscordBot.Data;
-using LDTTeam.Authentication.DiscordBot.Model.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using LDTTeam.Authentication.Models.App.Rewards;
+using LDTTeam.Authentication.Server.Data;
+using LDTTeam.Authentication.Server.Models.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace LDTTeam.Authentication.DiscordBot.Service;
+namespace LDTTeam.Authentication.Server.Services;
 
 
 /// <summary>
-/// Repository-style service for working with <see cref="Reward"/> entities.
-/// All methods are asynchronous and use the application's <see cref="Data.DatabaseContext"/> as the backing store.
-/// Implementations should use <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache"/> to reduce database load and ensure cache consistency.
+/// Repository-style service for working with <see cref="IMemoryCache"/> entities.
+/// All methods are asynchronous and use the application's <see cref="Memory"/> as the backing store.
+/// Implementations should use <see cref="Microsoft.Extensions.Caching"/> to reduce database load and ensure cache consistency.
 /// </summary>
 public interface IRewardRepository
 {

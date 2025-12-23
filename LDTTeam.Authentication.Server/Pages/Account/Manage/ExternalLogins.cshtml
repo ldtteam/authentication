@@ -54,20 +54,3 @@
         </div>
     </form>
 }
-@if (Model.CurrentLogins?.Any(x => x.LoginProvider == "Minecraft") != true)
-{
-    <h4>Add Minecraft Acount (Use button above if you have a microsoft linked account, this field is temporary!)</h4>
-    <hr/>
-    <form id="link-minecraft-form" asp-page-handler="LinkMinecraft" method="post" class="form-horizontal">
-        <div class="form-group">
-            <label asp-for="Input.MinecraftUsername"></label>
-            <input asp-for="Input.MinecraftUsername" class="form-control"/>
-            <span asp-validation-for="Input.MinecraftUsername" class="text-danger"></span>
-        </div>
-        @if (Model.MinecraftId != null)
-        {
-            <p class="fw-lighter">@Model.MinecraftId</p>
-        }
-        <button id="update-profile-button" type="submit" class="btn btn-primary">Submit</button>
-    </form>
-}

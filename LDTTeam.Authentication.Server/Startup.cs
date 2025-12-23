@@ -1,25 +1,19 @@
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
-using LDTTeam.Authentication.Modules.Api.Events;
-using LDTTeam.Authentication.Modules.Api.Extensions;
-using LDTTeam.Authentication.Modules.Api.Logging;
-using LDTTeam.Authentication.Modules.Api.Rewards;
 using LDTTeam.Authentication.Server.Data;
+using LDTTeam.Authentication.Server.Extensions;
 using LDTTeam.Authentication.Server.Services;
-using LDTTeam.Authentication.Server.Tasks;
 using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
+using IPNetwork = System.Net.IPNetwork;
 
 namespace LDTTeam.Authentication.Server
 {
@@ -43,6 +37,9 @@ namespace LDTTeam.Authentication.Server
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseNpgsql(Configuration.CreateConnectionString("authentication"),
                     b => b.MigrationsAssembly("LDTTeam.Authentication.Server")));
+
+            services.AddScoped<IAssignedRewardRepository, AssignedRewardRepository>();
+            services.AddScoped<IRewardRepository, RewardRepository>();
             
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
@@ -63,44 +60,25 @@ namespace LDTTeam.Authentication.Server
 
             services.AddMemoryCache();
             
-            services.AddTransient<IConditionService, ConditionService>();
-            services.AddTransient<IRewardService, RewardService>();
-
-            services.AddSingleton<EventsService>();
-            services.AddStartupTask<EventsStartupTask>();
-            services.AddStartupTask<DatabaseMigrationTask>();
-
-            services.AddSingleton<IBackgroundEventsQueue>(_ =>
-            {
-                if (!int.TryParse(Configuration["EventsQueueCapacity"], out int queueCapacity))
-                    queueCapacity = 10;
-                return new BackgroundEventsQueue(queueCapacity);
-            });
-            
-            services.AddSingleton<ILoggingQueue>(new LoggingQueue());
-
-            services.AddHostedService<MetricsHistoryService>();
-            services.AddHostedService<EventsQueueService>();
-
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders =
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-                options.KnownNetworks.Add(IPNetwork.Parse("10.0.0.0/8"));
+                options.KnownIPNetworks.Add(IPNetwork.Parse("10.0.0.0/8"));
             });
-
-            services.AddStartupTask<StartupAnnouncementTask>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public async Task Configure(WebApplication app, IWebHostEnvironment env)
         {
+            app.MigrateDatabase();
+            
             app.UseForwardedHeaders(
                 new ForwardedHeadersOptions
                 {
                     ForwardedHeaders = 
                         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-                    KnownNetworks =
+                    KnownIPNetworks =
                     {
                         IPNetwork.Parse("10.0.0.0/8")
                     }
@@ -123,19 +101,11 @@ namespace LDTTeam.Authentication.Server
             app.UseAuthentication();
             app.UseAuthorization();
 
-            
-            app.MapGet("/", () => Results.Ok("API Server is running."));
-            
-            /*
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                endpoints.MapControllerRoute(
-                    "default",
-                    "{controller=Home}/{action=Index}/{id?}");
-                endpoints.MapRazorPages();
-            });
-            */
+            app.MapControllers();
+            app.MapControllerRoute(
+                "default",
+                "{controller=Home}/{action=Index}/{id?}");
+            app.MapRazorPages();
         }
     }
 }

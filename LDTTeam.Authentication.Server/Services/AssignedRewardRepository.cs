@@ -1,10 +1,15 @@
-using LDTTeam.Authentication.DiscordBot.Data;
-using LDTTeam.Authentication.DiscordBot.Model.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using LDTTeam.Authentication.Models.App.Rewards;
+using LDTTeam.Authentication.Server.Data;
+using LDTTeam.Authentication.Server.Models.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace LDTTeam.Authentication.DiscordBot.Service;
+namespace LDTTeam.Authentication.Server.Services;
 
 /// <summary>
 /// Service for managing assigned rewards for users.
@@ -15,12 +20,12 @@ public interface IAssignedRewardRepository
     /// <summary>
     /// Gets all assigned rewards for a user.
     /// </summary>
-    Task<IEnumerable<AssignedReward>> GetForUserAsync(Guid userId, CancellationToken token = default);
+    Task<IEnumerable<AssignedReward>> GetForUserAsync(string userId, CancellationToken token = default);
 
     /// <summary>
     /// Checks whether a user has the specified reward.
     /// </summary>
-    Task<bool> HasRewardAsync(Guid userId, string reward, RewardType type, CancellationToken token = default);
+    Task<bool> HasRewardAsync(string userId, string reward, RewardType type, CancellationToken token = default);
 
     /// <summary>
     /// Assigns a reward to a user.
@@ -31,7 +36,7 @@ public interface IAssignedRewardRepository
     /// <summary>
     /// Removes a reward from a user.
     /// </summary>
-    Task RemoveAsync(Guid userId, string reward, RewardType type, CancellationToken token = default);
+    Task RemoveAsync(string userId, string reward, RewardType type, CancellationToken token = default);
 }
 
 /// <summary>
@@ -50,7 +55,7 @@ public class AssignedRewardRepository : IAssignedRewardRepository
         _cache = cache;
     }
 
-    public async Task<IEnumerable<AssignedReward>> GetForUserAsync(Guid userId, CancellationToken token = default)
+    public async Task<IEnumerable<AssignedReward>> GetForUserAsync(string userId, CancellationToken token = default)
     {
         var key = $"AssignedRewards:User:{userId}";
         if (_cache.TryGetValue<IEnumerable<AssignedReward>>(key, out var cached)) return cached!;
@@ -60,7 +65,7 @@ public class AssignedRewardRepository : IAssignedRewardRepository
         return items;
     }
 
-    public async Task<bool> HasRewardAsync(Guid userId, string reward, RewardType type, CancellationToken token = default)
+    public async Task<bool> HasRewardAsync(string userId, string reward, RewardType type, CancellationToken token = default)
     {
         var key = $"AssignedRewards:User:{userId}:Reward:{reward}:{type}";
         if (_cache.TryGetValue<bool?>(key, out var cachedBool) && cachedBool.HasValue) return cachedBool.Value;
@@ -86,7 +91,7 @@ public class AssignedRewardRepository : IAssignedRewardRepository
         _cache.Remove($"AssignedRewards:User:{assignment.UserId}:Reward:{assignment.Reward}:{assignment.Type}");
     }
 
-    public async Task RemoveAsync(Guid userId, string reward, RewardType type, CancellationToken token = default)
+    public async Task RemoveAsync(string userId, string reward, RewardType type, CancellationToken token = default)
     {
         var existing = await _db.AssignedRewards.FindAsync([userId, reward, type], token);
         if (existing is null) return;

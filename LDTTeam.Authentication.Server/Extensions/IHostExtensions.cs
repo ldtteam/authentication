@@ -1,7 +1,10 @@
-using LDTTeam.Authentication.DiscordBot.Data;
+using LDTTeam.Authentication.Server.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace LDTTeam.Authentication.DiscordBot.Extensions;
+namespace LDTTeam.Authentication.Server.Extensions;
 
 // ReSharper disable once InconsistentNaming
 public static class IHostExtensions

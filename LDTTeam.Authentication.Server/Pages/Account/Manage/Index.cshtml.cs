@@ -1,27 +1,23 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Modules.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Wolverine;
 
 namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 {
     [Authorize]
-    public class ManageIndexModel : PageModel
+    public class ManageIndexModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IMessageBus bus)
+        : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-
-        public ManageIndexModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
-
         [TempData]
         public string StatusMessage { get; set; }
 
@@ -31,25 +27,25 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
         public class InputModel
         {
             [Display(Name = "Username")]
-            public string Username { get; set; }
+            public required string Username { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
         {
-            string userName = await _userManager.GetUserNameAsync(user);
+            string? userName = await userManager.GetUserNameAsync(user);
 
             Input = new InputModel
             {
-                Username = userName
+                Username = userName ?? "Unknown"
             };
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
             }
 
             await LoadAsync(user);
@@ -58,10 +54,10 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostAsync()
         {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
             }
 
             if (!ModelState.IsValid)
@@ -70,10 +66,10 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 return Page();
             }
 
-            string username = await _userManager.GetUserNameAsync(user);
+            string? username = await userManager.GetUserNameAsync(user);
             if (Input.Username != username)
             {
-                IdentityResult setUsernameResult = await _userManager.SetUserNameAsync(user, Input.Username);
+                IdentityResult setUsernameResult = await userManager.SetUserNameAsync(user, Input.Username);
                 if (!setUsernameResult.Succeeded)
                 {
                     StatusMessage = "Unexpected error when trying to set username.";
@@ -81,8 +77,13 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 }
             }
 
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
+
+            await bus.PublishAsync(new NewUserCreatedOrUpdated(
+                Guid.Parse(user.Id), Input.Username
+            ));
+            
             return RedirectToPage();
         }
     }

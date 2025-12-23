@@ -1,19 +1,7 @@
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
-using LDTTeam.Authentication.Modules.Api.Events;
-using LDTTeam.Authentication.Modules.Api.Extensions;
-using LDTTeam.Authentication.Modules.Api.Rewards;
-using LDTTeam.Authentication.Modules.Patreon.Condition;
 using LDTTeam.Authentication.Modules.Patreon.Config;
-using LDTTeam.Authentication.Modules.Patreon.Data;
-using LDTTeam.Authentication.Modules.Patreon.EventHandlers;
-using LDTTeam.Authentication.Modules.Patreon.Services;
-using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
