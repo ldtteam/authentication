@@ -14,6 +14,8 @@ public static class HostApplicationBuilderExtensions
         {
             builder.Services.AddMemoryCache();
             builder.Services.AddScoped<IProviderLoginRepository, ProviderLoginRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IAssignedRewardRepository, AssignedRewardRepository>();
             return builder;
         }
         
