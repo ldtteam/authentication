@@ -37,7 +37,7 @@ app.MapGet("/api/{accountProvider}/{providerKey}/{reward}", async (HttpContext c
     if (login == null)
     {
         logger.LogDebug("No login found for {AccountProvider} user {MinecraftUser}", accountProvider, providerKey);
-        return Results.NotFound();
+        return Results.NotFound("The requested user was not found.");
     }
     
     logger.LogDebug("Found login for {AccountProvider} user {MinecraftUser}, checking reward {Reward}", accountProvider, providerKey, reward);
