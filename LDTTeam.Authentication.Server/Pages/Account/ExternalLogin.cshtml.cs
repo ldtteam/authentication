@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.Modules.Api;
+using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -132,6 +133,16 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                     await bus.PublishAsync(
                         new ExternalLoginConnectedToUser(userId, Enum.Parse<AccountProvider>(info.LoginProvider),
                             info.ProviderKey));
+
+                    if (info.Principal.Claims.Any(c => c.Type == "patreon_membership_id"))
+                    {
+                        await bus.PublishAsync(
+                            new PatreonMembershipCreatedOrUpdated(
+                                userId,
+                                Guid.Parse(info.Principal.Claims.First(c => c.Type == "patreon_membership_id").Value)
+                            )
+                        );
+                    }
 
                     AuthenticationProperties props = new();
                     props.StoreTokens(info.AuthenticationTokens ?? []);

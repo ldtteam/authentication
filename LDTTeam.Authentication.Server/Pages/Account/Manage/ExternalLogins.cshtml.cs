@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.Modules.Api;
-using LDTTeam.Authentication.Modules.Minecraft.Services;
+using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,7 +21,6 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
     public class ExternalLoginsModel(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        MinecraftService minecraftService,
         IMessageBus bus)
         : PageModel
     {
@@ -116,25 +115,32 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 foreach (UserLoginInfo mergeLogin in mergeLogins)
                 {
                     await userManager.RemoveLoginAsync(mergeUser, mergeLogin.LoginProvider, mergeLogin.ProviderKey);
+                    await bus.PublishAsync(
+                        new ExternalLoginDisconnectedFromUser(
+                            Guid.Parse(mergeUser.Id),
+                            Enum.Parse<AccountProvider>(mergeLogin.LoginProvider, true),
+                            mergeLogin.ProviderKey
+                        ));
+                    
                     await userManager.AddLoginAsync(user, mergeLogin);
-                }
-
-                if (!mergeLogins.Any(x =>
-                    x.LoginProvider.Equals("minecraft", StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    Claim? mergeClaim = mergeClaims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
-                    if (mergeClaim != null)
-                        await userManager.AddClaimAsync(user, mergeClaim);
-                }
-                else
-                {
-                    IList<Claim> claims = await userManager.GetClaimsAsync(user);
-                    Claim? mcClaim = claims.FirstOrDefault(x => x.Type == "urn:minecraft:user:id");
-                    if (mcClaim != null)
-                        await userManager.RemoveClaimAsync(user, mcClaim);
+                    await bus.PublishAsync(
+                        new ExternalLoginConnectedToUser(
+                            Guid.Parse(user.Id),
+                            Enum.Parse<AccountProvider>(mergeLogin.LoginProvider, true),
+                            mergeLogin.ProviderKey
+                        ));
                 }
 
                 await userManager.DeleteAsync(mergeUser);
+                await bus.PublishAsync(new UserDeleted(Guid.Parse(mergeUser.Id)));
+                
+                if (info.Principal.Claims.All(c => c.Type != "patreon_membership_id") && mergeClaims.Any(claim => claim.Type == "patreon_membership_id"))
+                {
+                    var claim = mergeClaims.First(claim => claim.Type == "patreon_membership_id");
+                    info.Principal.AddIdentity(new ClaimsIdentity([
+                        new Claim("patreon_membership_id", claim.Value)
+                    ]));
+                }
                 
                 StatusMessage =
                     "The external login was already linked to an existing account, your accounts have been merged.";
@@ -149,11 +155,14 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 Guid.Parse(user.Id), Enum.Parse<AccountProvider>(info.LoginProvider), info.ProviderKey
             ));
 
-
-            if (info.LoginProvider == "Minecraft")
+            if (info.Principal.Claims.Any(c => c.Type == "patreon_membership_id"))
             {
-                await userManager.RemoveClaimsAsync(user,
-                    (await userManager.GetClaimsAsync(user)).Where(x => x.Type == "urn:minecraft:user:id"));
+                await bus.PublishAsync(
+                    new PatreonMembershipCreatedOrUpdated(
+                        Guid.Parse(user.Id),
+                        Guid.Parse(info.Principal.Claims.First(c => c.Type == "patreon_membership_id").Value)
+                    )
+                );
             }
 
             // Clear the existing external cookie to ensure a clean login process

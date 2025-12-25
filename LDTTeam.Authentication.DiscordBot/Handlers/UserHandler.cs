@@ -56,6 +56,26 @@ public partial class UserHandler(
         }
     }
     
+    public async Task HandleAsync(UserDeleted message)
+    {
+        var user = await userRepository.GetByIdAsync(message.Id);
+        if (user != null)
+        {
+            await userRepository.DeleteAsync(message.Id);
+            await eventLoggingService.LogEvent(new Embed()
+            {
+                Title = "User Deleted",
+                Description = $"A user has been deleted: {user.Username}",
+                Colour = Color.DarkRed,
+                Fields = new[]
+                {
+                    new EmbedField("User ID", message.Id.ToString(), true),
+                    new EmbedField("Username", user.Username, true)
+                }
+            });
+        }
+    }
+    
     public async Task HandleAsync(ExternalLoginConnectedToUser message)
     {
         logger.LogWarning("Handling ExternalLoginConnectedToUser for User ID: {UserId}, Provider: {Provider}, Key: {ProviderKey}", message.UserId, message.Provider, message.ProviderKey);

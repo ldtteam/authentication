@@ -31,6 +31,16 @@ public partial class UserHandler(
         LogCreatedNewUserRecordForUserIdUseridWithUsernameUsername(logger, message.Id, message.UserName);
     }
     
+    public async Task Handle(UserDeleted message)
+    {
+        var user = await userRepository.GetByIdAsync(message.Id);
+        if (user == null)
+            return;
+
+        await userRepository.DeleteAsync(message.Id);
+        LogDeletedUserRecordForUserIdUserid(logger, message.Id);
+    }
+    
     public async Task Handle(ExternalLoginConnectedToUser message)
     {
         var user = await userRepository.GetByIdAsync(message.UserId);
@@ -65,4 +75,7 @@ public partial class UserHandler(
 
     [LoggerMessage(LogLevel.Information, "Linked Patreon account {patreonId} to user ID {userId}/{userName}")]
     static partial void LogLinkedPatreonAccountPatreonidToUserIdUseridUsername(ILogger<UserHandler> logger, string patreonId, Guid userId, string userName);
+
+    [LoggerMessage(LogLevel.Warning, "Deleted user record for user ID {userId}")]
+    static partial void LogDeletedUserRecordForUserIdUserid(ILogger<UserHandler> logger, Guid userId);
 }

@@ -1,4 +1,6 @@
 using LDTTeam.Authentication.Messages.User;
+using LDTTeam.Authentication.Models.App.Rewards;
+using LDTTeam.Authentication.Models.App.User;
 using LDTTeam.Authentication.RewardAPI.Model.Data;
 using LDTTeam.Authentication.RewardAPI.Service;
 using User = LDTTeam.Authentication.RewardAPI.Model.Data.User;
@@ -31,6 +33,16 @@ public partial class UserHandler(
         await userRepository.UpsertAsync(user);
     }
 
+    public async Task Handle(UserDeleted message)
+    {
+        var user = await userRepository.GetByIdAsync(message.Id);
+        if (user == null)
+            return;
+
+        await userRepository.DeleteAsync(user);
+        LogDeletedUserRecordForUserIdUserid(logger, message.Id);
+    }
+    
     public async Task Handle(ExternalLoginConnectedToUser message)
     {
         var user = await userRepository.GetByIdAsync(message.UserId);
@@ -57,9 +69,7 @@ public partial class UserHandler(
 
         if (providerLogin.ProviderUserId != message.ProviderKey)
         {
-            logger.LogWarning(
-                "Received ExternalLoginConnectedToUser with already registered key: {key}, for user: {userId}/{userName}",
-                message.ProviderKey, user.UserId, user.Username);
+            LogReceivedExternalloginconnectedtouserWithAlreadyRegisteredKeyKeyForUser(logger, message.ProviderKey, user.UserId, user.Username);
         }
     }
 
@@ -76,9 +86,7 @@ public partial class UserHandler(
             await providerLoginRepository.GetByProviderAndProviderUserIdAsync(message.Provider, message.ProviderKey);
         if (providerLogin == null)
         {
-            logger.LogWarning(
-                "Received ExternalLoginDisconnectedFromUser for user: {userId}/{userName}, which has no linked login for provider {provider} with key {key}",
-                user.UserId, user.Username, message.Provider, message.ProviderKey);
+            LogReceivedExternallogindisconnectedfromuserForUserUseridUsernameWhichHasNoLinkedLogin(logger, user.UserId, user.Username, message.Provider, message.ProviderKey);
             return;
         }
 
@@ -124,9 +132,7 @@ public partial class UserHandler(
             await assignedRewardRepository.GetByKeyAsync(message.UserId, message.Reward, message.RewardType);
         if (existingReward == null)
         {
-            logger.LogWarning(
-                "Received UserRewardRemoved for user ID {userId} which does not have reward {reward} of type {type}",
-                message.UserId, message.Reward, message.RewardType);
+            LogReceivedUserrewardremovedForUserIdUseridWhichDoesNotHaveRewardRewardOfTypeType(logger, message.UserId, message.Reward, message.RewardType);
             return;
         }
 
@@ -147,4 +153,16 @@ public partial class UserHandler(
     [LoggerMessage(LogLevel.Error, "Received ExternalLoginDisconnectedFromUser for non-existent user ID {userId}")]
     static partial void LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(
         ILogger<UserHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Warning, "Deleted user record for user ID {userId}")]
+    static partial void LogDeletedUserRecordForUserIdUserid(ILogger<UserHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Warning, "Received ExternalLoginConnectedToUser with already registered key: {key}, for user: {userId}/{userName}")]
+    static partial void LogReceivedExternalloginconnectedtouserWithAlreadyRegisteredKeyKeyForUser(ILogger<UserHandler> logger, string key, Guid userId, string userName);
+
+    [LoggerMessage(LogLevel.Warning, "Received ExternalLoginDisconnectedFromUser for user: {userId}/{userName}, which has no linked login for provider {provider} with key {key}")]
+    static partial void LogReceivedExternallogindisconnectedfromuserForUserUseridUsernameWhichHasNoLinkedLogin(ILogger<UserHandler> logger, Guid userId, string userName, AccountProvider provider, string key);
+
+    [LoggerMessage(LogLevel.Warning, "Received UserRewardRemoved for user ID {userId} which does not have reward {reward} of type {type}")]
+    static partial void LogReceivedUserrewardremovedForUserIdUseridWhichDoesNotHaveRewardRewardOfTypeType(ILogger<UserHandler> logger, Guid userId, string reward, RewardType type);
 }
