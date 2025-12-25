@@ -64,6 +64,38 @@ public partial class UserHandler(
         LogLinkedPatreonAccountPatreonidToUserIdUseridUsername(logger, message.ProviderKey, user.UserId, user.Username);
     }
     
+    public async Task Handle(ExternalLoginDisconnectedFromUser message)
+    {
+        var user = await userRepository.GetByIdAsync(message.UserId);
+        if (user == null)
+        {
+            if (message.Provider == AccountProvider.Patreon)
+            {
+                var userWithPatreonId = await userRepository.GetByPatreonIdAsync(message.ProviderKey);
+                if (userWithPatreonId != null)
+                {
+                    LogFoundUserWithPatreonIdPatreonidWhenHandlingExternallogindisconnectedfromuserFor(logger, message.ProviderKey, message.UserId);
+                    await Handle(message with { UserId = userWithPatreonId.UserId });
+                    return;
+                }
+            }
+            
+            LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(logger, message.UserId);
+            return;
+        }
+
+        if (message.Provider != AccountProvider.Patreon)
+            return;
+
+        if (user.PatreonId == message.ProviderKey)
+        {
+            user.PatreonId = null;
+            user.MembershipId = null;
+            await userRepository.CreateOrUpdateAsync(user);
+            LogUnlinkedPatreonAccountPatreonidFromUserIdUseridUsername(logger, message.ProviderKey, user.UserId, user.Username);
+        }
+    }
+    
     [LoggerMessage(LogLevel.Error, "Received ExternalLoginConnectedToUser for non-existent user ID {userId}")]
     static partial void LogReceivedExternalloginconnectedtouserForNonExistentUserIdUserid(ILogger<UserHandler> logger, Guid userId);
 
@@ -78,4 +110,13 @@ public partial class UserHandler(
 
     [LoggerMessage(LogLevel.Warning, "Deleted user record for user ID {userId}")]
     static partial void LogDeletedUserRecordForUserIdUserid(ILogger<UserHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Warning, "Unlinked Patreon account {patreonId} from user ID {userId}/{userName}")]
+    static partial void LogUnlinkedPatreonAccountPatreonidFromUserIdUseridUsername(ILogger<UserHandler> logger, string patreonId, Guid userId, string userName);
+
+    [LoggerMessage(LogLevel.Critical, "Received ExternalLoginDisconnectedFromUser for non-existent user ID {userId}")]
+    static partial void LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(ILogger<UserHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Error, "Found user with Patreon ID {patreonId} when handling ExternalLoginDisconnectedFromUser for non-existent user ID {userId}")]
+    static partial void LogFoundUserWithPatreonIdPatreonidWhenHandlingExternallogindisconnectedfromuserFor(ILogger<UserHandler> logger, string patreonId, Guid userId);
 }

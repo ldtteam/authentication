@@ -78,7 +78,7 @@ public partial class UserHandler(
     
     public async Task HandleAsync(ExternalLoginConnectedToUser message)
     {
-        logger.LogWarning("Handling ExternalLoginConnectedToUser for User ID: {UserId}, Provider: {Provider}, Key: {ProviderKey}", message.UserId, message.Provider, message.ProviderKey);
+        LogHandlingExternalloginconnectedtouserForUserIdUseridProviderProviderKey(logger, message.UserId, message.Provider, message.ProviderKey);
         
         var user = await userRepository.GetByIdAsync(message.UserId);
         if (user == null)
@@ -157,18 +157,18 @@ public partial class UserHandler(
         bool updated = user.Snowflake != snowflake;
         user.Snowflake = snowflake;
         
-        logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Original {Original}, will update: {Update}", user.UserId, snowflake, user.Snowflake, updated);
+        LogUserIdUseridLinkedDiscordSnowflakeSnowflakeOriginalOriginalWillUpdateUpdate(logger, user.UserId, snowflake, user.Snowflake, updated);
 
         if (updated)
         {
             await userRepository.CreateOrUpdateAsync(user);
             
-            logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Saved to database", user.UserId, snowflake);
+            LogUserIdUseridLinkedDiscordSnowflakeSnowflakeSavedToDatabase(logger, user.UserId, snowflake);
 
             var assigner = await roleAssignmentService.ForMember(user.Snowflake.Value);
             await assigner.UpdateAllRewards();
             
-            logger.LogInformation("User ID: {UserId} linked Discord Snowflake: {Snowflake}. Updated rewards", user.UserId, snowflake);
+            LogUserIdUseridLinkedDiscordSnowflakeSnowflakeUpdatedRewards(logger, user.UserId, snowflake);
             
             await eventLoggingService.LogEvent(new Embed()
             {
@@ -191,10 +191,39 @@ public partial class UserHandler(
         if (user == null)
         {
             LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(logger, message.UserId);
+
+            if (message.Provider == AccountProvider.Discord)
+            {
+                var snowflakeUser = await userRepository.GetBySnowflakeAsync(
+                    new Snowflake(ulong.Parse(message.ProviderKey))
+                );
+                
+                if (snowflakeUser != null)
+                {
+                    LogExternallogindisconnectedfromuserForNonExistentUserIdUseridButFoundUserSnowflakeuserid(logger, message.UserId, snowflakeUser.UserId, message.ProviderKey);
+                    await eventLoggingService.LogEvent(new Embed()
+                    {
+                        Title = "Login Removed - User Not Found, Found by Snowflake",
+                        Description =
+                            $"An external login was removed for a user that does not exist in the database. Located user via snowflake.",
+                        Colour = Color.DarkRed,
+                        Fields = new[]
+                        {
+                            new EmbedField("Original User ID", message.UserId.ToString(), true),
+                            new EmbedField("Found User ID", snowflakeUser.UserId.ToString(), true),
+                            new EmbedField("Provider", message.Provider.ToString(), true),
+                            new EmbedField("Provider Key", message.ProviderKey, true)
+                        }
+                    });
+                    await Handle(message with { UserId = snowflakeUser.UserId });
+                    return;
+                }
+            }
+            
             await eventLoggingService.LogEvent(new Embed()
             {
                 Title = "Login Removed - User Not Found",
-                Description = $"An external login was added for a user that does not exist in the database.",
+                Description = $"An external login was removed for a user that does not exist in the database.",
                 Colour = Color.Red,
                 Fields = new[]
                 {
@@ -452,4 +481,19 @@ public partial class UserHandler(
 
     [LoggerMessage(LogLevel.Error, "Received ExternalLoginDisconnectedFromUser for user: {userId}/{userName}, which does not match the stored Snowflake: {storedId}")]
     static partial void LogReceivedExternallogindisconnectedfromuserForUserUseridUsernameWhichDoesNotMatchThe(ILogger<UserHandler> logger, Guid userId, string userName, string storedId);
+
+    [LoggerMessage(LogLevel.Warning, "Handling ExternalLoginConnectedToUser for User ID: {UserId}, Provider: {Provider}, Key: {ProviderKey}")]
+    static partial void LogHandlingExternalloginconnectedtouserForUserIdUseridProviderProviderKey(ILogger<UserHandler> logger, Guid UserId, AccountProvider Provider, string ProviderKey);
+
+    [LoggerMessage(LogLevel.Information, "User ID: {UserId} linked Discord Snowflake: {Snowflake}. Original {Original}, will update: {Update}")]
+    static partial void LogUserIdUseridLinkedDiscordSnowflakeSnowflakeOriginalOriginalWillUpdateUpdate(ILogger<UserHandler> logger, Guid UserId, Snowflake? Snowflake, Snowflake? Original, bool Update);
+
+    [LoggerMessage(LogLevel.Information, "User ID: {UserId} linked Discord Snowflake: {Snowflake}. Saved to database")]
+    static partial void LogUserIdUseridLinkedDiscordSnowflakeSnowflakeSavedToDatabase(ILogger<UserHandler> logger, Guid UserId, Snowflake? Snowflake);
+
+    [LoggerMessage(LogLevel.Information, "User ID: {UserId} linked Discord Snowflake: {Snowflake}. Updated rewards")]
+    static partial void LogUserIdUseridLinkedDiscordSnowflakeSnowflakeUpdatedRewards(ILogger<UserHandler> logger, Guid UserId, Snowflake? Snowflake);
+
+    [LoggerMessage(LogLevel.Critical, "ExternalLoginDisconnectedFromUser for non-existent user ID {UserId} but found user {SnowflakeUserId} by snowflake {ProviderKey}")]
+    static partial void LogExternallogindisconnectedfromuserForNonExistentUserIdUseridButFoundUserSnowflakeuserid(ILogger<UserHandler> logger, Guid UserId, Guid SnowflakeUserId, string ProviderKey);
 }

@@ -66,6 +66,9 @@ namespace LDTTeam.Authentication.Server.Pages.Account.Manage
                 return RedirectToPage();
             }
 
+            await bus.PublishAsync(new ExternalLoginDisconnectedFromUser(
+                Guid.Parse(user.Id), Enum.Parse<AccountProvider>(loginProvider, true), providerKey
+            ));
             await signInManager.RefreshSignInAsync(user);
             StatusMessage = "The external login was removed.";
             return RedirectToPage();

@@ -78,6 +78,19 @@ public partial class UserHandler(
         var user = await userRepository.GetByIdAsync(message.UserId);
         if (user == null)
         {
+            var alternativeLogin =
+                await providerLoginRepository.GetByProviderAndProviderUserIdAsync(message.Provider, message.ProviderKey);
+            if (alternativeLogin != null)
+            {
+                var linkedUser = await userRepository.GetByIdAsync(alternativeLogin.UserId);
+                if (linkedUser != null)
+                {
+                    LogExternallogindisconnectedfromuserReceivedForNonExistentUserIdUseridButTheLoginIs(logger, message.UserId, linkedUser.UserId, linkedUser.Username);
+                    await Handle(message with { UserId = linkedUser.UserId });
+                    return;
+                }
+            }
+            
             LogReceivedExternallogindisconnectedfromuserForNonExistentUserIdUserid(logger, message.UserId);
             return;
         }
@@ -165,4 +178,7 @@ public partial class UserHandler(
 
     [LoggerMessage(LogLevel.Warning, "Received UserRewardRemoved for user ID {userId} which does not have reward {reward} of type {type}")]
     static partial void LogReceivedUserrewardremovedForUserIdUseridWhichDoesNotHaveRewardRewardOfTypeType(ILogger<UserHandler> logger, Guid userId, string reward, RewardType type);
+
+    [LoggerMessage(LogLevel.Critical, "ExternalLoginDisconnectedFromUser received for non-existent user ID {userId}, but the login is linked to existing user ID {linkedUserId}/{linkedUsername}")]
+    static partial void LogExternallogindisconnectedfromuserReceivedForNonExistentUserIdUseridButTheLoginIs(ILogger<UserHandler> logger, Guid userId, Guid linkedUserId, string linkedUsername);
 }
