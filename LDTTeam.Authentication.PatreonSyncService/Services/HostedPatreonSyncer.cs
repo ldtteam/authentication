@@ -23,8 +23,15 @@ public class HostedPatreonSyncer(
         
         logger.LogInformation("Legacy Contribution migration starting...");
         var legacyContributions = context.LegacyContributionInformations.ToList();
+        int index = 0;
         foreach (var contribution in legacyContributions)
         {
+            index++;
+            if (index % 100 == 0)
+            {
+                logger.LogInformation("Processing Legacy Contribution {Index}/{Total}", index, legacyContributions.Count);
+            }
+            
             var user = await userRepository.GetByPatreonIdAsync(contribution.Id.ToString(), stoppingToken);
             if (user == null)
             {
