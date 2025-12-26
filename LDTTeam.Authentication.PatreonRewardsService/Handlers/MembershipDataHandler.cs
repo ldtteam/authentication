@@ -35,9 +35,10 @@ public partial class MembershipDataHandler(
         {
             //New member has no rewards yet.
             //Check the membership for valid tiers and assign rewards accordingly.
-            if (!membership.LastChargeSuccessful || !membership.Tiers.Any())
+            if ((!membership.LastChargeSuccessful || !membership.Tiers.Any()) && membership.LifetimeCents == 0)
             {
-                LogMembershipWithIdMembershipidHasNoSuccessfulChargesOrTiersNoRewardsToAssign(logger, message.MembershipId);
+                LogMembershipWithIdMembershipidHasNoSuccessfulChargesOrTiersNoRewardsToAssign(logger,
+                    message.MembershipId);
                 return;
             }
 
