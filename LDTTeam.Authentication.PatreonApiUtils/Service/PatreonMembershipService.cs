@@ -1,6 +1,9 @@
+using ImTools;
+using LDTTeam.Authentication.PatreonApiUtils.Config;
 using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using LDTTeam.Authentication.PatreonApiUtils.Model.App;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Data;
+using Microsoft.Extensions.Options;
 using Wolverine;
 
 namespace LDTTeam.Authentication.PatreonApiUtils.Service;
@@ -19,6 +22,7 @@ public class PatreonMembershipService(
     IPatreonDataService patreonDataService,
     IMembershipRepository membershipRepository,
     IMessageBus bus,
+    IOptions<PatreonConfig> config,
     ILogger<PatreonMembershipService> logger) : IPatreonMembershipService
 {
     public async Task UpdateStatusFor(Guid userId)
@@ -70,7 +74,7 @@ public class PatreonMembershipService(
         
         await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
     }
-
+    
     private async Task<(Membership Membership, User User)?> CreateOrUpdateMembership(Guid membershipId, PatreonContribution patreonInformation,
         User? user = null)
     {
@@ -107,10 +111,7 @@ public class PatreonMembershipService(
                 IsGifted = patreonInformation.IsGifted,
                 LastChargeDate = patreonInformation.LastChargeDate?.ToUniversalTime(),
                 LastChargeSuccessful = patreonInformation.LastChargeSuccessful,
-                Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
-                {
-                    Tier = tier
-                }).ToList()
+                Tiers = BuildTiers(patreonInformation)
             };
         }
         else
@@ -119,13 +120,39 @@ public class PatreonMembershipService(
             membership.IsGifted = patreonInformation.IsGifted;
             membership.LastChargeDate = patreonInformation.LastChargeDate?.ToUniversalTime();
             membership.LastChargeSuccessful = patreonInformation.LastChargeSuccessful;
-            membership.Tiers = patreonInformation.Tiers.Select(tier => new TierMembership()
-            {
-                Tier = tier
-            }).ToList();
+            membership.Tiers = BuildTiers(patreonInformation);
         }
 
         return (membership, user);
+    }
+
+    private List<TierMembership> BuildTiers(PatreonContribution patreonInformation)
+    {
+        var tiers = config.Value.Tiers;
+        var tierNames = patreonInformation.Tiers
+            .OrderBy(t => tiers.IndexOf(t))
+            .ToList();
+        
+        if (tierNames.Count == 0)
+            return [];
+        
+        var initialTier = tierNames[0];
+        var initialIndex = tiers.IndexOf(initialTier);
+
+        if (initialIndex != 0)
+        {
+            //We need all tiers up but not including the highest tier
+            var allTiers = tiers.Take(initialIndex + 1).ToList();
+            tierNames = allTiers.Union(tierNames)
+                .OrderBy(t => tiers.IndexOf(t))
+                .ToList();
+        }
+        
+        return tierNames
+            .Select(tier => new TierMembership() 
+        {
+            Tier = tier
+        }).ToList();
     }
 
     public async Task UpdateAllStatuses()

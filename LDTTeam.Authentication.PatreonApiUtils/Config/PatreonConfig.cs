@@ -9,5 +9,17 @@ namespace LDTTeam.Authentication.PatreonApiUtils.Config
         public string InitializingApiRefreshToken { get; set; }
         
         public int CampaignId { get; set; }
+        
+        public List<string> Tiers { get; set; } = new()
+        {
+            "Token",
+            "Settler",
+            "Citizen",
+            "Noble",
+            "High Noble",
+            "Aristocrat",
+            "Mod Sponsor",
+            "Bank Roll"
+        };
     }
 }
