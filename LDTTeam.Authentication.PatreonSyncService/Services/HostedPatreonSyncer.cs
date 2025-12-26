@@ -19,7 +19,7 @@ public class HostedPatreonSyncer(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Starting Patreon membership synchronization...");
-        await membershipService.UpdateAllStatuses();
+        //await membershipService.UpdateAllStatuses();
         
         logger.LogInformation("Legacy Contribution migration starting...");
         var legacyContributions = context.LegacyContributionInformations.ToList();
@@ -28,17 +28,14 @@ public class HostedPatreonSyncer(
             var user = await userRepository.GetByPatreonIdAsync(contribution.Id.ToString(), stoppingToken);
             if (user == null)
             {
-                logger.LogWarning("No user found for Legacy Contribution Patreon ID: {PatreonId}", contribution.Id);
                 continue;
             }
 
             if (!user.MembershipId.HasValue)
             {
-                logger.LogWarning("User ID: {UserId} has no Membership ID, skipping Legacy Contribution migration for Patreon ID: {PatreonId}", user.UserId, contribution.Id);
                 continue;
             }
             
-            logger.LogInformation("Migrating Legacy Contribution for User ID: {UserId}, Patreon ID: {PatreonId}, Amount: {Amount}", user.UserId, contribution.Id, contribution.Lifetime);
             var membership = await membershipRepository.GetByIdAsync(user.MembershipId.Value, stoppingToken);
             if (membership == null)
             {
@@ -48,7 +45,7 @@ public class HostedPatreonSyncer(
 
             if (membership.LifetimeCents < contribution.Lifetime)
             {
-                logger.LogWarning("Membership ID: {MembershipId} has lower lifetime cents ({MembershipLifetime}) than Legacy Contribution ({LegacyLifetime}), skipping migration for User ID: {UserId}", membership.MembershipId, membership.LifetimeCents, contribution.Lifetime, user.UserId);
+                logger.LogWarning("Membership ID: {MembershipId} has lower lifetime cents ({MembershipLifetime}) than Legacy Contribution ({LegacyLifetime}), migrating for User ID: {UserId}", membership.MembershipId, membership.LifetimeCents, contribution.Lifetime, user.UserId);
                 membership.LifetimeCents = contribution.Lifetime;
                 await membershipRepository.CreateOrUpdateAsync(membership, stoppingToken);
 
