@@ -131,6 +131,8 @@ namespace LDTTeam.Authentication.Modules.Patreon
             }
             
             logger.LogInformation("User {User} has Patreon membership ID: {MembershipId}", infoPrincipal.Identity?.Name, claim.Value);
+            await messageBus.PublishAsync(
+                new PatreonMembershipCreatedOrUpdated(Guid.Parse(user.Id), Guid.Parse(claim.Value)));
         }
     }
 }
