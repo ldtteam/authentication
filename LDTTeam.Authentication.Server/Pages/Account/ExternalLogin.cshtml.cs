@@ -178,6 +178,16 @@ namespace LDTTeam.Authentication.Server.Pages.Account
                             new ExternalLoginConnectedToUser(userId, Enum.Parse<AccountProvider>(info.LoginProvider),
                                 info.ProviderKey));
 
+                        if (info.Principal.Claims.Any(c => c.Type == "patreon_membership_id"))
+                        {
+                            await bus.PublishAsync(
+                                new PatreonMembershipCreatedOrUpdated(
+                                    userId,
+                                    Guid.Parse(info.Principal.Claims.First(c => c.Type == "patreon_membership_id").Value)
+                                )
+                            );
+                        }
+
                         logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                         AuthenticationProperties props = new();

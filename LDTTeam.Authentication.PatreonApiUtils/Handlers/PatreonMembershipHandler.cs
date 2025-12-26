@@ -12,13 +12,7 @@ public partial class PatreonMembershipHandler(
     public async Task Handle(PatreonMembershipCreatedOrUpdated message)
     {
         LogHandlingPatreonMembershipCreatedOrUpdatedForUserIdUseridAndMembershipIdMembershipid(logger, message.UserId, message.MembershipId);
-        var user = await userRepository.GetByIdAsync(message.UserId);
-        if (user == null)
-            return;
-
-        user.MembershipId = message.MembershipId;
-        await userRepository.CreateOrUpdateAsync(user);
-        await membershipService.UpdateStatusFor(user.UserId);
+        await membershipService.UpdateStatusForMember(message.MembershipId);
     }
     
     public async Task Handle(PatreonMembershipRemoved message)
