@@ -1,7 +1,7 @@
 using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using LDTTeam.Authentication.PatreonApiUtils.Service;
 
-namespace LDTTeam.Authentication.PatreonApiUtils.Handlers;
+namespace LDTTeam.Authentication.PatreonRewardsService.Handlers;
 
 public partial class PatreonMembershipHandler(
     IUserRepository userRepository,

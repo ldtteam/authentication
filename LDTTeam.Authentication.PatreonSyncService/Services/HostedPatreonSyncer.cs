@@ -55,9 +55,9 @@ public class HostedPatreonSyncer(
                 logger.LogWarning("Membership ID: {MembershipId} has lower lifetime cents ({MembershipLifetime}) than Legacy Contribution ({LegacyLifetime}), migrating for User ID: {UserId}", membership.MembershipId, membership.LifetimeCents, contribution.Lifetime, user.UserId);
                 membership.LifetimeCents = contribution.Lifetime;
                 await membershipRepository.CreateOrUpdateAsync(membership, stoppingToken);
-
-                await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
             }
+
+            await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
         }
 
         logger.LogInformation("Patreon membership synchronization complete. Stopping application...");
