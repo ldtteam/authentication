@@ -18,11 +18,6 @@ public interface IRewardRepository
     Task<Reward?> GetByIdAsync(Guid membershipId, CancellationToken token = default);
 
     /// <summary>
-    /// Gets all rewards for a given Patreon user id.
-    /// </summary>
-    Task<IEnumerable<Reward>> GetByPatreonIdAsync(string patreonId, CancellationToken token = default);
-
-    /// <summary>
     /// Creates or updates a reward in the database.
     /// </summary>
     Task<Reward> CreateOrUpdateAsync(Reward reward, CancellationToken token = default);
@@ -56,27 +51,11 @@ public class RewardRepository : IRewardRepository
         if (_cache.TryGetValue<Reward>(cacheKey, out var reward))
             return reward;
         reward = await _db.Rewards
-            .Include(m => m.User)
             .Include(m => m.Tiers)
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (reward != null)
             _cache.Set(cacheKey, reward, CacheDuration);
         return reward;
-    }
-
-    public async Task<IEnumerable<Reward>> GetByPatreonIdAsync(string patreonId, CancellationToken token = default)
-    {
-        var cacheKey = $"reward:patreon:{patreonId}";
-        if (_cache.TryGetValue<IEnumerable<Reward>>(cacheKey, out var rewards))
-            return rewards ?? [];
-        
-        rewards = await _db.Rewards
-            .Include(m => m.User)
-            .Include(m => m.Tiers)
-            .Where(m => m.User.PatreonId == patreonId)
-            .ToListAsync(token);
-        _cache.Set(cacheKey, rewards, CacheDuration);
-        return rewards;
     }
 
     public async Task<Reward> CreateOrUpdateAsync(Reward reward, CancellationToken token = default)
@@ -95,21 +74,17 @@ public class RewardRepository : IRewardRepository
         
         // Update cache
         _cache.Set($"reward:id:{reward.MembershipId}", reward, CacheDuration);
-        if (reward.User != null && !string.IsNullOrEmpty(reward.User.PatreonId))
-            _cache.Remove($"reward:patreon:{reward.User.PatreonId}"); // Invalidate user cache
         return reward;
     }
 
     public async Task DeleteAsync(Guid membershipId, CancellationToken token = default)
     {
-        var reward = await _db.Rewards.Include(m => m.User).FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
+        var reward = await _db.Rewards.FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (reward != null)
         {
             _db.Rewards.Remove(reward);
             await _db.SaveChangesAsync(token);
             _cache.Remove($"reward:id:{membershipId}");
-            if (!string.IsNullOrEmpty(reward.User.PatreonId))
-                _cache.Remove($"reward:patreon:{reward.User.PatreonId}");
         }
     }
 

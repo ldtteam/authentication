@@ -15,6 +15,4 @@ public class Reward
     public required DateTime LastSyncDate { get; set; }
     
     public required IEnumerable<RewardMembership> Tiers { get; set; }
- 
-    public User User { get; set; }
 }

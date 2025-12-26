@@ -18,11 +18,6 @@ public interface IMembershipRepository
     Task<Membership?> GetByIdAsync(Guid membershipId, CancellationToken token = default);
 
     /// <summary>
-    /// Gets all memberships for a given Patreon user id.
-    /// </summary>
-    Task<IEnumerable<Membership>> GetByPatreonIdAsync(string patreonId, CancellationToken token = default);
-
-    /// <summary>
     /// Creates or updates a membership in the database.
     /// </summary>
     Task<Membership> CreateOrUpdateAsync(Membership membership, CancellationToken token = default);
@@ -56,26 +51,11 @@ public class MembershipRepository : IMembershipRepository
         if (_cache.TryGetValue<Membership>(cacheKey, out var membership))
             return membership;
         membership = await _db.Memberships
-            .Include(m => m.User)
             .Include(m => m.Tiers)
             .FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (membership != null)
             _cache.Set(cacheKey, membership, CacheDuration);
         return membership;
-    }
-
-    public async Task<IEnumerable<Membership>> GetByPatreonIdAsync(string patreonId, CancellationToken token = default)
-    {
-        var cacheKey = $"membership:patreon:{patreonId}";
-        if (_cache.TryGetValue<IEnumerable<Membership>>(cacheKey, out var memberships))
-            return memberships;
-        memberships = await _db.Memberships
-            .Include(m => m.User)
-            .Include(m => m.Tiers)
-            .Where(m => m.User.PatreonId == patreonId)
-            .ToListAsync(token);
-        _cache.Set(cacheKey, memberships, CacheDuration);
-        return memberships;
     }
 
     public async Task<Membership> CreateOrUpdateAsync(Membership membership, CancellationToken token = default)
@@ -92,21 +72,17 @@ public class MembershipRepository : IMembershipRepository
         await _db.SaveChangesAsync(token);
         // Update cache
         _cache.Set($"membership:id:{membership.MembershipId}", membership, CacheDuration);
-        if (membership.User != null && !string.IsNullOrEmpty(membership.User.PatreonId))
-            _cache.Remove($"membership:patreon:{membership.User.PatreonId}"); // Invalidate user cache
         return membership;
     }
 
     public async Task DeleteAsync(Guid membershipId, CancellationToken token = default)
     {
-        var membership = await _db.Memberships.Include(m => m.User).FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
+        var membership = await _db.Memberships.FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (membership != null)
         {
             _db.Memberships.Remove(membership);
             await _db.SaveChangesAsync(token);
             _cache.Remove($"membership:id:{membershipId}");
-            if (membership.User != null && !string.IsNullOrEmpty(membership.User.PatreonId))
-                _cache.Remove($"membership:patreon:{membership.User.PatreonId}");
         }
     }
 

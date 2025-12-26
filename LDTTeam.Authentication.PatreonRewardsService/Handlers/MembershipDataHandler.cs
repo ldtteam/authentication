@@ -11,6 +11,7 @@ public partial class MembershipDataHandler(
     IMembershipRepository membershipRepository,
     IRewardRepository rewardRepository,
     IMessageBus bus,
+    IUserRepository userRepository,
     ILogger<MembershipDataHandler> logger
     )
 {
@@ -81,19 +82,26 @@ public partial class MembershipDataHandler(
 
         if (newTiers.Any() || removedTiers.Any() || addedLifetimeCents != 0)
         {
+            var user = await userRepository.GetByMembershipIdAsync(message.MembershipId);
+            if (user == null)
+            {
+                LogDataInconsistencyNoUserFoundForMembershipIdMembershipid(logger, message.MembershipId);
+                return;
+            }
+            
             LogRewardsUpdatedForMembershipIdMembershipid(logger, message.MembershipId);
             await bus.PublishAsync(new UserLifetimeContributionIncreased(
-                membership.User.UserId,
+                user.UserId,
                 AccountProvider.Patreon,
                 addedLifetimeCents
             ));
             await bus.PublishAsync(new UserTiersAdded(
-                membership.User.UserId,
+                user.UserId,
                 AccountProvider.Patreon,
                 newTiers
             ));
             await bus.PublishAsync(new UserTiersRemoved(
-                membership.User.UserId,
+                user.UserId,
                 AccountProvider.Patreon,
                 removedTiers
             ));
@@ -111,4 +119,7 @@ public partial class MembershipDataHandler(
 
     [LoggerMessage(LogLevel.Information, "Rewards updated for Membership ID {membershipId}")]
     static partial void LogRewardsUpdatedForMembershipIdMembershipid(ILogger<MembershipDataHandler> logger, Guid membershipId);
+
+    [LoggerMessage(LogLevel.Critical, "Data inconsistency: No user found for Membership ID {MembershipId}")]
+    static partial void LogDataInconsistencyNoUserFoundForMembershipIdMembershipid(ILogger<MembershipDataHandler> logger, Guid MembershipId);
 }

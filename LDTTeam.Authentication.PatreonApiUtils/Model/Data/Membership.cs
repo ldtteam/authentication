@@ -16,6 +16,4 @@ public class Membership
     public required bool LastChargeSuccessful { get; set; }
 
     public required IEnumerable<TierMembership> Tiers { get; set; }
- 
-    public User User { get; set; }
 }
