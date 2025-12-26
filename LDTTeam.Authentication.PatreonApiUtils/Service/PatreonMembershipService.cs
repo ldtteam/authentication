@@ -142,13 +142,14 @@ public class PatreonMembershipService(
         if (initialIndex != 0)
         {
             //We need all tiers up but not including the highest tier
-            var allTiers = tiers.Take(initialIndex + 1).ToList();
+            var allTiers = tiers.Take(initialIndex).ToList();
             tierNames = allTiers.Union(tierNames)
                 .OrderBy(t => tiers.IndexOf(t))
                 .ToList();
         }
         
         return tierNames
+            .Distinct()
             .Select(tier => new TierMembership() 
         {
             Tier = tier
