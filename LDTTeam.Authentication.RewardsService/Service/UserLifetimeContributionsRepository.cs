@@ -24,7 +24,7 @@ public class UserLifetimeContributionsRepository(DatabaseContext dbContext, IMem
             entity = new UserLifetimeContributions { UserId = userId, LifetimeContributions = contribution };
             await dbContext.LifeTimeContributions.AddAsync(entity);
         }
-        else
+        else if (entity.LifetimeContributions < contribution)
         {
             entity.LifetimeContributions = contribution;
             dbContext.LifeTimeContributions.Update(entity);

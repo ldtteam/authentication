@@ -13,6 +13,7 @@ public class DatabaseContext : DbContext
     public DbSet<TierMembership> TierMemberships { get; set; } = null!;
     public DbSet<Reward> Rewards { get; set; } = null!;
     public DbSet<RewardMembership> RewardMemberships { get; set; } = null!;
+    public DbSet<LegacyContributionInformation> LegacyContributionInformations { get; set; } = null!;
         
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
     {

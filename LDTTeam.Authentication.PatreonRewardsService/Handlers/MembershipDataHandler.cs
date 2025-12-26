@@ -80,7 +80,7 @@ public partial class MembershipDataHandler(
 
         LogUpdatingRewardsForMembershipIdMembershipid(logger, message.MembershipId);
 
-        if (newTiers.Any() || removedTiers.Any() || addedLifetimeCents != 0)
+        if (newTiers.Count != 0 || removedTiers.Count != 0 || addedLifetimeCents != 0)
         {
             var user = await userRepository.GetByMembershipIdAsync(message.MembershipId);
             if (user == null)
@@ -90,21 +90,26 @@ public partial class MembershipDataHandler(
             }
             
             LogRewardsUpdatedForMembershipIdMembershipid(logger, message.MembershipId);
-            await bus.PublishAsync(new UserLifetimeContributionIncreased(
-                user.UserId,
-                AccountProvider.Patreon,
-                addedLifetimeCents
-            ));
-            await bus.PublishAsync(new UserTiersAdded(
-                user.UserId,
-                AccountProvider.Patreon,
-                newTiers
-            ));
-            await bus.PublishAsync(new UserTiersRemoved(
-                user.UserId,
-                AccountProvider.Patreon,
-                removedTiers
-            ));
+            if (addedLifetimeCents != 0)
+                await bus.PublishAsync(new UserLifetimeContributionIncreased(
+                    user.UserId,
+                    AccountProvider.Patreon,
+                    addedLifetimeCents
+                ));
+            
+            if (newTiers.Count != 0)
+                await bus.PublishAsync(new UserTiersAdded(
+                    user.UserId,
+                    AccountProvider.Patreon,
+                    newTiers
+                ));
+            
+            if (removedTiers.Count != 0)
+                await bus.PublishAsync(new UserTiersRemoved(
+                    user.UserId,
+                    AccountProvider.Patreon,
+                    removedTiers
+                ));
         }
     }
 
