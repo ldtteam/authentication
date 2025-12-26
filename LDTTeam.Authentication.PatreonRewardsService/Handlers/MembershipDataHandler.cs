@@ -55,8 +55,6 @@ public partial class MembershipDataHandler(
                 }).ToList()
             };
             
-            reward.User = membership.User;
-            
             await rewardRepository.CreateOrUpdateAsync(reward);
         }
         else
@@ -85,17 +83,17 @@ public partial class MembershipDataHandler(
         {
             LogRewardsUpdatedForMembershipIdMembershipid(logger, message.MembershipId);
             await bus.PublishAsync(new UserLifetimeContributionIncreased(
-                reward.User.UserId,
+                membership.User.UserId,
                 AccountProvider.Patreon,
                 addedLifetimeCents
             ));
             await bus.PublishAsync(new UserTiersAdded(
-                reward.User.UserId,
+                membership.User.UserId,
                 AccountProvider.Patreon,
                 newTiers
             ));
             await bus.PublishAsync(new UserTiersRemoved(
-                reward.User.UserId,
+                membership.User.UserId,
                 AccountProvider.Patreon,
                 removedTiers
             ));
