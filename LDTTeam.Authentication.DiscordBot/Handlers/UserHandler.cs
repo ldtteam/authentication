@@ -331,6 +331,13 @@ public partial class UserHandler(
             });
             return;
         }
+
+        await assignedRewardRepository.AssignAsync(new AssignedReward()
+        {
+            UserId = message.UserId,
+            Reward = message.Reward,
+            Type = message.RewardType
+        });
         
         if (!user?.Snowflake.HasValue ?? false)
         {
@@ -350,13 +357,6 @@ public partial class UserHandler(
             });
             return;
         }
-
-        await assignedRewardRepository.AssignAsync(new AssignedReward()
-        {
-            UserId = message.UserId,
-            Reward = message.Reward,
-            Type = message.RewardType
-        });
 
         if (user?.Snowflake.HasValue ?? false)
         {
