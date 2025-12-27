@@ -2,6 +2,7 @@ using LDTTeam.Authentication.DiscordBot.AutoCompletion;
 using LDTTeam.Authentication.DiscordBot.Commands;
 using LDTTeam.Authentication.DiscordBot.Config;
 using LDTTeam.Authentication.DiscordBot.Data;
+using LDTTeam.Authentication.DiscordBot.Responders;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,7 @@ public static class HostApplicationBuilderExtensions
         {
             builder.Services.AddScoped<DiscordRoleRewardService>();
             builder.Services.AddScoped<DiscordRoleAssignmentService>();
+            builder.Services.AddResponder<AssignRolesOnJoinResponder>();
             return builder;
         }
 
