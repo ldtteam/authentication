@@ -74,6 +74,7 @@ public class ContextCommands(
     [Command("Remove Tier")]
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
+    [SuppressInteractionResponse(true)]
     public async Task<IResult> RemoveTierFromUser(
         IUser user)
     {
@@ -142,6 +143,7 @@ public class ContextCommands(
     [Command("Add Tier")]
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
+    [SuppressInteractionResponse(true)]
     public async Task<IResult> AddTierToUser(
         IUser user)
     {
@@ -210,6 +212,7 @@ public class ContextCommands(
     [Command("Add Contribution")]
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
+    [SuppressInteractionResponse(true)]
     public async Task<IResult> AddContributionToUser(
         IUser user)
     {
