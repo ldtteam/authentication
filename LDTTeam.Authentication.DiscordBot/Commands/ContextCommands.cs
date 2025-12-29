@@ -75,7 +75,7 @@ public class ContextCommands(
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
     public async Task<IResult> RemoveTierFromUser(
-        IUser discordUser)
+        IUser user)
     {
         var executor = interactionContext.Interaction.Member;
         var permissions = executor.FlatMap(m => m.Permissions);
@@ -98,8 +98,8 @@ public class ContextCommands(
                 }));
         }
 
-        var user = await userRepository.GetBySnowflakeAsync(discordUser.ID);
-        if (user == null)
+        var internalUser = await userRepository.GetBySnowflakeAsync(user.ID);
+        if (internalUser == null)
         {
             return Result.FromError(await feedbackService.SendContextualEmbedAsync(
                 new Embed
@@ -117,7 +117,7 @@ public class ContextCommands(
             new InteractionResponse(
                 InteractionCallbackType.Modal,
                 new(new InteractionModalCallbackData(
-                    CustomIDHelpers.CreateModalIDWithState("remove-tier-from-user", user.UserId.ToString()),
+                    CustomIDHelpers.CreateModalIDWithState("remove-tier-from-user", internalUser.UserId.ToString()),
                     "Provide the tier to remove",
                     [
                         new ActionRowComponent(
@@ -143,7 +143,7 @@ public class ContextCommands(
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
     public async Task<IResult> AddTierToUser(
-        IUser discordUser)
+        IUser user)
     {
         var executor = interactionContext.Interaction.Member;
         var permissions = executor.FlatMap(m => m.Permissions);
@@ -166,8 +166,8 @@ public class ContextCommands(
                 }));
         }
 
-        var user = await userRepository.GetBySnowflakeAsync(discordUser.ID);
-        if (user == null)
+        var internalUser = await userRepository.GetBySnowflakeAsync(user.ID);
+        if (internalUser == null)
         {
             return Result.FromError(await feedbackService.SendContextualEmbedAsync(
                 new Embed
@@ -185,7 +185,7 @@ public class ContextCommands(
             new InteractionResponse(
                 InteractionCallbackType.Modal,
                 new(new InteractionModalCallbackData(
-                    CustomIDHelpers.CreateModalIDWithState("add-tier-to-user", user.UserId.ToString()),
+                    CustomIDHelpers.CreateModalIDWithState("add-tier-to-user", internalUser.UserId.ToString()),
                     "Provide the tier to add",
                     [
                         new ActionRowComponent(
@@ -211,7 +211,7 @@ public class ContextCommands(
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
     public async Task<IResult> AddContributionToUser(
-        IUser discordUser)
+        IUser user)
     {
         var executor = interactionContext.Interaction.Member;
         var permissions = executor.FlatMap(m => m.Permissions);
@@ -234,8 +234,8 @@ public class ContextCommands(
                 }));
         }
 
-        var user = await userRepository.GetBySnowflakeAsync(discordUser.ID);
-        if (user == null)
+        var internalUser = await userRepository.GetBySnowflakeAsync(user.ID);
+        if (internalUser == null)
         {
             return Result.FromError(await feedbackService.SendContextualEmbedAsync(
                 new Embed
@@ -253,7 +253,7 @@ public class ContextCommands(
             new InteractionResponse(
                 InteractionCallbackType.Modal,
                 new(new InteractionModalCallbackData(
-                    CustomIDHelpers.CreateModalIDWithState("add-contribution-to-user", user.UserId.ToString()),
+                    CustomIDHelpers.CreateModalIDWithState("add-contribution-to-user", internalUser.UserId.ToString()),
                     "How much has the user contributed?",
                     [
                         new ActionRowComponent(
