@@ -2,6 +2,7 @@ using LDTTeam.Authentication.DiscordBot.AutoCompletion;
 using LDTTeam.Authentication.DiscordBot.Commands;
 using LDTTeam.Authentication.DiscordBot.Config;
 using LDTTeam.Authentication.DiscordBot.Data;
+using LDTTeam.Authentication.DiscordBot.Interactions;
 using LDTTeam.Authentication.DiscordBot.Responders;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Utils.Extensions;
@@ -12,6 +13,7 @@ using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Hosting.Options;
 using Remora.Discord.Hosting.Services;
+using Remora.Discord.Interactivity.Extensions;
 using Remora.Discord.Rest;
 using static Remora.Extensions.Options.Immutable.ImmutableOptionServiceCollectionExtensions;
 
@@ -86,6 +88,8 @@ public static class HostApplicationBuilderExtensions
                 .WithCommandGroup<TierCommands>()
                 .WithCommandGroup<ContextCommands>()
                 .Finish()
+                .AddInteractivity()
+                .AddInteractionGroup<UserInteractions>()
                 .AddDiscordCaching()
                 .AddAutocompleteProvider<RewardsAutoCompleteProvider>()
                 .AddAutocompleteProvider<DiscordRoleRewardsAutoCompleteProvider>();
