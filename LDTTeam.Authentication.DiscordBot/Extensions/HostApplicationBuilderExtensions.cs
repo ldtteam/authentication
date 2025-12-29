@@ -87,6 +87,7 @@ public static class HostApplicationBuilderExtensions
                 .WithCommandGroup<RewardsCommands>()
                 .WithCommandGroup<TierCommands>()
                 .WithCommandGroup<ContextCommands>()
+                .WithCommandGroup<ContributionRewards>()
                 .Finish()
                 .AddInteractivity()
                 .AddInteractionGroup<UserInteractions>()
