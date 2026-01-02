@@ -12,6 +12,32 @@ public partial class PatreonMembershipHandler(
     public async Task Handle(PatreonMembershipCreatedOrUpdated message)
     {
         LogHandlingPatreonMembershipCreatedOrUpdatedForUserIdUseridAndMembershipIdMembershipid(logger, message.UserId, message.MembershipId);
+
+        var user = await userRepository.GetByIdAsync(message.UserId);
+        if (user == null)
+        {
+            LogUserIdUseridNotFoundWhileHandlingPatreonMembershipCreationOrUpdate(logger, message.UserId);
+            return;
+        }
+        
+        var membership = await membershipRepository.GetByIdAsync(message.MembershipId);
+        if (membership != null)
+        {
+            if (!user.MembershipId.HasValue)
+            {
+                var userByMembership = await userRepository.GetByMembershipIdAsync(message.MembershipId);
+                if (userByMembership != null)
+                {
+                    LogMembershipIdMembershipidIsAlreadyAssociatedWithAnotherUserIdOtheruserid(logger, message.MembershipId, userByMembership.UserId);
+                    return;
+                }
+
+                user.MembershipId = message.MembershipId;
+                await userRepository.CreateOrUpdateAsync(user);
+                LogAssociatedExistingMembershipIdMembershipidWithUserIdUserid(logger, message.MembershipId, user.UserId);
+            }
+        }
+
         await membershipService.UpdateStatusForMember(message.MembershipId);
     }
     
@@ -64,4 +90,13 @@ public partial class PatreonMembershipHandler(
 
     [LoggerMessage(LogLevel.Information, "Forced removal of membership data for User {userId} and Membership {membershipId}")]
     static partial void LogForcedRemovalOfMembershipDataForUserUseridAndMembershipMembershipid(ILogger<PatreonMembershipHandler> logger, Guid userId, Guid membershipId);
+
+    [LoggerMessage(LogLevel.Error, "User ID {userId} not found while handling Patreon membership creation or update")]
+    static partial void LogUserIdUseridNotFoundWhileHandlingPatreonMembershipCreationOrUpdate(ILogger<PatreonMembershipHandler> logger, Guid userId);
+
+    [LoggerMessage(LogLevel.Warning, "Membership ID {membershipId} is already associated with another user ID {otherUserId}")]
+    static partial void LogMembershipIdMembershipidIsAlreadyAssociatedWithAnotherUserIdOtheruserid(ILogger<PatreonMembershipHandler> logger, Guid membershipId, Guid otherUserId);
+
+    [LoggerMessage(LogLevel.Information, "Associated existing Membership ID {membershipId} with User ID {userId}")]
+    static partial void LogAssociatedExistingMembershipIdMembershipidWithUserIdUserid(ILogger<PatreonMembershipHandler> logger, Guid membershipId, Guid userId);
 }
