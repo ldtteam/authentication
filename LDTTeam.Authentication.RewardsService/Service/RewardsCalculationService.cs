@@ -1,3 +1,4 @@
+using System.Collections;
 using LDTTeam.Authentication.Models.App.Rewards;
 using LDTTeam.Authentication.Messages.User;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -7,7 +8,7 @@ using Wolverine;
 
 namespace LDTTeam.Authentication.RewardsService.Service;
 
-public class RewardsCalculationService(
+public partial class RewardsCalculationService(
     IRewardCalculationsRepository rewardCalculationsRepository,
     IUserRewardAssignmentsRepository userRewardAssignmentsRepository,
     IUserTiersRepository userTiersRepository,
@@ -37,6 +38,7 @@ public class RewardsCalculationService(
         {
             var key = (type, reward);
             var lambdaCode = "(tiers, lifetime) => " + lambda;
+            logger.LogInformation("Compiling reward calculation lambda for reward {reward} of type {type}: {lambdaCode}", reward, type, lambdaCode);
             var options = ScriptOptions.Default.AddReferences(typeof(List<string>).Assembly);
             var compiled = CSharpScript.EvaluateAsync<Func<List<string>, decimal, bool>>(lambdaCode, options).Result;
             lambdaDict[key] = compiled;
@@ -62,12 +64,14 @@ public class RewardsCalculationService(
             var (type, reward) = kvp.Key;
             var lambda = kvp.Value;
             
-            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, string.Join(", ", userTiers), userLifetime);
+            LogRecalculatingRewardRewardOfTypeTypeForUserUseridAvailableTiersTiersAnd(logger, reward, type, userId, string.Join(", ", userTiers), userLifetime);
             
             bool shouldHave;
             try
             {
+                logger.LogInformation("Evaluating reward calculation lambda for user {userId}, reward {reward}, type {type}, tiers: {tiers}, lifetime: {lifetime}", userId, reward, type, string.Concat(userTiers), userLifetime);
                 shouldHave = lambda(userTiers, userLifetime);
+                LogEvaluationResultForRewardRewardOfTypeTypeForUserUseridShouldhave(logger, reward, type, userId, shouldHave);
             }
             catch(Exception exception)
             {
@@ -78,6 +82,8 @@ public class RewardsCalculationService(
             if (shouldHave)
                 newRewardsSet.Add((type, reward));
         }
+        
+        LogFinishedRecalculatingRewardsForUserUseridCurrentRewardsCountCurrentcountNewRewards(logger, userId, currentRewardsSet.Count, newRewardsSet.Count);
 
         await ProcessRewardChanges(userId, newRewardsSet, currentRewardsSet);
     }
@@ -92,7 +98,7 @@ public class RewardsCalculationService(
         if (toRemove.Count > 0)
             await userRewardAssignmentsRepository.RemoveUserRewardsAsync(userId, toRemove);
         
-        logger.LogInformation("Processed reward changes for user {userId}. Added: {addedCount}, Removed: {removedCount}", userId, toAdd.Count, toRemove.Count);
+        LogProcessedRewardChangesForUserUseridAddedAddedcountRemovedRemovedcount(logger, userId, toAdd.Count, toRemove.Count);
         
         foreach (var (type, reward) in toAdd)
         {
@@ -117,7 +123,7 @@ public class RewardsCalculationService(
             throw new InvalidOperationException("Reward calculation lambda cache is not initialized.");
         var lambda = lambdaDict.GetValueOrDefault((type, reward));
 
-        logger.LogWarning("Recalculating reward {reward} of type {type} for all users. Found {userCount} users to process.", reward, type, allUsers.Count());
+        LogRecalculatingRewardRewardOfTypeTypeForAllUsersFoundUsercountUsersToProcess(logger, reward, type, allUsers.Count());
         
         //We removed the reward entirely, so just remove it from all users
         if (lambda == null)
@@ -144,7 +150,7 @@ public class RewardsCalculationService(
             var currentRewardsSet = new HashSet<(RewardType, string)>(currentRewards);
             var newRewardsSet = new HashSet<(RewardType, string)>(currentRewards);
             
-            logger.LogInformation("Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}", reward, type, userId, userTiers, userLifetime);
+            LogRecalculatingRewardRewardOfTypeTypeForUserUseridAvailableTiersTiersAnd(logger, reward, type, userId, userTiers, userLifetime);
             
             bool shouldHave;
             try
@@ -168,4 +174,19 @@ public class RewardsCalculationService(
     {
         memoryCache.Remove(LambdaCacheKey);
     }
+
+    [LoggerMessage(LogLevel.Information, "Recalculating reward {reward} of type {type} for user {userId}. Available tiers {Tiers}, and lifetime contributions: {Contributions}")]
+    static partial void LogRecalculatingRewardRewardOfTypeTypeForUserUseridAvailableTiersTiersAnd(ILogger<RewardsCalculationService> logger, string reward, RewardType type, Guid userId, IEnumerable Tiers, decimal Contributions);
+
+    [LoggerMessage(LogLevel.Information, "Evaluation result for reward {reward} of type {type} for user {userId}: {shouldHave}")]
+    static partial void LogEvaluationResultForRewardRewardOfTypeTypeForUserUseridShouldhave(ILogger<RewardsCalculationService> logger, string reward, RewardType type, Guid userId, bool shouldHave);
+
+    [LoggerMessage(LogLevel.Information, "Finished recalculating rewards for user {userId}. Current rewards count: {currentCount}, New rewards count: {newCount}")]
+    static partial void LogFinishedRecalculatingRewardsForUserUseridCurrentRewardsCountCurrentcountNewRewards(ILogger<RewardsCalculationService> logger, Guid userId, int currentCount, int newCount);
+
+    [LoggerMessage(LogLevel.Information, "Processed reward changes for user {userId}. Added: {addedCount}, Removed: {removedCount}")]
+    static partial void LogProcessedRewardChangesForUserUseridAddedAddedcountRemovedRemovedcount(ILogger<RewardsCalculationService> logger, Guid userId, int addedCount, int removedCount);
+
+    [LoggerMessage(LogLevel.Warning, "Recalculating reward {reward} of type {type} for all users. Found {userCount} users to process.")]
+    static partial void LogRecalculatingRewardRewardOfTypeTypeForAllUsersFoundUsercountUsersToProcess(ILogger<RewardsCalculationService> logger, string reward, RewardType type, int userCount);
 }
