@@ -160,8 +160,9 @@ public class PatreonDataService(
     {
         var isActive = member.Attributes.PatronStatus == "active_patron";
         var hasPaid = member.Attributes.LastChargeStatus?.EqualsIgnoreCase("paid") ?? false;
+        var isGifted = member.Attributes.IsGifted;
         
-        var shouldHaveTiers = isActive && hasPaid;
+        var shouldHaveTiers = isActive && (hasPaid || isGifted);
 
         return new PatreonContribution
         {
