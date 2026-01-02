@@ -1,3 +1,4 @@
+using LDTTeam.Authentication.Messages.Rewards;
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.RewardsService.Service;
 using Microsoft.Extensions.Logging;
@@ -43,6 +44,12 @@ public partial class UserHandler(
         await userLifetimeContributionsRepository.SetUserLifetimeContributionAsync(message.UserId, message.NewLifetimeContributionAmount);
         await rewardsCalculationService.RecalculateRewardsAsync(message.UserId);
     }
+    
+    public async Task Handle(RecalculateRewardsForUser message)
+    {
+        LogHandlingRecalculaterewardsforuserForUseridUserid(logger, message.UserId);
+        await rewardsCalculationService.RecalculateRewardsAsync(message.UserId);
+    }
 
     #region Logging
 
@@ -60,4 +67,6 @@ public partial class UserHandler(
 
     #endregion
 
+    [LoggerMessage(LogLevel.Information, "Handling RecalculateRewardsForUser for UserId: {userId}")]
+    static partial void LogHandlingRecalculaterewardsforuserForUseridUserid(ILogger<UserHandler> logger, Guid userId);
 }
