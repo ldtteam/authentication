@@ -15,6 +15,33 @@ public partial class MembershipDataHandler(
     ILogger<MembershipDataHandler> logger
     )
 {
+    public async Task Handle(MembershipDataRemoved message)
+    {
+        var reward = await rewardRepository.GetByIdAsync(message.OldMembershipId);
+        if (reward != null)
+        {
+            await rewardRepository.DeleteAsync(message.OldMembershipId);
+            
+            var removedTiers = reward.Tiers.Select(t => t.Tier).Distinct().ToList();
+            var removedLifetimeCents = reward.LifetimeCents;
+            
+            await bus.PublishAsync(new UserLifetimeContributionIncreased(
+                message.UserId,
+                AccountProvider.Patreon,
+                -removedLifetimeCents
+            ));
+            
+            if (removedTiers.Count != 0)
+            {
+                await bus.PublishAsync(new UserTiersRemoved(
+                    message.UserId,
+                    AccountProvider.Patreon,
+                    removedTiers
+                ));
+            }
+        }
+    }
+    
     public async Task Handle(MembershipDataUpdated message)
     {
         var membership = await membershipRepository.GetByIdAsync(message.MembershipId);

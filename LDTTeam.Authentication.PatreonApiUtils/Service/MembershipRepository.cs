@@ -80,6 +80,9 @@ public class MembershipRepository : IMembershipRepository
         var membership = await _db.Memberships.FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (membership != null)
         {
+            _db.TierMemberships.RemoveRange(
+                await _db.TierMemberships.Where(tm => tm.MembershipId == membershipId).ToListAsync(token)
+                );
             _db.Memberships.Remove(membership);
             await _db.SaveChangesAsync(token);
             _cache.Remove($"membership:id:{membershipId}");

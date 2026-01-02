@@ -82,6 +82,9 @@ public class RewardRepository : IRewardRepository
         var reward = await _db.Rewards.FirstOrDefaultAsync(m => m.MembershipId == membershipId, token);
         if (reward != null)
         {
+            _db.RewardMemberships.RemoveRange(
+                await _db.RewardMemberships.Where(rm => rm.MembershipId == reward.MembershipId).ToListAsync(token)
+                );
             _db.Rewards.Remove(reward);
             await _db.SaveChangesAsync(token);
             _cache.Remove($"reward:id:{membershipId}");

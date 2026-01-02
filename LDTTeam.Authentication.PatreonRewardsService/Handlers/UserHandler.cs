@@ -1,12 +1,15 @@
 using LDTTeam.Authentication.Messages.User;
 using LDTTeam.Authentication.Models.App.User;
+using LDTTeam.Authentication.PatreonApiUtils.Messages;
 using LDTTeam.Authentication.PatreonApiUtils.Model.Data;
 using LDTTeam.Authentication.PatreonApiUtils.Service;
+using Wolverine;
 
 namespace LDTTeam.Authentication.PatreonApiUtils.Handlers;
 
 public partial class UserHandler(
     IUserRepository userRepository,
+    IMessageBus bus,
     ILogger<UserHandler> logger) {
 
     public async Task Handle(NewUserCreatedOrUpdated message)
@@ -89,6 +92,10 @@ public partial class UserHandler(
 
         if (user.PatreonId == message.ProviderKey)
         {
+            await bus.PublishAsync(
+                new PatreonMembershipRemoved(user.UserId)
+            );
+            
             user.PatreonId = null;
             user.MembershipId = null;
             await userRepository.CreateOrUpdateAsync(user);

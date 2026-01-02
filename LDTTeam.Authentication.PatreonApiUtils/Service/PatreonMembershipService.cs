@@ -15,6 +15,8 @@ public interface IPatreonMembershipService
     Task UpdateStatusForMember(Guid membershipId);
 
     Task UpdateAllStatuses();
+    
+    Task ForceRemoveMembershipOf(Guid userId, Guid oldMembershipId);
 }
 
 public class PatreonMembershipService(
@@ -179,5 +181,10 @@ public class PatreonMembershipService(
             
             await bus.PublishAsync(new MembershipDataUpdated(membership.MembershipId));
         }
+    }
+
+    public async Task ForceRemoveMembershipOf(Guid userId, Guid oldMembershipId)
+    {
+        await bus.PublishAsync(new MembershipDataRemoved(oldMembershipId, userId));
     }
 }
