@@ -43,16 +43,26 @@ public class UserRewardAssignmentsRepository(DatabaseContext dbContext, IMemoryC
 
     public async Task RemoveUserRewardsAsync(Guid userId, List<(RewardType Type, string Reward)> rewards)
     {
-        var assignments = await dbContext.RewardAssignments
-            .Where(x => x.UserId == userId && rewards.Any(r => r.Type == x.Type && r.Reward == x.Reward))
-            .ToListAsync();
-        if (assignments.Count > 0)
+        var assignmentsRemoved = false;
+        foreach (var (rewardType, reward) in rewards)
         {
-            dbContext.RewardAssignments.RemoveRange(assignments);
+            var assignment = await dbContext.RewardAssignments
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.Type == rewardType && x.Reward == reward);
+            
+            if (assignment == null) continue;
+            
+            dbContext.RewardAssignments.Remove(assignment);
+            assignmentsRemoved = true;
+
+        }
+        
+        if (assignmentsRemoved)
+        {
             await dbContext.SaveChangesAsync();
             var updatedRewards = await QueryUserRewardsAsync(userId);
             cache.Set(GetCacheKey(userId), updatedRewards, _cacheDuration);
         }
+        
     }
 
     public async Task<List<(RewardType Type, string Reward)>> GetUserRewardsAsync(Guid userId)
