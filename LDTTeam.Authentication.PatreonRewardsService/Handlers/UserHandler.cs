@@ -93,7 +93,7 @@ public partial class UserHandler(
         if (user.PatreonId == message.ProviderKey)
         {
             await bus.PublishAsync(
-                new PatreonMembershipRemoved(user.UserId)
+                new PatreonMembershipRemoved(user.MembershipId, user.UserId)
             );
             
             user.PatreonId = null;

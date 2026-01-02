@@ -55,20 +55,23 @@ public partial class PatreonMembershipHandler(
             return;
         }
 
-        if (!user.MembershipId.HasValue)
+        if (!user.MembershipId.HasValue && !message.MembershipId.HasValue)
         {
             LogUserIdUseridHasNoMembershipIdWhileHandlingPatreonMembershipRemoval(logger, message.UserId);
             return;
         }
         
-        var oldMembershipId = user.MembershipId.Value;
-        await membershipRepository.DeleteAsync(user.MembershipId.Value);
+        var oldMembershipId = (user.MembershipId ?? message.MembershipId) ?? throw new InvalidOperationException("No membership ID to remove. This should not be reachable!");
+        await membershipRepository.DeleteAsync(oldMembershipId);
         
         LogRemovedMembershipMembershipidForUserUserid(logger, oldMembershipId, user.UserId);
 
-        user.MembershipId = null;
-        await userRepository.CreateOrUpdateAsync(user);
-        LogClearedMembershipIdForUserUserid(logger, user.UserId);
+        if (user.MembershipId.HasValue)
+        {
+            user.MembershipId = null;
+            await userRepository.CreateOrUpdateAsync(user);
+            LogClearedMembershipIdForUserUserid(logger, user.UserId);
+        }
         
         await membershipService.ForceRemoveMembershipOf(user.UserId, oldMembershipId);
         LogForcedRemovalOfMembershipDataForUserUseridAndMembershipMembershipid(logger, user.UserId, oldMembershipId);
