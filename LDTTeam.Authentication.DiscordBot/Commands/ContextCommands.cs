@@ -1,6 +1,8 @@
 using System.Drawing;
 using JetBrains.Annotations;
+using LDTTeam.Authentication.DiscordBot.Extensions;
 using LDTTeam.Authentication.DiscordBot.Service;
+using LDTTeam.Authentication.Messages.Rewards;
 using OneOf;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -23,6 +25,7 @@ public class ContextCommands(
     IDiscordRestInteractionAPI interactionApi,
     IUserRepository userRepository,
     IAssignedRewardRepository assignedRewardRepository,
+    IMessageBus bus,
     IFeedbackService feedbackService) : CommandGroup
 {
     [Command("List Rewards")]
@@ -276,6 +279,68 @@ public class ContextCommands(
                 ))
             )
         );
+    }
+    
+    [Command("Recalculate Rewards")]
+    [CommandType(ApplicationCommandType.User)]
+    [UsedImplicitly]
+    public async Task<IResult> RecalculateRewardsForSpecificUser(
+        IUser user)
+    {
+        var executor = interactionContext.Interaction.Member;
+        var permissions = executor.FlatMap(m => m.Permissions);
+        if (!permissions.HasValue)
+        {
+            return await feedbackService.SendContextualErrorAsync(
+                "You are not authorized to run this command for other users"
+            );
+        }
+
+        if (permissions.HasValue && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+        {
+            return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "No permission",
+                    Description =
+                        "You require Administrator permissions to run this command for other users",
+                    Colour = Color.Red
+                }));
+        }
+
+        var internalUser = await userRepository.GetBySnowflakeAsync(user.ID);
+        if (internalUser == null)
+        {
+            return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "Missing User",
+                    Description =
+                        "The user does not have their discord account linked in the authentication system.",
+                    Colour = Color.Red
+                }));
+        }
+        
+        await bus.ExecuteProtectedAsync(
+            feedbackService,
+            "Failed to recalculate rewards",
+            async b =>
+            {
+                await b.PublishAsync(new RecalculateRewardsForUser(internalUser.UserId));
+
+                await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "Rewards Recalculation Triggered",
+                        Description =
+                            $"The rewards for user {user.Username} are being recalculated. This may take a few minutes to complete.",
+                        Colour = Color.Green
+                    });
+
+                return Result.FromSuccess();
+            });
+
+        return Result.FromSuccess();
     }
 
     private async Task<IResult> ListRewardsFor(Snowflake discordUserId, string userName)

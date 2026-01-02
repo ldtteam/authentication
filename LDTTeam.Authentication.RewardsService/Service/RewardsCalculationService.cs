@@ -90,7 +90,7 @@ public partial class RewardsCalculationService(
 
     private async Task ProcessRewardChanges(Guid userId, HashSet<(RewardType, string)> newRewardsSet, HashSet<(RewardType, string)> currentRewardsSet)
     {
-        var toAdd = newRewardsSet.Except(currentRewardsSet).ToList();
+        var toAdd = newRewardsSet.ToList();
         var toRemove = currentRewardsSet.Except(newRewardsSet).ToList();
 
         if (toAdd.Count > 0)
