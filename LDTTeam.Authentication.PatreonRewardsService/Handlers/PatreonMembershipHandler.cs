@@ -35,6 +35,10 @@ public partial class PatreonMembershipHandler(
                 user.MembershipId = message.MembershipId;
                 await userRepository.CreateOrUpdateAsync(user);
                 LogAssociatedExistingMembershipIdMembershipidWithUserIdUserid(logger, message.MembershipId, user.UserId);
+
+                //On reattach we need to ensure old data is cleared
+                await membershipService.ForceRemoveMembershipOf(message.UserId, message.MembershipId);
+                LogForcedRemovalOfOldMembershipDataForUserUseridAndMembershipMembershipidOn(logger, message.UserId, message.MembershipId);
             }
         }
 
@@ -99,4 +103,7 @@ public partial class PatreonMembershipHandler(
 
     [LoggerMessage(LogLevel.Information, "Associated existing Membership ID {membershipId} with User ID {userId}")]
     static partial void LogAssociatedExistingMembershipIdMembershipidWithUserIdUserid(ILogger<PatreonMembershipHandler> logger, Guid membershipId, Guid userId);
+
+    [LoggerMessage(LogLevel.Warning, "Forced removal of old membership data for User {userId} and Membership {membershipId} on reattachment")]
+    static partial void LogForcedRemovalOfOldMembershipDataForUserUseridAndMembershipMembershipidOn(ILogger<PatreonMembershipHandler> logger, Guid userId, Guid membershipId);
 }
