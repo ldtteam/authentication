@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LDTTeam.Authentication.Server.Models.Data;
 
-[PrimaryKey(nameof(UserId), nameof(Reward))]
+[PrimaryKey(nameof(UserId), nameof(Type), nameof(Reward))]
 public class AssignedReward
 {
     public required string UserId { get; set; }
