@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Builder;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddLogging().AddConfiguration();
-builder.AddWolverine();
+builder.AddWolverine(opts =>
+{
+    opts.Discovery.IncludeAssembly(typeof(Startup).Assembly);
+});
 
 var startup = new Startup(builder.Configuration);
 startup.ConfigureServices(builder.Services, builder);
