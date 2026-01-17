@@ -79,7 +79,7 @@ public class AssignedRewardRepository : IAssignedRewardRepository
 
     public async Task AssignAsync(AssignedReward assignment, CancellationToken token = default)
     {
-        var existing = await _db.AssignedRewards.FindAsync(new object[] { assignment.UserId, assignment.Reward, assignment.Type }, token);
+        var existing = await _db.AssignedRewards.FindAsync([assignment.UserId, assignment.Reward, assignment.Type.ToString()], token);
         if (existing is null)
         {
             await _db.AssignedRewards.AddAsync(assignment, token);
@@ -93,7 +93,7 @@ public class AssignedRewardRepository : IAssignedRewardRepository
 
     public async Task RemoveAsync(string userId, string reward, RewardType type, CancellationToken token = default)
     {
-        var existing = await _db.AssignedRewards.FindAsync([userId, reward, type], token);
+        var existing = await _db.AssignedRewards.FindAsync([userId, reward, type.ToString()], token);
         if (existing is null) return;
 
         _db.AssignedRewards.Remove(existing);
