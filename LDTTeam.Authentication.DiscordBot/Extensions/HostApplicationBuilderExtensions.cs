@@ -85,6 +85,7 @@ public static class HostApplicationBuilderExtensions
                 .AddDiscordCommands(true)
                 .AddCommandTree()
                 .WithCommandGroup<RewardsCommands>()
+                .WithCommandGroup<UserCommands>()
                 .WithCommandGroup<TierCommands>()
                 .WithCommandGroup<ContextCommands>()
                 .WithCommandGroup<ContributionRewards>()
