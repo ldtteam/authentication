@@ -34,13 +34,13 @@ public class ContextCommands(
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
     public async Task<IResult> EmitUserCreatedOrUpdatedEvent(
-        IUser discordUser)
+        IUser user)
     {
         var executor = interactionContext.Interaction.Member;
         var executingUser = executor.FlatMap(m => m.User);
         var permissions = executor.FlatMap(m => m.Permissions);
         if (!permissions.HasValue &&
-            !(executingUser.HasValue && executingUser.Value.ID.Equals(discordUser.ID)))
+            !(executingUser.HasValue && executingUser.Value.ID.Equals(user.ID)))
         {
             return await feedbackService.SendContextualErrorAsync(
                 "You are not authorized to run this command for other users"
@@ -48,7 +48,7 @@ public class ContextCommands(
         }
 
         if (permissions.HasValue && executingUser.HasValue
-                                 && !executingUser.Value.ID.Equals(discordUser.ID)
+                                 && !executingUser.Value.ID.Equals(user.ID)
                                  && !permissions.Value.HasPermission(DiscordPermission.Administrator))
         {
             return Result.FromError(await feedbackService.SendContextualEmbedAsync(
@@ -73,15 +73,15 @@ public class ContextCommands(
                 }));
         }
         
-        var user = await userRepository.GetBySnowflakeAsync(discordUser.ID);
-        if (user == null)
+        var portalUser = await userRepository.GetBySnowflakeAsync(user.ID);
+        if (portalUser == null)
         {
             return Result.FromError(await feedbackService.SendContextualEmbedAsync(
                 new Embed
                 {
                     Title = "Unknown User",
                     Description =
-                        $"The user {discordUser.Username} is not registered in the authentication system. Ensure they have linked their Discord account.",
+                        $"The user {user.Username} is not registered in the authentication system. Ensure they have linked their Discord account.",
                     Colour = Color.Red
                 }));
         }
@@ -91,14 +91,14 @@ public class ContextCommands(
             "Failed to recalculate rewards",
             async b =>
             {
-                await b.PublishAsync(new NewUserCreatedOrUpdated(user.UserId, user.Username));
+                await b.PublishAsync(new NewUserCreatedOrUpdated(portalUser.UserId, portalUser.Username));
                 
                 await feedbackService.SendContextualEmbedAsync(
                     new Embed
                     {
                         Title = "Event emitted",
                         Description =
-                            $"The user created or updated event for {user.Username} has been emitted, you might need to recalculate the rewards!",
+                            $"The user created or updated event for {portalUser.Username} has been emitted, you might need to recalculate the rewards!",
                         Colour = Color.Green
                     });
 
