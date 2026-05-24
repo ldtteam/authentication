@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using LDTTeam.Authentication.DiscordBot.Extensions;
 using LDTTeam.Authentication.DiscordBot.Service;
 using LDTTeam.Authentication.Messages.Rewards;
+using LDTTeam.Authentication.Messages.User;
 using OneOf;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -28,6 +29,85 @@ public class ContextCommands(
     IMessageBus bus,
     IFeedbackService feedbackService) : CommandGroup
 {
+
+    [Command("Emit User Created or Updated Event")]
+    [CommandType(ApplicationCommandType.User)]
+    [UsedImplicitly]
+    public async Task<IResult> EmitUserCreatedOrUpdatedEvent(
+        IUser discordUser)
+    {
+        var executor = interactionContext.Interaction.Member;
+        var executingUser = executor.FlatMap(m => m.User);
+        var permissions = executor.FlatMap(m => m.Permissions);
+        if (!permissions.HasValue &&
+            !(executingUser.HasValue && executingUser.Value.ID.Equals(discordUser.ID)))
+        {
+            return await feedbackService.SendContextualErrorAsync(
+                "You are not authorized to run this command for other users"
+            );
+        }
+
+        if (permissions.HasValue && executingUser.HasValue
+                                 && !executingUser.Value.ID.Equals(discordUser.ID)
+                                 && !permissions.Value.HasPermission(DiscordPermission.Administrator))
+        {
+            return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "No permission",
+                    Description =
+                        "You require Administrator permissions to run this command for other users",
+                    Colour = Color.Red
+                }));
+        }
+
+        if (!executingUser.HasValue)
+        {
+            return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "No user provided",
+                    Description =
+                        "You need to supply a user to get rewards for",
+                    Colour = Color.Red
+                }));
+        }
+        
+        var user = await userRepository.GetBySnowflakeAsync(discordUser.ID);
+        if (user == null)
+        {
+            return Result.FromError(await feedbackService.SendContextualEmbedAsync(
+                new Embed
+                {
+                    Title = "Unknown User",
+                    Description =
+                        $"The user {discordUser.Username} is not registered in the authentication system. Ensure they have linked their Discord account.",
+                    Colour = Color.Red
+                }));
+        }
+        
+        await bus.ExecuteProtectedAsync(
+            feedbackService,
+            "Failed to recalculate rewards",
+            async b =>
+            {
+                await b.PublishAsync(new NewUserCreatedOrUpdated(user.UserId, user.Username));
+                
+                await feedbackService.SendContextualEmbedAsync(
+                    new Embed
+                    {
+                        Title = "Event emitted",
+                        Description =
+                            $"The user created or updated event for {user.Username} has been emitted, you might need to recalculate the rewards!",
+                        Colour = Color.Green
+                    });
+
+                return Result.FromSuccess();
+            });
+
+        return Result.FromSuccess();
+    }
+    
     [Command("List Rewards")]
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
