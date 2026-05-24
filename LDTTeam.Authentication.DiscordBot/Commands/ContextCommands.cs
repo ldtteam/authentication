@@ -30,7 +30,7 @@ public class ContextCommands(
     IFeedbackService feedbackService) : CommandGroup
 {
 
-    [Command("Emit User Created or Updated Event")]
+    [Command("Emit User Event")]
     [CommandType(ApplicationCommandType.User)]
     [UsedImplicitly]
     public async Task<IResult> EmitUserCreatedOrUpdatedEvent(

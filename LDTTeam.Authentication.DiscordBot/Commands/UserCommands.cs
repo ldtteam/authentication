@@ -29,7 +29,7 @@ public class UserCommands(
     IFeedbackService feedbackService) : CommandGroup
 {
 
-    [Command("Emit User Created or Updated Event")]
+    [Command("emit_created_event")]
     [Description("Triggers the emission of the user created or updated event, so other application parts can resync.")]
     [UsedImplicitly]
     public async Task<IResult> EmitUserCreatedOrUpdatedEvent(
