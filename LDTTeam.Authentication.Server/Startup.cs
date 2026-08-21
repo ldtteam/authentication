@@ -3,6 +3,7 @@ using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Server.Data;
 using LDTTeam.Authentication.Server.Extensions;
 using LDTTeam.Authentication.Server.Services;
+using LDTTeam.Authentication.Server.Validators;
 using LDTTeam.Authentication.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -49,7 +50,8 @@ namespace LDTTeam.Authentication.Server
 
                     options.User.RequireUniqueEmail = false;
                 })
-                .AddEntityFrameworkStores<DatabaseContext>();
+                .AddEntityFrameworkStores<DatabaseContext>()
+                .AddUserValidator<UnicodeUserValidator>();
 
             AuthenticationBuilder authBuilder = services.AddAuthentication();
 
