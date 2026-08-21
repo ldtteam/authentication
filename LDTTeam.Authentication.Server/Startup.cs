@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
 using LDTTeam.Authentication.Server.Data;
@@ -50,8 +51,12 @@ namespace LDTTeam.Authentication.Server
 
                     options.User.RequireUniqueEmail = false;
                 })
-                .AddEntityFrameworkStores<DatabaseContext>()
-                .AddUserValidator<UnicodeUserValidator>();
+                .AddEntityFrameworkStores<DatabaseContext>();
+
+            // Replace the default user validator with our Unicode-aware one
+            var existing = services.FirstOrDefault(d => d.ServiceType == typeof(IUserValidator<ApplicationUser>));
+            if (existing != null) services.Remove(existing);
+            services.AddTransient<IUserValidator<ApplicationUser>, UnicodeUserValidator>();
 
             AuthenticationBuilder authBuilder = services.AddAuthentication();
 
