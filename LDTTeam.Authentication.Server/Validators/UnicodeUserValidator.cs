@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using LDTTeam.Authentication.Modules.Api;
@@ -16,15 +19,25 @@ namespace LDTTeam.Authentication.Server.Validators
         public override async Task<IdentityResult> ValidateAsync(UserManager<ApplicationUser> manager, ApplicationUser user)
         {
             // Run base validation first (checks for null/empty username, etc.)
-            var result = await base.ValidateAsync(manager, user);
-            if (!result.Succeeded)
-                return result;
+            if (manager == null) throw new ArgumentNullException(nameof(manager));
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            
+            var errors = new List<IdentityError>();
+            if (manager.Options.User.RequireUniqueEmail)
+            {
+                errors = await ValidateEmail(manager, user, errors).ConfigureAwait(false);
+            }
+
+            if (errors?.Count > 0)
+            {
+                return IdentityResult.Failed(errors.ToArray());
+            }
 
             // Custom username character validation using Unicode-aware checks
             if (!string.IsNullOrEmpty(user.UserName))
             {
                 var invalidChars = user.UserName
-                    .Where(c => !char.IsLetterOrDigit(c) && !AllowedSpecialChars.Contains(c))
+                    .Where(c => !char.IsLetterOrDigit(c) && !Enumerable.Contains(AllowedSpecialChars, c))
                     .Distinct()
                     .ToArray();
 
@@ -38,7 +51,32 @@ namespace LDTTeam.Authentication.Server.Validators
                 }
             }
 
-            return result;
+            return IdentityResult.Success;
+        }
+        
+        private async Task<List<IdentityError>?> ValidateEmail(UserManager<ApplicationUser> manager, ApplicationUser user, List<IdentityError>? errors)
+        {
+            var email = await manager.GetEmailAsync(user).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                errors ??= new List<IdentityError>();
+                errors.Add(Describer.InvalidEmail(email));
+                return errors;
+            }
+            if (!new EmailAddressAttribute().IsValid(email))
+            {
+                errors ??= new List<IdentityError>();
+                errors.Add(Describer.InvalidEmail(email));
+                return errors;
+            }
+            var owner = await manager.FindByEmailAsync(email).ConfigureAwait(false);
+            if (owner != null &&
+                !string.Equals(await manager.GetUserIdAsync(owner).ConfigureAwait(false), await manager.GetUserIdAsync(user).ConfigureAwait(false)))
+            {
+                errors ??= new List<IdentityError>();
+                errors.Add(Describer.DuplicateEmail(email));
+            }
+            return errors;
         }
     }
 }
