@@ -42,7 +42,9 @@ foreach (var (_, id) in servers)
 {
     await slashService.UpdateSlashCommandsAsync(id);
 }
+logger.LogWarning("Registering Discord Slash Commands for {ServerCount} servers...", servers.Count);
 
+logger.LogWarning("Emitting bot started event to Discord Event Logging Service...");
 var eventLogger = scope.ServiceProvider.GetRequiredService<DiscordEventLoggingService>();
 await eventLogger.LogEvent(new Embed()
 {
@@ -59,7 +61,9 @@ await eventLogger.LogEvent(new Embed()
         false
     ))).ToList()
 });
+logger.LogWarning("Emitted bot started event to Discord Event Logging Service.");
 
+logger.LogInformation("Starting application with arguments: {Arguments}", args);
 var result = await app.RunJasperFxCommands(args);
 
 logger.LogWarning("Application has stopped.");
