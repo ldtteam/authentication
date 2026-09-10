@@ -10,29 +10,29 @@
     
     <ItemGroup>
         <PackageReference Include="AspNet.Security.OAuth.Discord" Version="10.0.0" />
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-        <PackageReference Include="Remora.Discord" Version="2025.2.0" />
-        <PackageReference Include="Remora.Discord.Caching" Version="40.0.1" />
-        <PackageReference Include="Remora.Discord.Commands" Version="30.0.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
+        <PackageReference Include="Remora.Discord" Version="2026.1.0" />
+        <PackageReference Include="Remora.Discord.Caching" Version="40.0.2" />
+        <PackageReference Include="Remora.Discord.Commands" Version="30.1.0" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.12" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.9.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.1" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-        <PackageReference Include="WolverineFx" Version="5.9.0" />
-        <PackageReference Include="WolverineFx.Postgresql" Version="5.9.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.12" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageReference Include="WolverineFx" Version="6.35.0" />
+        <PackageReference Include="WolverineFx.Postgresql" Version="6.35.0" />
     </ItemGroup>
     
     <ItemGroup>
