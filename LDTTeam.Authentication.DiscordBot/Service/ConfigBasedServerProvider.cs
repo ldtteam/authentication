@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using LDTTeam.Authentication.DiscordBot.Config;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
 using Remora.Rest.Core;
 
