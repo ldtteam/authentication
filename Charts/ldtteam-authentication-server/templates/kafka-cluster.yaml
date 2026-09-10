@@ -34,6 +34,7 @@ metadata:
   name: {{ .Values.kafka.name }}-pool
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+    com.ldtteam.minecolonies/cluster: {{ .Values.kafka.name }}
 spec:
   clusterRef:
     name: {{ .Values.kafka.name }}
