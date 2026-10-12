@@ -14,7 +14,7 @@ namespace LDTTeam.Authentication.Server.Validators
     /// </summary>
     public class UnicodeUserValidator : UserValidator<ApplicationUser>
     {
-        private static readonly char[] AllowedSpecialChars = { '.', '@', '-' };
+        private static readonly char[] AllowedSpecialChars = { '.', '@', '-', '_' };
 
         public override async Task<IdentityResult> ValidateAsync(UserManager<ApplicationUser> manager, ApplicationUser user)
         {
@@ -46,7 +46,7 @@ namespace LDTTeam.Authentication.Server.Validators
                     return IdentityResult.Failed(new IdentityError
                     {
                         Code = "InvalidUserNameCharacters",
-                        Description = $"Username '{user.UserName}' contains invalid characters: '{new string(invalidChars)}'. Only letters, digits, '.', '@', and '-' are allowed."
+                        Description = $"Username '{user.UserName}' contains invalid characters: '{new string(invalidChars)}'. Only letters, digits, '.', '@', '_', and '-' are allowed."
                     });
                 }
             }
