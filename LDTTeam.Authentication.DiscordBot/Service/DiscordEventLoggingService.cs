@@ -9,7 +9,7 @@ using Remora.Results;
 
 namespace LDTTeam.Authentication.DiscordBot.Service;
 
-public class DiscordEventLoggingService(
+public partial class DiscordEventLoggingService(
     ILoggingChannelProvider loggingChannelProvider,
     IDiscordRestChannelAPI channelApi,
     IDiscordFailedLogQueueService failedLogQueueService,
@@ -24,13 +24,15 @@ public class DiscordEventLoggingService(
 
         var result = await SendEmbedAsync(channel.Value, embed);
 
-        if (result is { IsSuccess: false, Error: RestResultError<RestError> { Error.RetryAfter.HasValue: true } resultError })
+        switch (result)
         {
-            failedLogQueueService.EnqueueFailedLog(embed, resultError.Error, count);
-        }
-        else if (result is { IsSuccess: false })
-        {
-            logger.LogWarning("Failed to log event: {Error}", result.Error?.Message);
+            case { IsSuccess: false, Error: RestResultError<RestError> { Error.RetryAfter.HasValue: true } resultError }:
+                LogFailedToLogEventWeHaveHitTheRateLimitQueueingForRetry();
+                failedLogQueueService.EnqueueFailedLog(embed, resultError.Error, count);
+                break;
+            case { IsSuccess: false }:
+                LogFailedToLogEventError(result.Error?.Message);
+                break;
         }
     }
     
@@ -64,4 +66,10 @@ public class DiscordEventLoggingService(
             ct: ct
         );
     }
+
+    [LoggerMessage(LogLevel.Information, $"Failed to log event. We have hit the rate limit. Queueing for retry!")]
+    partial void LogFailedToLogEventWeHaveHitTheRateLimitQueueingForRetry();
+
+    [LoggerMessage(LogLevel.Warning, "Failed to log event: {Error}")]
+    partial void LogFailedToLogEventError(string? error);
 }
