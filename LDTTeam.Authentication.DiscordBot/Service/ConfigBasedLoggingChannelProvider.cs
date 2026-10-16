@@ -3,7 +3,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Rest.Core;
-using Wolverine.Persistence.Durability;
 
 namespace LDTTeam.Authentication.DiscordBot.Service;
 
@@ -12,7 +11,7 @@ namespace LDTTeam.Authentication.DiscordBot.Service;
 /// Uses <see cref="IMemoryCache"/> to cache the resolved Snowflake and reads configuration from an
 /// <see cref="IOptionsSnapshot{TOptions}"/> so changes in configuration are picked up between requests.
 /// </summary>
-public class ConfigBasedLoggingChannelProvider(IOptions<DiscordConfig> configSnapshot, IMemoryCache cache, IDiscordRestGuildAPI guildApi, IServerProvider serverProvider) : ILoggingChannelProvider
+public partial class ConfigBasedLoggingChannelProvider(IOptions<DiscordConfig> configSnapshot, IMemoryCache cache, IDiscordRestGuildAPI guildApi, IServerProvider serverProvider, ILogger<ConfigBasedLoggingChannelProvider> logger) : ILoggingChannelProvider
 {
     private const string CacheKey = "LoggingChannelSnowflake";
 
@@ -31,12 +30,14 @@ public class ConfigBasedLoggingChannelProvider(IOptions<DiscordConfig> configSna
         var channels = await guildApi.GetGuildChannelsAsync(server);
         if (!channels.IsSuccess)
         {
+            LogFailedToGetTheChannelsForLoggingErrormessage(channels.Error?.Message);
             return null;
         }
         
         var channel = channels.Entity.FirstOrDefault(c => c.Name == loggingChannel.Channel);
         if (channel == null)
         {
+            LogCouldNotFindTheLoggingChannelWithNameLoggingchannelchannelAvailableAre(loggingChannel.Channel, string.Join(", ", channels.Entity.Select(e => e.Name)));
             return null;
         }
         
@@ -44,4 +45,10 @@ public class ConfigBasedLoggingChannelProvider(IOptions<DiscordConfig> configSna
         cache.Set(CacheKey, channel.ID, TimeSpan.FromMinutes(5));
         return channel.ID;
     }
+
+    [LoggerMessage(LogLevel.Error, "Failed to get the channels for logging: {ErrorMessage}")]
+    partial void LogFailedToGetTheChannelsForLoggingErrormessage(string? errorMessage);
+
+    [LoggerMessage(LogLevel.Warning, "Could not find the logging channel with name: {LoggingChannelChannel}. Available are: {AvailableChannels}")]
+    partial void LogCouldNotFindTheLoggingChannelWithNameLoggingchannelchannelAvailableAre(string loggingChannelChannel, string availableChannels);
 }
